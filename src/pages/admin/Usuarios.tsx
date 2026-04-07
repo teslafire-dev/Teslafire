@@ -8,7 +8,8 @@ import {
   ArrowRight,
   Package,
   Users,
-  Settings
+  Settings,
+  ShoppingBag
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import toast from "react-hot-toast";
@@ -16,6 +17,7 @@ import toast from "react-hot-toast";
 export default function AdminUsuarios() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
   const { canManageUsers } = useAuth();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
@@ -23,13 +25,19 @@ export default function AdminUsuarios() {
     if (canManageUsers) fetchUsers();
   }, [canManageUsers]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (search: string = "") => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("perfiles")
-        .select("*")
-        .order("created_at", { ascending: false });
+      let query = supabase.from("perfiles").select("*");
+      
+      if (search.trim() !== "") {
+        query = query.ilike("email", `%${search.trim()}%`);
+      } else {
+        // Para ahorrar costos: si no hay búsqueda activa, cargar solo al equipo actual (admin/editor)
+        query = query.in("rol", ["admin", "editor"]);
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false }).limit(50);
       
       if (error) {
         toast.error("Error al cargar usuarios");
@@ -44,6 +52,11 @@ export default function AdminUsuarios() {
     }
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchUsers(searchTerm);
+  };
+
   const updateRole = async (userId: string, newRole: string) => {
     const { error } = await supabase
       .from("perfiles")
@@ -54,7 +67,7 @@ export default function AdminUsuarios() {
       toast.error("Error al actualizar rol");
     } else {
       toast.success(`Usuario actualizado a ${newRole}`);
-      fetchUsers();
+      fetchUsers(searchTerm);
     }
   };
 
@@ -97,14 +110,22 @@ export default function AdminUsuarios() {
       {/* Users Table */}
       <div className="bg-white rounded-[4rem] border border-slate-50 shadow-sm overflow-hidden mb-20">
         <div className="p-10 border-b border-slate-50 flex justify-between items-center bg-slate-50/20">
-           <div className="relative w-full md:w-[450px] group">
+           <form onSubmit={handleSearch} className="relative w-full md:w-[450px] group">
               <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-accent transition-smooth" />
               <input 
                 type="text" 
-                placeholder="Buscar por Email o Identificación técnica..."
-                className="w-full bg-white border border-slate-100 rounded-2xl py-4 pl-16 pr-6 text-sm font-medium outline-none focus:ring-2 focus:ring-accent transition-smooth shadow-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar por Email para asignar rol..."
+                className="w-full bg-white border border-slate-100 rounded-2xl py-4 pl-16 pr-14 text-sm font-medium outline-none focus:ring-2 focus:ring-accent transition-smooth shadow-sm"
               />
-           </div>
+              <button 
+                type="submit"
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-slate-50 text-slate-400 hover:text-white hover:bg-accent rounded-xl transition-smooth"
+              >
+                <ArrowRight className="w-4 h-4" />
+              </button>
+           </form>
         </div>
 
         <div className="overflow-x-auto">
@@ -143,6 +164,14 @@ export default function AdminUsuarios() {
                   </td>
                   <td className="px-10 py-8">
                     <div className="flex items-center justify-center gap-2">
+                       <button 
+                        onClick={() => togglePermission(user.id, 'can_manage_orders', user.can_manage_orders)}
+                        disabled={updatingId === user.id}
+                        title="Gestionar Órdenes"
+                        className={`p-3 rounded-xl border transition-smooth ${user.can_manage_orders ? 'bg-accent/10 border-accent/20 text-accent' : 'bg-slate-50 border-slate-100 text-slate-300'}`}
+                       >
+                          <ShoppingBag className="w-4 h-4" />
+                       </button>
                        <button 
                         onClick={() => togglePermission(user.id, 'can_manage_products', user.can_manage_products)}
                         disabled={updatingId === user.id}

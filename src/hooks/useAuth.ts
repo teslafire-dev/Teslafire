@@ -13,6 +13,7 @@ export function useAuth() {
     canManageProducts: context.canManageProducts,
     canManageUsers: context.canManageUsers,
     canManageSettings: context.canManageSettings,
+    canManageOrders: context.canManageOrders,
     refreshProfile: context.refreshProfile
   };
 }

@@ -12,6 +12,7 @@ export interface AuthContextType {
   canManageProducts: boolean;
   canManageUsers: boolean;
   canManageSettings: boolean;
+  canManageOrders: boolean;
   refreshProfile: () => Promise<void>;
 }
 

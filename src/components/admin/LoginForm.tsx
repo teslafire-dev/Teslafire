@@ -33,10 +33,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
         toast.success("¡Sesión iniciada!");
         if (onSuccess) onSuccess();
         
-        // Solo redirigir al panel si estamos en la página de login completa
-        if (window.location.pathname === '/admin/login') {
-          navigate("/admin");
-        }
+        // Let the parent Login.tsx page handle the redirect via AuthContext state
       } else {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;

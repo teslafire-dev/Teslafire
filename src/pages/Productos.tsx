@@ -1,10 +1,34 @@
 import { Link } from "react-router-dom";
-import { featuredProducts } from "@/data/mockData";
 import ProductCard from "@/components/productos/ProductCard";
 import ProductFilters from "@/components/productos/ProductFilters";
-import { Grid, List, ChevronDown, SlidersHorizontal } from "lucide-react";
+import { Grid, List, ChevronDown, SlidersHorizontal, Loader2, Package } from "lucide-react";
+import { supabase } from "@/lib/supabase/client";
+import { useState, useEffect } from "react";
 
 export default function Productos() {
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('productos')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (err) {
+      console.error("Error fetching products:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="bg-slate-50 min-h-screen py-12">
       <div className="container mx-auto px-6">
@@ -27,7 +51,9 @@ export default function Productos() {
             <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
               <div className="flex flex-col gap-2">
                 <h1 className="text-3xl font-black text-primary-950 uppercase tracking-tighter leading-none">Catálogo de Productos</h1>
-                <p className="text-slate-500 font-medium tracking-wide">Mostrando {featuredProducts.length} resultados profesionales.</p>
+                <p className="text-slate-500 font-medium tracking-wide">
+                  {loading ? 'Cargando Catálogo...' : `Mostrando ${products.length} resultados profesionales.`}
+                </p>
               </div>
               <div className="flex items-center gap-4 w-full md:w-auto">
                 <div className="relative group w-full md:w-56 text-slate-600">
@@ -49,15 +75,36 @@ export default function Productos() {
               </div>
             </div>
 
-            {/* Product Grid */}
+             {/* Product Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-              {featuredProducts.map((prod) => (
-                <ProductCard key={prod.id} {...prod} />
-              ))}
-              {/* Duplicate for demo */}
-              {featuredProducts.map((prod) => (
-                <ProductCard key={`${prod.id}-2`} {...prod} />
-              ))}
+              {loading ? (
+                <div className="col-span-full py-20 flex flex-col items-center gap-4 text-slate-400">
+                   <Loader2 className="w-12 h-12 animate-spin text-accent" />
+                   <span className="text-[10px] font-black uppercase tracking-widest text-center">Sincronizando Inventario con Base de Datos</span>
+                </div>
+              ) : products.length === 0 ? (
+                <div className="col-span-full py-20 flex flex-col items-center gap-6 text-slate-400">
+                   <Package className="w-16 h-16 text-slate-200" />
+                   <div className="text-center">
+                    <h3 className="text-xl font-black text-primary-950 uppercase tracking-tighter">Sin Stock Disponible</h3>
+                    <p className="text-xs font-medium uppercase tracking-widest mt-2">Estamos actualizando nuestro catálogo técnico.</p>
+                   </div>
+                </div>
+              ) : (
+                products.map((prod) => (
+                  <ProductCard 
+                    key={prod.id} 
+                    id={prod.id} 
+                    name={prod.nombre} 
+                    sku={prod.sku} 
+                    category={prod.categoria} 
+                    price={prod.precio} 
+                    image={prod.imagen_url || '/placeholder-product.png'} 
+                    isNew={prod.is_new} 
+                    isOffer={prod.is_offer} 
+                  />
+                ))
+              )}
             </div>
 
             {/* Pagination (Mock) */}

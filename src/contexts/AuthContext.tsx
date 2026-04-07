@@ -4,100 +4,98 @@ import { User } from "@supabase/supabase-js";
 import { AuthContext, Role } from "./AuthContextCore";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [role, setRole] = useState<Role | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [canManageProducts, setCanManageProducts] = useState(false);
-  const [canManageUsers, setCanManageUsers] = useState(false);
-  const [canManageSettings, setCanManageSettings] = useState(false);
+  const [authState, setAuthState] = useState<{
+    user: User | null;
+    role: Role | null;
+    loading: boolean;
+    canManageProducts: boolean;
+    canManageUsers: boolean;
+    canManageSettings: boolean;
+    canManageOrders: boolean;
+  }>({
+    user: null,
+    role: null,
+    loading: true,
+    canManageProducts: false,
+    canManageUsers: false,
+    canManageSettings: false,
+    canManageOrders: false
+  });
 
-  // Function to fetch or refresh the profile
-  const fetchProfile = async (userId: string) => {
+  const getProfileData = async (userId: string) => {
     try {
       const { data: profile, error } = await supabase
         .from('perfiles')
-        .select('rol, can_manage_products, can_manage_users, can_manage_settings')
+        .select('rol, can_manage_products, can_manage_users, can_manage_settings, can_manage_orders')
         .eq('id', userId)
-        .single();
+        .maybeSingle(); // Changed to maybeSingle to avoid throw on 0 rows
       
-      if (error) throw error;
-      setRole(profile?.rol as Role ?? 'invitado');
-      setCanManageProducts(!!profile?.can_manage_products);
-      setCanManageUsers(!!profile?.can_manage_users);
-      setCanManageSettings(!!profile?.can_manage_settings);
+      if (error) {
+         console.warn("AuthContext: error executing maybeSingle()", error);
+      }
+      
+      const role = (profile?.rol as Role) ?? 'invitado';
+      
+      return {
+        role,
+        can_manage_products: profile?.can_manage_products ?? (role === 'admin' || role === 'editor'),
+        can_manage_users: profile?.can_manage_users ?? (role === 'admin'),
+        can_manage_settings: profile?.can_manage_settings ?? (role === 'admin'),
+        can_manage_orders: profile?.can_manage_orders ?? (role === 'admin' || role === 'editor')
+      };
     } catch (error) {
-      console.error("AuthContext: Error al obtener el perfil:", error);
-      setRole('invitado'); // Default safely
-      setCanManageProducts(false);
-      setCanManageUsers(false);
-      setCanManageSettings(false);
+      console.error("AuthContext: Error crítico al obtener el perfil:", error);
+      return {
+        role: 'invitado' as Role,
+        can_manage_products: false,
+        can_manage_users: false,
+        can_manage_settings: false,
+        can_manage_orders: false
+      };
     }
   };
 
   useEffect(() => {
     let mounted = true;
 
-    // Safety fallback: ensure loading is turned off after 6 seconds max
+    // Safety timeout: 8 seconds
     const forceStopLoading = setTimeout(() => {
       if (mounted) {
-        console.warn("AuthContext: Tiempo de espera de seguridad superado.");
-        setLoading(false);
+        setAuthState(prev => ({ ...prev, loading: false }));
       }
-    }, 6000);
+    }, 8000);
 
-    const initialize = async () => {
-      console.log(`[${new Date().toISOString()}] AuthContext: Iniciando inicialización...`);
-      try {
-        // Creamos una promesa que resuelve tras un pequeño timeout para no colgar la app
-        const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("Timeout getSession")), 2000)
-        );
-
-        // Competimos: si getSession tarda más de 2s, seguimos sin él
-        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]) as any;
-        
-        const currentUser = session?.user ?? null;
-        console.log(`[${new Date().toISOString()}] AuthContext: Sesión obtenida:`, currentUser?.id || 'Ninguna');
-        
-        if (mounted) {
-          setUser(currentUser);
-          if (currentUser) {
-            fetchProfile(currentUser.id);
-          }
-        }
-      } catch (error: any) {
-        if (error.message === "Timeout getSession") {
-          console.warn("AuthContext: getSession ha tardado demasiado, continuando sin sesión inicial.");
-        } else {
-          console.error("AuthContext: Error de inicialización:", error);
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-          clearTimeout(forceStopLoading);
-          console.log(`[${new Date().toISOString()}] AuthContext: Loading finalizado`);
-        }
+    const syncUser = async (session: any) => {
+      if (!session?.user) {
+        if (mounted) setAuthState({ user: null, role: null, loading: false, canManageProducts: false, canManageUsers: false, canManageSettings: false, canManageOrders: false });
+        return;
+      }
+      
+      const profileData = await getProfileData(session.user.id);
+      if (mounted) {
+        setAuthState({
+          user: session.user,
+          role: profileData.role,
+          loading: false,
+          canManageProducts: profileData.can_manage_products,
+          canManageUsers: profileData.can_manage_users,
+          canManageSettings: profileData.can_manage_settings,
+          canManageOrders: profileData.can_manage_orders
+        });
       }
     };
 
-    initialize();
+    // Strict initialization
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+       if (error) console.error("Initial getSession error:", error);
+       if (mounted) syncUser(session);
+    });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      const currentUser = session?.user ?? null;
-      
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'INITIAL_SESSION') return;
       if (mounted) {
-        if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-          setUser(currentUser);
-          if (currentUser) {
-            await fetchProfile(currentUser.id);
-          }
-          setLoading(false);
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
-          setRole(null);
-          setLoading(false);
-        }
+        clearTimeout(forceStopLoading);
+        syncUser(session);
       }
     });
 
@@ -109,16 +107,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = {
-    user,
-    role,
-    loading,
-    isAdmin: role === 'admin',
-    isEditor: role === 'admin' || role === 'editor',
-    canManageProducts,
-    canManageUsers,
-    canManageSettings,
+    ...authState,
+    isAdmin: authState.role === 'admin',
+    isEditor: authState.role === 'admin' || authState.role === 'editor',
     refreshProfile: async () => {
-      if (user) await fetchProfile(user.id);
+      if (authState.user) {
+        const profileData = await getProfileData(authState.user.id);
+        setAuthState(prev => ({
+          ...prev,
+          role: profileData.role,
+          canManageProducts: profileData.can_manage_products,
+          canManageUsers: profileData.can_manage_users,
+          canManageSettings: profileData.can_manage_settings,
+          canManageOrders: profileData.can_manage_orders
+        }));
+      }
     }
   };
 

@@ -150,7 +150,7 @@ export default function Header() {
           >
             <Link 
               to="/carrito" 
-              className={`relative p-3 rounded-2xl transition-smooth shadow-inner border border-transparent ${
+              className={`relative flex items-center justify-center p-3 rounded-2xl transition-smooth shadow-inner border border-transparent ${
                 totalItems > 0 
                   ? 'bg-accent text-white shadow-accent/20 border-accent/20' 
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'

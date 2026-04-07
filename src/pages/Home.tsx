@@ -31,55 +31,68 @@ export default function Home() {
 
         <div className="flex-grow flex items-center relative z-10 pt-32 pb-24 md:pt-40 md:pb-32">
           <div className="container mx-auto px-6">
-            <div className="max-w-4xl flex flex-col gap-10 animate-in fade-in slide-in-from-left-12 duration-1000">
-              <div className="inline-flex items-center gap-3 bg-accent/20 backdrop-blur-xl border border-accent/30 px-5 py-2 rounded-2xl w-fit">
-                <span className="w-2.5 h-2.5 rounded-full bg-accent animate-pulse shadow-lg shadow-accent/50"></span>
-                <span className="text-accent text-[10px] font-black uppercase tracking-[0.3em]">Equipamiento Profesional</span>
-              </div>
+            <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center animate-in fade-in slide-in-from-left-12 duration-1000">
               
-              <h1 className="text-6xl md:text-8xl font-black text-white leading-[0.95] tracking-tighter">
-                Protección <span className="text-accent">Superior</span> para cada Desafío Industrial
-              </h1>
-              
-              <div className="flex flex-col gap-8 max-w-2xl">
-                <p className="text-xl text-slate-200 leading-relaxed font-medium tracking-wide">
-                  Equipamiento certificado para las industrias más exigentes. Garantizamos seguridad de alto nivel con las marcas líderes del mercado.
-                </p>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex items-center gap-3 bg-white/5 backdrop-blur-md border border-white/10 px-4 py-3 rounded-2xl">
-                    <div className="w-8 h-8 bg-accent/20 rounded-lg flex items-center justify-center">
-                      <ShieldCheck className="w-4 h-4 text-accent" />
-                    </div>
-                    <span className="text-[10px] text-white font-bold uppercase tracking-wider">+2000 Productos Certificados</span>
-                  </div>
-                  <div className="flex items-center gap-3 bg-white/5 backdrop-blur-md border border-white/10 px-4 py-3 rounded-2xl">
-                    <div className="w-8 h-8 bg-accent/20 rounded-lg flex items-center justify-center">
-                      <Truck className="w-4 h-4 text-accent" />
-                    </div>
-                    <span className="text-[10px] text-white font-bold uppercase tracking-wider">Retiro Inmediato en Tienda</span>
-                  </div>
+              {/* Left Column (Main Text) */}
+              <div className="flex flex-col gap-8 lg:gap-10">
+                <div className="inline-flex items-center gap-3 bg-accent/20 backdrop-blur-xl border border-accent/30 px-5 py-2 rounded-2xl w-fit">
+                  <span className="w-2.5 h-2.5 rounded-full bg-accent animate-pulse shadow-lg shadow-accent/50"></span>
+                  <span className="text-accent text-[10px] font-black uppercase tracking-[0.3em]">Equipamiento Profesional</span>
                 </div>
                 
-                <p className="text-[11px] text-slate-400 font-bold uppercase tracking-[0.25em] bg-white/10 w-fit px-6 py-3 rounded-full border border-white/5">
-                  Distribuidores Oficiales: <span className="text-white">Ansell • Radians • Bullard</span>
+                <h1 className="text-6xl md:text-7xl lg:text-[5.5rem] font-black text-white leading-[0.95] tracking-tighter">
+                  Protección <span className="text-accent">Superior</span> para cada Desafío Industrial
+                </h1>
+                
+                <p className="text-xl text-slate-200 leading-relaxed font-medium tracking-wide max-w-xl">
+                  Equipamiento certificado para las industrias más exigentes. Garantizamos seguridad de alto nivel con las marcas líderes del mercado.
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-6">
-                <Link 
-                  to="/productos" 
-                  className="bg-accent hover:bg-accent/80 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest flex items-center gap-3 transition-all duration-300 shadow-2xl shadow-accent/40 active:scale-95"
-                >
-                  Explorar Catálogo <ArrowRight className="w-5 h-5" />
-                </Link>
-                <Link 
-                  to="/nosotros" 
-                  className="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest transition-all duration-300 active:scale-95"
-                >
-                  Conocer la Empresa
-                </Link>
+              {/* Right Column (Badges & CTA) */}
+              <div className="flex flex-col gap-10 bg-white/5 backdrop-blur-md border border-white/10 p-8 md:p-12 rounded-[3.5rem] shadow-2xl relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
+                
+                <div className="flex flex-col gap-6 relative z-10">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex items-center gap-4 bg-white/5 backdrop-blur-md px-5 py-5 rounded-[2rem] border border-white/10 group-hover:bg-white/10 transition-smooth">
+                      <div className="w-12 h-12 bg-accent/20 rounded-xl flex items-center justify-center shrink-0">
+                        <ShieldCheck className="w-6 h-6 text-accent" />
+                      </div>
+                      <span className="text-[10px] text-white font-black uppercase tracking-widest leading-tight">+2000 Productos<br/>Certificados</span>
+                    </div>
+                    <div className="flex items-center gap-4 bg-white/5 backdrop-blur-md px-5 py-5 rounded-[2rem] border border-white/10 group-hover:bg-white/10 transition-smooth">
+                      <div className="w-12 h-12 bg-accent/20 rounded-xl flex items-center justify-center shrink-0">
+                        <Truck className="w-6 h-6 text-accent" />
+                      </div>
+                      <span className="text-[10px] text-white font-black uppercase tracking-widest leading-tight">Retiro Inmediato<br/>en Tienda</span>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white/5 px-6 py-5 rounded-[2rem] border border-white/5 text-center">
+                    <span className="text-[11px] text-slate-400 font-bold uppercase tracking-[0.3em]">
+                      Distribuidores Oficiales:<br/>
+                      <span className="text-white font-black mt-2 inline-block text-sm tracking-[0.2em]">Ansell • Radians • Bullard</span>
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4 relative z-10">
+                  <Link 
+                    to="/productos" 
+                    className="flex-1 justify-center bg-accent hover:bg-orange-600 text-white px-8 py-5 rounded-2xl font-black uppercase text-[10px] md:text-xs tracking-widest flex items-center gap-3 transition-smooth shadow-2xl shadow-accent/40 active:scale-95"
+                  >
+                    Explorar Catálogo <ArrowRight className="w-5 h-5" />
+                  </Link>
+                  <Link 
+                    to="/nosotros" 
+                    className="flex-1 justify-center bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/20 px-8 py-5 rounded-2xl font-black uppercase text-[10px] md:text-xs tracking-widest transition-smooth active:scale-95 flex items-center"
+                  >
+                    Conocer Empresa
+                  </Link>
+                </div>
               </div>
+
             </div>
           </div>
         </div>

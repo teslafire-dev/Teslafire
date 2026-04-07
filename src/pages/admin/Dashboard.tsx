@@ -10,8 +10,56 @@ import {
   ArrowDownRight
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/lib/supabase/client";
+import * as XLSX from "xlsx";
+import toast from "react-hot-toast";
+import { useState } from "react";
 
 export default function AdminDashboard() {
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportXLS = async () => {
+    setIsExporting(true);
+    const toastId = toast.loading("Generando reporte Excel...");
+    try {
+      // Fetch full inventory
+      const { data, error } = await supabase.from('productos').select('*').order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        toast.error("No hay productos para exportar", { id: toastId });
+        return;
+      }
+
+      // Map data to a cleaner format for Excel
+      const exportData = data.map(item => ({
+        'SKU': item.sku || '-',
+        'Categoría': item.categoria || '-',
+        'Nombre': item.nombre,
+        'Precio (USD)': item.precio,
+        'Stock': item.stock || 0,
+        'Marca': item.marca || '-',
+        'Estado': item.en_alerta ? 'ALERTA' : (item.stock > 0 ? 'DISPONIBLE' : 'AGOTADO'),
+        'Fecha Registro': new Date(item.created_at).toLocaleDateString()
+      }));
+
+      // Create Excel workbook and worksheet
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Inventario");
+      
+      // Trigger download
+      XLSX.writeFile(wb, `Inventario_Dobell_${new Date().toISOString().split('T')[0]}.xlsx`);
+      toast.success("¡Reporte XLS descargado existosamente!", { id: toastId });
+      
+    } catch (error) {
+      console.error("Error al exportar a Excel:", error);
+      toast.error("Error al generar el archivo", { id: toastId });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const kpis = [
     { label: "Total Productos", value: "2,145", change: "+12.5%", trending: "up", icon: Package, color: "bg-blue-100 text-blue-600" },
     { label: "Reservas Hoy", value: "54", change: "+4.2%", trending: "up", icon: ShoppingBag, color: "bg-green-100 text-green-600" },
@@ -35,8 +83,12 @@ export default function AdminDashboard() {
           <p className="text-slate-500 font-medium tracking-wide leading-none">Resumen ejecutivo del inventario y reservas industriales.</p>
         </div>
         <div className="flex items-center gap-4">
-          <button className="bg-white border border-slate-200 text-slate-600 font-black uppercase text-[10px] tracking-widest px-8 py-3 rounded-2xl hover:border-accent transition-smooth active:scale-95">
-            Exportar XLS
+          <button 
+             onClick={handleExportXLS}
+             disabled={isExporting}
+             className={`bg-white border text-slate-600 font-black uppercase text-[10px] tracking-widest px-8 py-3 rounded-2xl transition-smooth active:scale-95 ${isExporting ? 'border-slate-200 opacity-50 cursor-not-allowed' : 'border-slate-200 hover:border-accent'}`}
+          >
+            {isExporting ? 'Exportando...' : 'Exportar XLS'}
           </button>
           <Link 
             to="/admin/productos" 

@@ -8,6 +8,7 @@ import Gracias from './pages/Gracias';
 import AdminDashboard from './pages/admin/Dashboard';
 import Login from './pages/admin/Login';
 import AdminProductos from './pages/admin/Productos';
+import AdminOrdenes from './pages/admin/Ordenes';
 import AdminUsuarios from './pages/admin/Usuarios';
 import AdminConfiguracion from './pages/admin/Configuracion';
 import AdminLayout from './components/admin/AdminLayout';
@@ -43,6 +44,7 @@ function App() {
               <Route element={<AdminLayout />}>
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/productos" element={<AdminProductos />} />
+                <Route path="/admin/ordenes" element={<AdminOrdenes />} />
                 <Route path="/admin/usuarios" element={<AdminUsuarios />} />
                 <Route path="/admin/configuracion" element={<AdminConfiguracion />} />
               </Route>

@@ -9,17 +9,31 @@ import {
   User,
   Users,
   ShieldAlert,
-  ExternalLink
+  ExternalLink,
+  ShoppingBag
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function AdminLayout() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { role, isAdmin, user, canManageProducts, canManageUsers, canManageSettings } = useAuth();
+  const { role, isAdmin, user, canManageProducts, canManageUsers, canManageSettings, canManageOrders } = useAuth();
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -48,6 +62,7 @@ export default function AdminLayout() {
 
   const menuItems = [
     { name: "Dashboard", icon: LayoutDashboard, href: "/admin", permission: true },
+    { name: "Órdenes", icon: ShoppingBag, href: "/admin/ordenes", permission: canManageOrders },
     { name: "Productos", icon: Package, href: "/admin/productos", permission: canManageProducts },
     { name: "Usuarios", icon: Users, href: "/admin/usuarios", permission: canManageUsers },
     { name: "Configuración", icon: Settings, href: "/admin/configuracion", permission: canManageSettings },
@@ -127,22 +142,59 @@ export default function AdminLayout() {
               <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-white shadow-lg shadow-destructive/20"></span>
             </button>
             <div className="h-10 w-[1px] bg-slate-100"></div>
-            <div className="flex items-center gap-5 group cursor-pointer">
-              <Link 
-                to="/" 
-                className="flex items-center gap-2 px-6 py-2.5 bg-accent/10 hover:bg-accent text-accent hover:text-white rounded-xl transition-smooth text-[10px] font-black uppercase tracking-widest border border-accent/20 shadow-sm"
+            
+            <div className="relative" ref={userMenuRef}>
+              <div 
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center gap-5 group cursor-pointer"
               >
-                <ExternalLink className="w-4 h-4" />
-                Ver Tienda
-              </Link>
-              <div className="h-10 w-[1px] bg-slate-100 ml-4"></div>
-              <div className="flex flex-col items-end">
-                <span className="text-sm font-black text-primary-950 uppercase tracking-tighter leading-none">Dobell Staff</span>
-                <span className="text-[9px] font-black text-accent uppercase tracking-widest mt-1">{role}</span>
+                <div className="flex flex-col items-end hidden md:flex">
+                  <span className="text-sm font-black text-primary-950 uppercase tracking-tighter leading-none group-hover:text-accent transition-smooth">
+                    {user?.email?.split('@')[0]}
+                  </span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">
+                    {role} • {isAdmin ? 'Nivel 1' : 'Staff'}
+                  </span>
+                </div>
+                <div className="w-12 h-12 bg-primary-950 rounded-2xl flex items-center justify-center shadow-2xl group-hover:bg-accent transition-smooth relative">
+                  <User className="w-6 h-6 text-white" />
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                </div>
               </div>
-              <div className="w-12 h-12 bg-primary-950 rounded-2xl flex items-center justify-center shadow-2xl group-hover:bg-accent transition-smooth">
-                <User className="w-6 h-6 text-white" />
-              </div>
+
+              <AnimatePresence>
+                {isUserMenuOpen && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute right-0 mt-4 w-72 bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 p-4 z-50 overflow-hidden"
+                  >
+                    <div className="p-6 border-b border-slate-50 flex flex-col gap-1">
+                       <span className="text-[10px] font-black text-accent uppercase tracking-widest">Cuenta Activa</span>
+                       <span className="text-sm font-bold text-primary-950 truncate">{user?.email}</span>
+                    </div>
+                    
+                    <div className="p-2 flex flex-col gap-1">
+                      <Link 
+                        to="/" 
+                        className="flex items-center gap-4 px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-smooth group"
+                      >
+                        <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-accent" />
+                        Ver Tienda
+                      </Link>
+                      
+                      <button 
+                        onClick={handleLogout}
+                        className="flex items-center gap-4 px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest text-destructive hover:bg-red-50 transition-smooth group"
+                      >
+                        <LogOut className="w-4 h-4 text-red-300 group-hover:text-red-500" />
+                        Cerrar Sesión
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </header>
