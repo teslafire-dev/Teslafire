@@ -1,10 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Search, ShoppingCart, User, Menu, X } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase/client";
 import LoginModal from "../admin/LoginModal";
 import { useAuth } from "@/hooks/useAuth";
 import toast from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -15,12 +16,25 @@ export default function Header() {
   const [lastScrollY, setLastScrollY] = useState(0);
   const { user, isAdmin, role } = useAuth();
   const navigate = useNavigate();
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = async () => {
+    setIsUserMenuOpen(false);
     await supabase.auth.signOut();
     toast.success("Sesión cerrada");
     navigate("/");
   };
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [userMenuRef]);
 
   useEffect(() => {
     const controlNavbar = () => {
@@ -87,7 +101,7 @@ export default function Header() {
               to="/admin" 
               className="text-primary-950 px-4 py-2 bg-accent/10 rounded-xl border border-accent/20 hover:bg-accent hover:text-white transition-smooth flex items-center gap-2"
             >
-              Panel Admin
+              Administrador
             </Link>
           )}
         </nav>
@@ -112,18 +126,57 @@ export default function Header() {
             </span>
           </Link>
           {user ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 relative" ref={userMenuRef}>
               <div className="hidden lg:flex flex-col items-end mr-2">
                 <span className="text-[9px] font-black text-primary-950 uppercase tracking-tighter leading-none">{user.email?.split('@')[0]}</span>
                 <span className="text-[8px] font-black text-accent uppercase tracking-widest mt-1">{role}</span>
               </div>
               <button 
-                onClick={handleLogout}
-                className="p-3 bg-slate-100 text-slate-400 hover:text-destructive transition-smooth rounded-2xl shadow-inner active:scale-95"
-                title="Cerrar Sesión"
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className={`p-3 transition-smooth rounded-2xl shadow-inner active:scale-95 ${
+                  isUserMenuOpen ? 'bg-primary-950 text-white shadow-2xl' : 'bg-slate-100 text-slate-400 hover:text-primary-950'
+                }`}
+                title="Menú de Usuario"
               >
                 <User className="w-6 h-6" />
               </button>
+
+              {/* User Dropdown Menu */}
+              <AnimatePresence>
+                {isUserMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="absolute top-full right-0 mt-4 w-56 bg-white rounded-3xl shadow-2xl border border-slate-50 overflow-hidden z-[100]"
+                  >
+                    <div className="p-2 flex flex-col">
+                      <div className="px-4 py-3 border-b border-slate-50 mb-1">
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Conectado como</p>
+                        <p className="text-xs font-bold text-primary-950 mt-1 truncate">{user.email}</p>
+                      </div>
+                      
+                      <Link 
+                        to="/admin" 
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 text-[10px] font-black text-slate-600 hover:bg-slate-50 hover:text-primary-950 rounded-2xl transition-smooth uppercase tracking-widest"
+                      >
+                        <User className="w-4 h-4" />
+                        Mi Cuenta
+                      </Link>
+
+                      <button 
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 px-4 py-3 text-[10px] font-black text-destructive hover:bg-destructive/10 rounded-2xl transition-smooth uppercase tracking-widest text-left"
+                      >
+                        <X className="w-4 h-4" />
+                        Cerrar Sesión
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           ) : (
             <button 
@@ -149,10 +202,10 @@ export default function Header() {
             <Link to="/productos" onClick={() => setIsMenuOpen(false)}>Productos</Link>
             <Link to="/soluciones" onClick={() => setIsMenuOpen(false)}>Soluciones</Link>
             <Link to="/nosotros" onClick={() => setIsMenuOpen(false)}>Nosotros</Link>
-            <Link to="/contacto" onClick={() => setIsMenuOpen(false)}>Contacto</Link>
             {isAdmin && (
-              <Link to="/admin" className="text-accent" onClick={() => setIsMenuOpen(false)}>Panel Admin</Link>
+              <Link to="/admin" className="text-accent" onClick={() => setIsMenuOpen(false)}>Administrador</Link>
             )}
+            <Link to="/contacto" onClick={() => setIsMenuOpen(false)}>Contacto</Link>
           </nav>
         </div>
       )}
