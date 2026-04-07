@@ -13,7 +13,12 @@ export interface AuthContextType {
   canManageUsers: boolean;
   canManageSettings: boolean;
   canManageOrders: boolean;
+  nombre_completo: string | null;
+  apellido: string | null;
+  telefono: string | null;
   refreshProfile: () => Promise<void>;
+  updateProfile: (data: { nombre_completo?: string; apellido?: string; telefono?: string }) => Promise<{ error: any }>;
+  updateCredentials: (data: { email?: string; password?: string }) => Promise<{ error: any }>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Eye, Plus, Star } from "lucide-react";
 import { useCartStore } from "@/lib/store/cartStore";
 import toast from "react-hot-toast";
+import { useTranslation } from "@/contexts/TranslationContext";
 
 interface ProductCardProps {
   id: string;
@@ -25,6 +26,7 @@ export default function ProductCard({
   isOffer 
 }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem);
+  const { t } = useTranslation();
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -41,65 +43,67 @@ export default function ProductCard({
   return (
     <Link 
       to={`/productos/${id}`}
-      className="group bg-white rounded-[2rem] border border-slate-100 overflow-hidden hover:shadow-2xl hover:shadow-primary-950/10 transition-smooth flex flex-col h-full relative"
+      className="group bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden hover:shadow-xl hover:shadow-primary-950/5 transition-smooth flex flex-col h-full relative"
     >
       {/* Badges */}
-      <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
+      <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
         {isNew && (
-          <span className="bg-accent text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg shadow-accent/20 animate-in zoom-in duration-500">
+          <span className="bg-accent text-white text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest shadow-lg shadow-accent/20 animate-in zoom-in duration-500">
             Nuevo
           </span>
         )}
         {isOffer && (
-          <span className="bg-destructive text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg shadow-destructive/20 animate-in zoom-in duration-500">
+          <span className="bg-destructive text-white text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest shadow-lg shadow-destructive/20 animate-in zoom-in duration-500">
             Oferta
           </span>
         )}
       </div>
 
       {/* Image Container */}
-      <div className="relative aspect-square overflow-hidden bg-slate-50 p-8 group-hover:p-6 transition-smooth">
+      <div className="relative aspect-square overflow-hidden bg-slate-50 p-4 group-hover:p-2 transition-smooth">
         <img 
           src={image} 
           alt={name} 
-          className="w-full h-full object-contain group-hover:scale-110 transition-smooth duration-700"
+          className="w-full h-full object-contain group-hover:scale-105 transition-smooth duration-700"
         />
         <div className="absolute inset-0 bg-primary-950/0 group-hover:bg-primary-950/5 transition-smooth"></div>
         
         {/* Quick Actions Overlay (Hidden on Mobile) */}
-        <div className="absolute inset-0 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-smooth translate-y-4 group-hover:translate-y-0 hidden md:flex">
-          <button className="p-4 bg-white rounded-2xl text-primary-950 shadow-xl hover:bg-accent hover:text-white transition-smooth">
-            <Eye className="w-5 h-5" />
+        <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-smooth translate-y-2 group-hover:translate-y-0 hidden md:flex">
+          <button className="p-3 bg-white rounded-xl text-primary-950 shadow-xl hover:bg-accent hover:text-white transition-smooth active:scale-95">
+            <Eye className="w-4 h-4" />
           </button>
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-8 flex flex-col gap-4 flex-1">
-        <div className="flex flex-col gap-1">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{category}</span>
-          <h3 className="text-lg font-bold text-primary-950 leading-tight group-hover:text-accent transition-smooth line-clamp-2 min-h-[3rem]">
+      <div className="p-5 flex flex-col gap-3 flex-1">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">{category}</span>
+          <h3 className="text-[15px] font-black text-primary-950 leading-snug group-hover:text-accent transition-smooth line-clamp-2 uppercase tracking-tight">
             {name}
           </h3>
         </div>
 
-        <div className="flex items-center gap-1">
-           {[1,2,3,4,5].map(s => <Star key={s} className="w-3 h-3 fill-accent text-accent" />)}
-           <span className="text-[9px] text-slate-400 font-bold ml-1 uppercase tracking-widest">(12 Reseñas)</span>
-        </div>
+        {t('mostrar_resegnas') === 'true' && (
+          <div className="flex items-center gap-0.5">
+             {[1,2,3,4,5].map(s => <Star key={s} className="w-2.5 h-2.5 fill-accent text-accent" />)}
+             <span className="text-[8px] text-slate-400 font-bold ml-1 uppercase tracking-widest">(12)</span>
+          </div>
+        )}
 
-        <div className="mt-auto flex items-end justify-between gap-4">
+        <div className="mt-auto flex items-end justify-between gap-3 pt-2">
           <div className="flex flex-col">
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">SKU: {sku}</span>
-            <span className="text-2xl font-black text-primary-950 font-outfit tracking-tighter">
+            <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest mb-1">SKU: {sku}</span>
+            <span className="text-xl font-black text-primary-950 font-outfit tracking-tighter leading-none">
               {price ? `$${price.toFixed(2)}` : "Cotizar"}
             </span>
           </div>
           <button 
             onClick={handleAddToCart}
-            className="p-4 bg-primary-950 text-white rounded-2xl hover:bg-accent transition-smooth shadow-lg shadow-primary-950/20 active:scale-90"
+            className="p-3 bg-primary-950 text-white rounded-xl hover:bg-accent transition-smooth shadow-lg shadow-primary-950/10 active:scale-90"
           >
-            <Plus className="w-6 h-6" />
+            <Plus className="w-5 h-5" />
           </button>
         </div>
       </div>

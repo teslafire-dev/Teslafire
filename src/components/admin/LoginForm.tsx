@@ -37,9 +37,29 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
       } else {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        toast.success("Cuenta creada. Ahora eres un 'Invitado'.");
+        toast.success("Cuenta creada con éxito. Inicie sesión para continuar.");
         setIsLogin(true);
       }
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!email) {
+      toast.error("Por favor ingresa tu correo electrónico primero para restaurar.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/admin/login'
+      });
+      if (error) throw error;
+      toast.success("Enlace de recuperación enviado. Revisa tu bandeja de entrada.");
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -50,18 +70,18 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Main Content Area with Padding */}
-      <div className="p-8 md:p-10 flex flex-col gap-6">
+      <div className="p-2 flex flex-col gap-5">
         {/* Dynamic Header */}
         <div className="flex flex-col gap-1 text-center pb-2">
-          <h2 className="text-xl font-black text-primary-950 uppercase tracking-tighter">
-            {isLogin ? "Acceso Administrativo" : "Registro de Usuario"}
+          <h2 className="text-lg font-black text-primary-950 uppercase tracking-tighter">
+            {isLogin ? "Acceso Seguro" : "Registro de Usuario"}
           </h2>
           <p className="text-slate-500 font-medium text-[9px] leading-relaxed uppercase tracking-widest text-center">
-            {isLogin ? "Ingrese sus credenciales corporativas." : "Únete al equipo administrativo de seguridad."}
+            {isLogin ? "Ingrese credenciales" : "Nueva cuenta Dobell"}
           </p>
         </div>
 
-        <form onSubmit={handleAuth} className="flex flex-col gap-5">
+        <form onSubmit={handleAuth} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 px-1">
             <Mail className="w-3 h-3 text-accent" /> Email
@@ -70,16 +90,27 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
             type="email" 
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="admin@dobellservice.com"
+            placeholder="usuario@ejemplo.com"
             className="w-full bg-slate-50 border border-slate-100 rounded-lg px-4 py-3 text-xs font-medium focus:ring-1 focus:ring-accent outline-none transition-smooth"
             required
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 px-1">
-            <Lock className="w-3 h-3 text-accent" /> Clave
-          </label>
+          <div className="flex items-center justify-between px-1">
+            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <Lock className="w-3 h-3 text-accent" /> Clave
+            </label>
+            {isLogin && (
+              <button 
+                type="button"
+                onClick={handleResetPassword}
+                className="text-[9px] font-black text-accent hover:text-primary-950 uppercase tracking-widest transition-smooth"
+              >
+                ¿Olvidó su clave?
+              </button>
+            )}
+          </div>
           <input 
             type="password" 
             value={password}
@@ -92,7 +123,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
 
         <button 
           disabled={loading}
-          className="w-full h-11 bg-primary-950 text-white font-black uppercase text-[9px] tracking-widest rounded-lg mt-1 flex items-center justify-center gap-2 hover:bg-accent transition-smooth active:scale-95 disabled:opacity-50"
+          className="w-full h-11 bg-primary-950 text-white font-black uppercase text-[9px] tracking-widest rounded-lg mt-1 flex items-center justify-center gap-2 hover:bg-black transition-smooth active:scale-95 disabled:opacity-50"
         >
           {loading ? <Loader2 className="w-5 h-5 animate-spin text-accent" /> : (
             <>
@@ -117,7 +148,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
       }`}>
         <AlertCircle className={`w-4 h-4 ${isLogin ? "text-slate-400" : "text-accent"}`} />
         <p className={`text-[9px] font-black uppercase tracking-widest ${isLogin ? "text-slate-500" : "text-primary-900"}`}>
-          {isLogin ? "Sistema DOBELL v1.1.0 • Estatus Protegido" : "Modo Invitado • Requiere Aprobación Manual"}
+          {isLogin ? "Sistema DOBELL v1.1.0 • Estatus Protegido" : "Portal de Cliente • Registro Seguro"}
         </p>
       </div>
     </div>

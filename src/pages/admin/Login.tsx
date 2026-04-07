@@ -20,20 +20,20 @@ export default function Login() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-accent/10 blur-[120px] rounded-full animate-pulse decoration-accent"></div>
       </div>
 
-      <div className="w-full max-w-md relative z-10 animate-in fade-in zoom-in duration-700">
-        <div className="bg-white rounded-[3.5rem] shadow-2xl overflow-hidden border border-white/10">
+      <div className="w-full max-w-sm relative z-10 animate-in fade-in zoom-in duration-700">
+        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-white/10">
           {/* Header */}
-          <div className="bg-primary-950 p-12 text-center flex flex-col items-center gap-6">
-            <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center shadow-2xl group hover:scale-110 transition-smooth">
-              <span className="text-primary-950 font-black text-4xl font-outfit">D</span>
+          <div className="bg-primary-950 p-8 text-center flex flex-col items-center gap-4">
+            <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-xl group hover:scale-110 transition-smooth">
+              <span className="text-primary-950 font-black text-2xl font-outfit">D</span>
             </div>
             <div className="flex flex-col gap-1">
-              <h1 className="text-white text-3xl font-black font-outfit uppercase tracking-tighter">Dobell Admin</h1>
-              <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">Control de Seguridad Industrial</p>
+              <h1 className="text-white text-xl font-black font-outfit uppercase tracking-tighter">Dobell Admin</h1>
+              <p className="text-slate-400 text-[9px] font-black uppercase tracking-[0.3em]">Control de Seguridad</p>
             </div>
           </div>
 
-          <div className="p-12">
+          <div className="p-6">
             <LoginForm />
           </div>
         </div>

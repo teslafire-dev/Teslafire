@@ -3,14 +3,14 @@ export const categories = [
     id: "cat-1",
     name: "Protección de Manos",
     slug: "proteccion-manos",
-    image: "/images/products/nitrile_gloves_industrial.png",
+    image: "https://images.unsplash.com/photo-1588636402422-b676aa610b65?w=800&q=80",
     count: 245
   },
   {
     id: "cat-2",
     name: "Protección de Cabeza",
     slug: "proteccion-cabeza",
-    image: "/images/cat-head.png",
+    image: "https://images.unsplash.com/photo-1542282088-fe8426682b8f?w=800&q=80",
     count: 120
   },
   {
@@ -31,7 +31,7 @@ export const categories = [
     id: "cat-5",
     name: "Calzado de Seguridad",
     slug: "calzado",
-    image: "/images/products/safety_boots_dielectric.png",
+    image: "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=800&q=80",
     count: 310
   },
   {
@@ -60,7 +60,7 @@ export const featuredProducts = [
     sku: "GUA-002",
     category: "Protección de Manos",
     price: 12.99,
-    image: "/images/products/nitrile_gloves_industrial.png",
+    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&q=80",
     isNew: false,
     isOffer: true
   },
@@ -70,7 +70,7 @@ export const featuredProducts = [
     sku: "CAS-003",
     category: "Protección de Cabeza",
     price: 45.00,
-    image: "/images/products/safety_helmet_white.png",
+    image: "https://images.unsplash.com/photo-1533481405265-e9ce0c044abb?w=800&q=80",
     isNew: false,
     isOffer: false
   },
@@ -80,7 +80,7 @@ export const featuredProducts = [
     sku: "LEN-004",
     category: "Protección Visual",
     price: null,
-    image: "/images/products/safety_glasses_clear_radians.png",
+    image: "https://images.unsplash.com/photo-1563207038-f86eeff0ebd9?w=800&q=80",
     isNew: true,
     isOffer: false
   },
@@ -90,7 +90,7 @@ export const featuredProducts = [
     sku: "RES-005",
     category: "Protección Respiratoria",
     price: 85.00,
-    image: "/images/products/respirator_mask_3m_industrial.png",
+    image: "https://images.unsplash.com/photo-1616423640778-28d1b53229bd?w=800&q=80",
     isNew: false,
     isOffer: true
   },
@@ -100,7 +100,7 @@ export const featuredProducts = [
     sku: "CAL-006",
     category: "Calzado",
     price: 65.00,
-    image: "/images/products/safety_boots_dielectric.png",
+    image: "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=800&q=80",
     isNew: false,
     isOffer: false
   },

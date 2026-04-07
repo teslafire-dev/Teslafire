@@ -7,9 +7,10 @@ interface ProductModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  editProduct?: any | null;
 }
 
-export default function ProductModal({ isOpen, onClose, onSuccess }: ProductModalProps) {
+export default function ProductModal({ isOpen, onClose, onSuccess, editProduct }: ProductModalProps) {
   const [loading, setLoading] = useState(false);
   const [categorias, setCategorias] = useState<any[]>([]);
   const [marcas, setMarcas] = useState<any[]>([]);
@@ -17,19 +18,39 @@ export default function ProductModal({ isOpen, onClose, onSuccess }: ProductModa
   const [formData, setFormData] = useState({
     sku: "",
     nombre: "",
+    nombre_en: "",
     categoria_id: "",
     nueva_categoria: "",
     marca_id: "",
     nueva_marca: "",
     precio: "",
-    stock: ""
+    stock: "",
+    descripcion: "",
+    descripcion_en: ""
   });
 
   useEffect(() => {
     if (isOpen) {
+      if (editProduct) {
+        setFormData({
+          sku: editProduct.sku || "",
+          nombre: editProduct.nombre || "",
+          nombre_en: editProduct.nombre_en || "",
+          categoria_id: editProduct.categoria_id || "",
+          nueva_categoria: "",
+          marca_id: editProduct.marca_id || "",
+          nueva_marca: "",
+          precio: editProduct.precio || "",
+          stock: editProduct.stock || "",
+          descripcion: editProduct.descripcion || "",
+          descripcion_en: editProduct.descripcion_en || ""
+        });
+      } else {
+        setFormData({ sku: "", nombre: "", nombre_en: "", categoria_id: "", nueva_categoria: "", marca_id: "", nueva_marca: "", precio: "", stock: "", descripcion: "", descripcion_en: "" });
+      }
       fetchRelations();
     }
-  }, [isOpen]);
+  }, [isOpen, editProduct]);
 
   const fetchRelations = async () => {
     try {
@@ -75,28 +96,39 @@ export default function ProductModal({ isOpen, onClose, onSuccess }: ProductModa
         finalMarcaId = newMarca.id;
       }
 
-      // Finally insert Product
-      const { error } = await supabase.from("productos").insert([{
+      const productPayload = {
         sku: formData.sku,
         nombre: formData.nombre,
+        nombre_en: formData.nombre_en,
         categoria_id: finalCatId || null,
         marca_id: finalMarcaId || null,
-        tipo_precio: "fijo",
         precio: parseFloat(formData.precio) || 0,
         stock: parseInt(formData.stock) || 0,
-        estado: "activo",
-        destacado: false
-      }]);
+        descripcion: formData.descripcion,
+        descripcion_en: formData.descripcion_en,
+        updated_at: new Date().toISOString()
+      };
 
-      if (error) throw error;
+      if (editProduct) {
+        const { error } = await supabase.from("productos").update(productPayload).eq('id', editProduct.id);
+        if (error) throw error;
+        toast.success("SKU actualizado correctamente");
+      } else {
+        const { error } = await supabase.from("productos").insert([{
+          ...productPayload,
+          tipo_precio: "fijo",
+          estado: "activo",
+          destacado: false
+        }]);
+        if (error) throw error;
+        toast.success("SKU registrado correctamente");
+      }
       
-      toast.success("SKU registrado correctamente");
-      setFormData({ sku: "", nombre: "", categoria_id: "", nueva_categoria: "", marca_id: "", nueva_marca: "", precio: "", stock: "" });
       onSuccess();
       onClose();
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || "Error al crear el producto");
+      toast.error(err.message || "Error al procesar el producto");
     } finally {
       setLoading(false);
     }
@@ -113,17 +145,29 @@ export default function ProductModal({ isOpen, onClose, onSuccess }: ProductModa
               <Package className="w-6 h-6 text-accent" />
             </div>
             <div className="flex flex-col">
-              <h3 className="text-2xl font-black font-outfit uppercase tracking-tighter text-primary-950">Nuevo SKU</h3>
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Añadir al Catálogo</span>
+              <h3 className="text-2xl font-black font-outfit uppercase tracking-tighter text-primary-950">{editProduct ? 'Editar SKU' : 'Nuevo SKU'}</h3>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{editProduct ? 'Modificar Catálogo' : 'Añadir al Catálogo'}</span>
             </div>
           </div>
-          <button onClick={onClose} className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-smooth">
+          <button type="button" onClick={onClose} className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-smooth">
             <X className="w-6 h-6" />
           </button>
         </div>
 
         {/* Body */}
         <form onSubmit={handleSubmit} className="p-10 flex flex-col gap-8">
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Nombre (Español)</label>
+              <input required type="text" value={formData.nombre} onChange={e => setFormData({...formData, nombre: e.target.value})} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-accent outline-none" placeholder="Descripción en español" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] font-black text-accent uppercase tracking-widest pl-2">Nombre (Inglés)</label>
+              <input type="text" value={formData.nombre_en} onChange={e => setFormData({...formData, nombre_en: e.target.value})} className="bg-accent/5 border border-accent/10 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-accent outline-none" placeholder="Product name in English" />
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-6">
             <div className="flex flex-col gap-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">SKU Localizador</label>
@@ -145,32 +189,33 @@ export default function ProductModal({ isOpen, onClose, onSuccess }: ProductModa
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Nombre Técnico</label>
-            <input required type="text" value={formData.nombre} onChange={e => setFormData({...formData, nombre: e.target.value})} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-accent outline-none" placeholder="Descripción completa del producto" />
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Información Técnica (Español)</label>
+            <textarea value={formData.descripcion} onChange={e => setFormData({...formData, descripcion: e.target.value})} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-accent outline-none min-h-[100px] resize-none" placeholder="Características detalladas, certificaciones..." />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Fabricante / Marca</label>
-            <select value={formData.marca_id} onChange={e => setFormData({...formData, marca_id: e.target.value})} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-accent outline-none">
-              <option value="">(Sin Marca)</option>
-              {marcas.map(m => (
-                <option key={m.id} value={m.id}>{m.nombre}</option>
-              ))}
-              <option value="new" className="font-black text-accent">+ Ingresar Nueva Marca</option>
-            </select>
-            {formData.marca_id === "new" && (
-              <input required type="text" value={formData.nueva_marca} onChange={e => setFormData({...formData, nueva_marca: e.target.value})} placeholder="Nombre del fabricante..." className="mt-2 bg-accent/5 border border-accent/20 text-accent rounded-2xl p-4 text-sm font-bold placeholder:text-accent/50 focus:ring-2 focus:ring-accent outline-none w-full" />
-            )}
+            <label className="text-[10px] font-black text-accent uppercase tracking-widest pl-2">Technical Info (English)</label>
+            <textarea value={formData.descripcion_en} onChange={e => setFormData({...formData, descripcion_en: e.target.value})} className="bg-accent/5 border border-accent/10 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-accent outline-none min-h-[100px] resize-none" placeholder="Detailed features, certifications in English..." />
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+             <div className="flex flex-col gap-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Fabricante</label>
+              <select value={formData.marca_id} onChange={e => setFormData({...formData, marca_id: e.target.value})} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-accent outline-none">
+                <option value="">(Sin Marca)</option>
+                {marcas.map(m => (
+                  <option key={m.id} value={m.id}>{m.nombre}</option>
+                ))}
+                <option value="new" className="font-black text-accent">+ Nueva Marca</option>
+              </select>
+            </div>
             <div className="flex flex-col gap-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Inversión (USD)</label>
               <input required type="number" step="0.01" value={formData.precio} onChange={e => setFormData({...formData, precio: e.target.value})} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-accent outline-none" placeholder="0.00" />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Stock Inicial</label>
-              <input required type="number" value={formData.stock} onChange={e => setFormData({...formData, stock: e.target.value})} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-accent outline-none" placeholder="Cantidad física" />
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Stock</label>
+              <input required type="number" value={formData.stock} onChange={e => setFormData({...formData, stock: e.target.value})} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-accent outline-none" placeholder="0" />
             </div>
           </div>
 
@@ -180,7 +225,7 @@ export default function ProductModal({ isOpen, onClose, onSuccess }: ProductModa
             </button>
             <button disabled={loading} type="submit" className="bg-primary-950 text-white px-10 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-accent transition-smooth shadow-xl flex items-center gap-3 disabled:opacity-50">
               {loading ? <Loader2 className="w-4 h-4 animate-spin text-accent" /> : <Package className="w-4 h-4 text-accent" />}
-              {loading ? "Registrando..." : "Registrar SKU"}
+              {loading ? "Procesando..." : (editProduct ? "Actualizar" : "Registrar")}
             </button>
           </div>
         </form>

@@ -34,6 +34,7 @@ export default function AdminProductos() {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [editProduct, setEditProduct] = useState<any | null>(null);
   const { canManageProducts, loading: authLoading } = useAuth();
   const { syncFromExcel, isSyncing, progress } = useSyncProducts();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -56,6 +57,19 @@ export default function AdminProductos() {
       console.error("Error fetching products:", err);
     } finally {
       setLoadingProducts(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("¿Estás seguro de que deseas eliminar este SKU de la base de datos?")) return;
+    try {
+      const { error } = await supabase.from('productos').delete().eq('id', id);
+      if (error) throw error;
+      toast.success("SKU eliminado correctamente");
+      fetchProducts();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Error al eliminar SKU");
     }
   };
 
@@ -172,7 +186,7 @@ export default function AdminProductos() {
             <Tags className="w-4 h-4 text-accent" /> Categorías
           </button>
           <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => { setEditProduct(null); setIsModalOpen(true); }}
             className="bg-primary-950 text-white font-black uppercase text-[10px] tracking-widest px-8 py-3 rounded-2xl hover:bg-black transition-smooth shadow-2xl shadow-primary-950/20 active:scale-95 flex items-center gap-3"
           >
             <Plus className="w-4 h-4 text-accent" /> Nuevo SKU
@@ -247,7 +261,7 @@ export default function AdminProductos() {
                   <td className="px-10 py-6">
                     <div className="flex items-center gap-6">
                        <div className="w-14 h-14 bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 p-2 group-hover:rotate-3 group-hover:scale-110 transition-smooth shadow-inner shrink-0">
-                          <img src={prod.imagen_url || '/placeholder-product.png'} alt={prod.nombre} className="w-full h-full object-contain" />
+                          <img src={(prod.imagenes_urls && prod.imagenes_urls[0]) || '/placeholder-product.png'} alt={prod.nombre} className="w-full h-full object-contain" />
                        </div>
                        <div className="flex flex-col">
                           <span className="text-sm font-black text-primary-950 group-hover:text-accent transition-smooth line-clamp-1 uppercase tracking-tight">{prod.nombre}</span>
@@ -285,13 +299,13 @@ export default function AdminProductos() {
                   </td>
                   <td className="px-10 py-6 text-right">
                     <div className="flex items-center justify-end gap-3">
-                       <button className="p-3 text-slate-300 hover:text-accent transition-smooth bg-slate-50 rounded-xl active:scale-90 border border-transparent hover:border-slate-200">
+                       <Link to={`/productos/${prod.id}`} target="_blank" className="p-3 text-slate-300 hover:text-accent transition-smooth bg-slate-50 rounded-xl active:scale-90 border border-transparent hover:border-slate-200">
                           <Eye className="w-5 h-5" />
-                       </button>
-                       <button className="p-3 text-slate-300 hover:text-blue-600 transition-smooth bg-slate-50 rounded-xl active:scale-90 border border-transparent hover:border-slate-200">
+                       </Link>
+                       <button onClick={() => { setEditProduct(prod); setIsModalOpen(true); }} className="p-3 text-slate-300 hover:text-blue-600 transition-smooth bg-slate-50 rounded-xl active:scale-90 border border-transparent hover:border-slate-200">
                           <Edit3 className="w-5 h-5" />
                        </button>
-                       <button className="p-3 text-slate-300 hover:text-red-500 transition-smooth bg-slate-50 rounded-xl active:scale-90 border border-transparent hover:border-slate-200">
+                       <button onClick={() => handleDelete(prod.id)} className="p-3 text-slate-300 hover:text-red-500 transition-smooth bg-slate-50 rounded-xl active:scale-90 border border-transparent hover:border-slate-200">
                           <Trash2 className="w-5 h-5" />
                        </button>
                     </div>
@@ -347,8 +361,9 @@ export default function AdminProductos() {
       {/* Product Creation Modal */}
       <ProductModal 
         isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+        onClose={() => { setIsModalOpen(false); setEditProduct(null); }} 
         onSuccess={fetchProducts} 
+        editProduct={editProduct}
       />
       {/* Category Manager Modal */}
       <CategoryManagerModal

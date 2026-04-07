@@ -21,9 +21,21 @@ import { motion, AnimatePresence } from "framer-motion";
 export default function AdminLayout() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { role, isAdmin, user, canManageProducts, canManageUsers, canManageSettings, canManageOrders } = useAuth();
+  const { 
+    role, 
+    isAdmin, 
+    user, 
+    canManageProducts, 
+    canManageUsers, 
+    canManageSettings, 
+    canManageOrders,
+    nombre_completo 
+  } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  const displayName = nombre_completo || user?.email?.split('@')[0] || 'Usuario';
+  const displayRole = role === 'invitado' ? 'Staff' : role;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -82,7 +94,7 @@ export default function AdminLayout() {
             <span className="text-white font-black leading-none text-2xl font-outfit uppercase tracking-tighter uppercase group-hover:text-accent transition-smooth">Dobell</span>
             <div className="flex items-center gap-2 mt-1">
                <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest ${isAdmin ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'bg-slate-800 text-slate-400'}`}>
-                 {role}
+                 {displayRole}
                </span>
             </div>
           </div>
@@ -133,7 +145,7 @@ export default function AdminLayout() {
         <header className="h-24 bg-white/70 border-b border-slate-100 px-12 flex items-center justify-between sticky top-0 z-40 backdrop-blur-xl">
           <div className="flex flex-col">
              <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Panel de Control</span>
-             <h2 className="text-xl font-black text-primary-950 uppercase tracking-tighter">Bienvenido, {user?.email?.split('@')[0]}</h2>
+             <h2 className="text-xl font-black text-primary-950 uppercase tracking-tighter">Bienvenido, {displayName}</h2>
           </div>
 
           <div className="flex items-center gap-8">
@@ -150,10 +162,10 @@ export default function AdminLayout() {
               >
                 <div className="flex flex-col items-end hidden md:flex">
                   <span className="text-sm font-black text-primary-950 uppercase tracking-tighter leading-none group-hover:text-accent transition-smooth">
-                    {user?.email?.split('@')[0]}
+                    {displayName}
                   </span>
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">
-                    {role} • {isAdmin ? 'Nivel 1' : 'Staff'}
+                    {displayRole} • {isAdmin ? 'Nivel 1' : 'Staff'}
                   </span>
                 </div>
                 <div className="w-12 h-12 bg-primary-950 rounded-2xl flex items-center justify-center shadow-2xl group-hover:bg-accent transition-smooth relative">

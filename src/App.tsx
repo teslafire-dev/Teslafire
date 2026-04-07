@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import Home from './pages/Home';
 import Productos from './pages/Productos';
 import ProductDetail from './pages/ProductDetail';
@@ -15,48 +16,66 @@ import AdminLayout from './components/admin/AdminLayout';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import Nosotros from './pages/Nosotros';
+import Soluciones from './pages/Soluciones';
+import Perfil from './pages/perfil/Perfil';
+import Historial from './pages/perfil/Historial';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
+import { TranslationProvider } from './contexts/TranslationContext';
 import ProtectedRoute from './components/admin/ProtectedRoute';
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <div className="flex flex-col min-h-screen">
-          <Routes>
-            {/* Public Context (with Header/Footer) */}
-            <Route element={<><Header /><main className="flex-grow"><NavigationWrapper /></main><Footer /></>}>
-              <Route path="/" element={<Home />} />
-              <Route path="/productos" element={<Productos />} />
-              <Route path="/productos/:id" element={<ProductDetail />} />
-              <Route path="/carrito" element={<Carrito />} />
-              <Route path="/reservar" element={<Reservar />} />
-              <Route path="/nosotros" element={<Nosotros />} />
-              <Route path="/gracias/:localizador" element={<Gracias />} />
-            </Route>
-
-            {/* Admin Context (Login) */}
-            <Route path="/admin/login" element={<Login />} />
-
-            {/* Admin Protected Pages (with Sidebar) */}
-            <Route element={<ProtectedRoute />}>
-              <Route element={<AdminLayout />}>
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/admin/productos" element={<AdminProductos />} />
-                <Route path="/admin/ordenes" element={<AdminOrdenes />} />
-                <Route path="/admin/usuarios" element={<AdminUsuarios />} />
-                <Route path="/admin/configuracion" element={<AdminConfiguracion />} />
+    <TranslationProvider>
+      <AuthProvider>
+        <Router>
+          <ScrollToTop />
+          <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-500">
+            <Routes>
+              {/* Public Context (with Header/Footer) */}
+              <Route element={<><Header /><main className="flex-grow"><NavigationWrapper /></main><Footer /></>}>
+                <Route path="/" element={<Home />} />
+                <Route path="/productos" element={<Productos />} />
+                <Route path="/productos/:id" element={<ProductDetail />} />
+                <Route path="/carrito" element={<Carrito />} />
+                <Route path="/reservar" element={<Reservar />} />
+                <Route path="/nosotros" element={<Nosotros />} />
+                <Route path="/soluciones" element={<Soluciones />} />
+                <Route path="/gracias/:localizador" element={<Gracias />} />
+                <Route path="/perfil" element={<Perfil />} />
+                <Route path="/perfil/historial" element={<Historial />} />
               </Route>
-            </Route>
 
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-          <Toaster position="top-right" />
-        </div>
-      </Router>
-    </AuthProvider>
+              {/* Admin Context (Login) */}
+              <Route path="/admin/login" element={<Login />} />
+
+              {/* Admin Protected Pages (with Sidebar) */}
+              <Route element={<ProtectedRoute />}>
+                <Route element={<AdminLayout />}>
+                  <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/admin/productos" element={<AdminProductos />} />
+                  <Route path="/admin/ordenes" element={<AdminOrdenes />} />
+                  <Route path="/admin/usuarios" element={<AdminUsuarios />} />
+                  <Route path="/admin/configuracion" element={<AdminConfiguracion />} />
+                </Route>
+              </Route>
+
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+            <Toaster position="bottom-right" />
+          </div>
+        </Router>
+      </AuthProvider>
+    </TranslationProvider>
   );
 }
 

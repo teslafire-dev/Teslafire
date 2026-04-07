@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 
 export default function ProtectedRoute() {
-  const { user, loading } = useAuth();
+  const { user, loading, role } = useAuth();
   const location = useLocation();
 
   // Mientras se verifica la sesión inicial, mostramos un estado de carga premium
@@ -32,6 +32,11 @@ export default function ProtectedRoute() {
     return <Navigate to="/admin/login" state={{ from: location }} replace />;
   }
 
-  // Si hay usuario, permitimos el acceso a las rutas hijas
+  // Si es un invitado (cliente normal), prohibimos la entrada al admin y redirigimos a su perfil
+  if (role === 'invitado') {
+    return <Navigate to="/perfil" replace />;
+  }
+
+  // Si hay usuario con rol admin/editor, permitimos el acceso a las rutas hijas
   return <Outlet />;
 }

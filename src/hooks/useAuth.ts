@@ -14,6 +14,11 @@ export function useAuth() {
     canManageUsers: context.canManageUsers,
     canManageSettings: context.canManageSettings,
     canManageOrders: context.canManageOrders,
-    refreshProfile: context.refreshProfile
+    nombre_completo: context.nombre_completo,
+    apellido: context.apellido,
+    telefono: context.telefono,
+    refreshProfile: context.refreshProfile,
+    updateProfile: context.updateProfile,
+    updateCredentials: context.updateCredentials
   };
 }

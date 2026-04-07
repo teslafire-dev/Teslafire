@@ -1,26 +1,60 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import ProductCard from "@/components/productos/ProductCard";
 import ProductFilters from "@/components/productos/ProductFilters";
 import { Grid, List, ChevronDown, SlidersHorizontal, Loader2, Package } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { useState, useEffect } from "react";
+import { useTranslation } from "@/contexts/TranslationContext";
 
 export default function Productos() {
+  const { t, lang } = useTranslation();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState("newest");
+  const [searchParams] = useSearchParams();
+
+  const currentCategory = searchParams.get("categoria");
+  const currentBrand = searchParams.get("marca");
+  const minPrice = searchParams.get("min_precio");
+  const maxPrice = searchParams.get("max_precio");
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [currentCategory, currentBrand, minPrice, maxPrice, sortBy]);
 
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('productos')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
+        .select('*, categorias(nombre), marcas(nombre)');
+
+      if (currentCategory) {
+        const { data: catData } = await supabase
+          .from('categorias')
+          .select('id')
+          .eq('slug', currentCategory)
+          .single();
+        if (catData) query = query.eq('categoria_id', catData.id);
+      }
+
+      if (currentBrand) {
+        const { data: brandData } = await supabase
+          .from('marcas')
+          .select('id')
+          .eq('nombre', currentBrand)
+          .single();
+        if (brandData) query = query.eq('marca_id', brandData.id);
+      }
+
+      if (minPrice) query = query.gte('precio', parseFloat(minPrice));
+      if (maxPrice) query = query.lte('precio', parseFloat(maxPrice));
+
+      if (sortBy === "price_asc") query = query.order('precio', { ascending: true });
+      else if (sortBy === "price_desc") query = query.order('precio', { ascending: false });
+      else query = query.order('created_at', { ascending: false });
+
+      const { data, error } = await query;
       if (error) throw error;
       setProducts(data || []);
     } catch (err) {
@@ -29,97 +63,98 @@ export default function Productos() {
       setLoading(false);
     }
   };
-  return (
-    <div className="bg-slate-50 min-h-screen py-12">
-      <div className="container mx-auto px-6">
-        {/* Breadcrumbs */}
-        <div className="flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-[.2em] mb-12">
-          <Link to="/" className="hover:text-accent transition-smooth">Home</Link>
-          <span className="text-slate-300">/</span>
-          <span className="text-primary-950 font-black">Catálogo</span>
-        </div>
 
+  return (
+    <div className="bg-slate-50 min-h-screen pt-40 pb-40">
+      <div className="container mx-auto px-6">
         <div className="flex flex-col lg:flex-row gap-12">
           {/* Filters Sidebar */}
-          <div className="w-full lg:w-72 shrink-0">
+          <div className="hidden lg:block lg:w-72 shrink-0">
             <ProductFilters />
           </div>
 
           {/* Main Content */}
           <div className="flex-1 flex flex-col gap-10">
-            {/* Header & Controls */}
-            <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
-              <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-black text-primary-950 uppercase tracking-tighter leading-none">Catálogo de Productos</h1>
+            {/* Catalog Header */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+              <div className="flex flex-col gap-3">
+                <h1 className="text-4xl md:text-6xl font-black font-outfit text-primary-950 uppercase tracking-tighter leading-none">
+                   {t('catalog.title').split(' ').map((word, i) => (
+                      word === 'Productos' || word === 'Products' 
+                      ? <span key={i} className="text-accent underline decoration-4 decoration-accent/20 underline-offset-8">{word}</span> 
+                      : word + ' '
+                   ))}
+                </h1>
                 <p className="text-slate-500 font-medium tracking-wide">
-                  {loading ? 'Cargando Catálogo...' : `Mostrando ${products.length} resultados profesionales.`}
+                   {t('catalog.showing_results').replace('{count}', products.length.toString())}
                 </p>
               </div>
-              <div className="flex items-center gap-4 w-full md:w-auto">
-                <div className="relative group w-full md:w-56 text-slate-600">
-                  <select className="appearance-none w-full bg-slate-50 border border-slate-100 rounded-xl px-5 py-3 pr-10 text-[10px] font-black uppercase tracking-widest focus:ring-2 focus:ring-accent outline-none transition-smooth cursor-pointer">
-                    <option>Ordenar por: Popularidad</option>
-                    <option>Precio: Menor a Mayor</option>
-                    <option>Precio: Mayor a Menor</option>
-                    <option>Novedades</option>
+
+              {/* Controls */}
+              <div className="flex items-center gap-4">
+                <div className="relative group">
+                  <select 
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="appearance-none bg-white border border-slate-200 rounded-2xl px-6 py-3.5 pr-12 text-xs font-black uppercase tracking-widest text-primary-950 outline-none focus:ring-2 focus:ring-accent transition-smooth shadow-sm cursor-pointer"
+                  >
+                    <option value="newest">{t('catalog.sort.newest')}</option>
+                    <option value="price_asc">{t('catalog.sort.price_asc')}</option>
+                    <option value="price_desc">{t('catalog.sort.price_desc')}</option>
+                    <option value="popularity">{t('catalog.sort.popularity')}</option>
                   </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-hover:text-accent pointer-events-none" />
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none group-hover:text-accent transition-smooth" />
                 </div>
-                <div className="flex border border-slate-100 rounded-xl overflow-hidden shrink-0 bg-slate-50 p-1">
-                  <button className="p-2.5 bg-primary-950 text-white rounded-lg shadow-lg"><Grid className="w-5 h-5" /></button>
-                  <button className="p-2.5 text-slate-400 hover:text-accent transition-smooth"><List className="w-5 h-5" /></button>
-                </div>
-                <button className="lg:hidden p-3 rounded-xl bg-white border border-slate-100 text-slate-600 flex items-center justify-center gap-3 font-black uppercase text-[10px] tracking-widest hover:border-accent transition-smooth w-full md:w-auto">
-                  <SlidersHorizontal className="w-4 h-4" /> Filtros
+                
+                <button className="lg:hidden flex items-center gap-3 px-6 py-3.5 bg-primary-950 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-primary-950/20 active:scale-95 transition-smooth">
+                  <SlidersHorizontal className="w-4 h-4" /> {t('catalog.filters')}
                 </button>
               </div>
             </div>
 
-             {/* Product Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-              {loading ? (
-                <div className="col-span-full py-20 flex flex-col items-center gap-4 text-slate-400">
-                   <Loader2 className="w-12 h-12 animate-spin text-accent" />
-                   <span className="text-[10px] font-black uppercase tracking-widest text-center">Sincronizando Inventario con Base de Datos</span>
-                </div>
-              ) : products.length === 0 ? (
-                <div className="col-span-full py-20 flex flex-col items-center gap-6 text-slate-400">
-                   <Package className="w-16 h-16 text-slate-200" />
-                   <div className="text-center">
-                    <h3 className="text-xl font-black text-primary-950 uppercase tracking-tighter">Sin Stock Disponible</h3>
-                    <p className="text-xs font-medium uppercase tracking-widest mt-2">Estamos actualizando nuestro catálogo técnico.</p>
-                   </div>
-                </div>
-              ) : (
-                products.map((prod) => (
+            {/* Product Grid */}
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-40 gap-6">
+                <Loader2 className="w-16 h-16 animate-spin text-accent" />
+                <span className="text-[10px] font-black uppercase tracking-[.4em] text-slate-400 animate-pulse">{t('catalog.loading')}</span>
+              </div>
+            ) : products.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-6">
+                {products.map((product) => (
                   <ProductCard 
-                    key={prod.id} 
-                    id={prod.id} 
-                    name={prod.nombre} 
-                    sku={prod.sku} 
-                    category={prod.categoria} 
-                    price={prod.precio} 
-                    image={prod.imagen_url || '/placeholder-product.png'} 
-                    isNew={prod.is_new} 
-                    isOffer={prod.is_offer} 
+                    key={product.id}
+                    id={product.id}
+                    name={(lang === 'EN' && product.nombre_en) ? product.nombre_en : product.nombre}
+                    sku={product.sku}
+                    category={(lang === 'EN' && product.categorias?.nombre_en) ? product.categorias?.nombre_en : (product.categorias?.nombre || 'General')}
+                    price={product.precio}
+                    image={(product.imagenes_urls && product.imagenes_urls[0]) || '/placeholder-product.png'}
+                    isNew={product.is_new}
+                    isOffer={product.is_offer}
                   />
-                ))
-              )}
-            </div>
-
-            {/* Pagination (Mock) */}
-            <div className="flex justify-center mt-12 mb-32">
-              <nav className="flex gap-3 bg-white p-2 rounded-2xl border border-slate-100 shadow-sm">
-                {[1, 2, 3, "...", 12].map((p, i) => (
-                  <button 
-                    key={i} 
-                    className={`w-11 h-11 rounded-xl flex items-center justify-center font-black text-xs transition-smooth ${p === 1 ? 'bg-primary-950 text-white shadow-xl shadow-primary-950/20' : 'text-slate-500 hover:bg-slate-50 hover:text-accent'}`}
-                  >
-                    {p}
-                  </button>
                 ))}
-              </nav>
-            </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-40 gap-8 bg-white rounded-[4rem] border border-slate-100 border-dashed">
+                <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center">
+                  <Package className="w-12 h-12 text-slate-200" />
+                </div>
+                <div className="text-center">
+                   <h3 className="text-2xl font-black text-primary-950 uppercase tracking-tighter mb-2">{t('catalog.no_products')}</h3>
+                   <p className="text-slate-500 font-medium tracking-wide">{t('catalog.no_products_desc')}</p>
+                </div>
+              </div>
+            )}
+
+            {/* End of results */}
+            {!loading && products.length > 0 && (
+              <div className="flex flex-col items-center gap-6 pt-20">
+                <div className="w-px h-20 bg-gradient-to-b from-slate-200 to-transparent"></div>
+                <span className="text-[10px] font-black uppercase tracking-[.6em] text-slate-300">
+                   {t('catalog.end')}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>
