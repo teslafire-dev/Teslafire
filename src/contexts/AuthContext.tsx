@@ -28,26 +28,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    // Safety timeout: forced end of loading after 5 seconds
-    const timeout = setTimeout(() => {
+    // Safety fallback: ensure loading is turned off after 6 seconds max
+    const forceStopLoading = setTimeout(() => {
       if (mounted) {
-        console.log("AuthContext: Tiempo de espera agotado. Forzando fin de carga.");
+        console.warn("AuthContext: Tiempo de espera de seguridad superado.");
         setLoading(false);
       }
-    }, 5000);
+    }, 6000);
 
     const initialize = async () => {
-      console.log("AuthContext: Iniciando fase de verificación...");
-      setLoading(true);
       try {
         const { data: { session } } = await supabase.auth.getSession();
         const currentUser = session?.user ?? null;
-        console.log("AuthContext: Sesión detectada:", currentUser?.email || "Ninguna");
         
         if (mounted) {
           setUser(currentUser);
           if (currentUser) {
-            console.log("AuthContext: Cargando perfil de usuario...");
             await fetchProfile(currentUser.id);
           }
         }
@@ -55,9 +51,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error("AuthContext: Error de inicialización:", error);
       } finally {
         if (mounted) {
-          console.log("AuthContext: Verificación completada.");
           setLoading(false);
-          clearTimeout(timeout);
+          clearTimeout(forceStopLoading);
         }
       }
     };
@@ -65,27 +60,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initialize();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("AuthContext: Evento de Auth:", event);
       const currentUser = session?.user ?? null;
       
       if (mounted) {
-        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
+        if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
           setUser(currentUser);
           if (currentUser) {
             await fetchProfile(currentUser.id);
-          } else {
-            setRole(null);
           }
-          // After auth change, also make sure loading is false
           setLoading(false);
-          clearTimeout(timeout);
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setRole(null);
+          setLoading(false);
         }
       }
     });
 
     return () => {
       mounted = false;
-      clearTimeout(timeout);
+      clearTimeout(forceStopLoading);
       subscription.unsubscribe();
     };
   }, []);

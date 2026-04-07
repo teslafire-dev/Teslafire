@@ -3,6 +3,8 @@ import { Search, ShoppingCart, User, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
 import LoginModal from "../admin/LoginModal";
+import { useAuth } from "@/hooks/useAuth";
+import toast from "react-hot-toast";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -11,6 +13,14 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const { user, isAdmin, role } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast.success("Sesión cerrada");
+    navigate("/");
+  };
 
   useEffect(() => {
     const controlNavbar = () => {
@@ -72,7 +82,14 @@ export default function Header() {
           <Link to="/productos" className="hover:text-accent transition-smooth">Productos</Link>
           <Link to="/soluciones" className="hover:text-accent transition-smooth">Soluciones</Link>
           <Link to="/nosotros" className="hover:text-accent transition-smooth">Nosotros</Link>
-          <Link to="/contacto" className="hover:text-accent transition-smooth">Contacto</Link>
+          {isAdmin && (
+            <Link 
+              to="/admin" 
+              className="text-primary-950 px-4 py-2 bg-accent/10 rounded-xl border border-accent/20 hover:bg-accent hover:text-white transition-smooth flex items-center gap-2"
+            >
+              Panel Admin
+            </Link>
+          )}
         </nav>
 
         {/* Search & Actions */}
@@ -94,12 +111,28 @@ export default function Header() {
               0
             </span>
           </Link>
-          <button 
-            onClick={() => setShowLoginModal(true)}
-            className="p-3 bg-slate-900 text-white rounded-2xl hover:bg-slate-800 transition-smooth shadow-lg active:scale-95"
-          >
-            <User className="w-6 h-6" />
-          </button>
+          {user ? (
+            <div className="flex items-center gap-3">
+              <div className="hidden lg:flex flex-col items-end mr-2">
+                <span className="text-[9px] font-black text-primary-950 uppercase tracking-tighter leading-none">{user.email?.split('@')[0]}</span>
+                <span className="text-[8px] font-black text-accent uppercase tracking-widest mt-1">{role}</span>
+              </div>
+              <button 
+                onClick={handleLogout}
+                className="p-3 bg-slate-100 text-slate-400 hover:text-destructive transition-smooth rounded-2xl shadow-inner active:scale-95"
+                title="Cerrar Sesión"
+              >
+                <User className="w-6 h-6" />
+              </button>
+            </div>
+          ) : (
+            <button 
+              onClick={() => setShowLoginModal(true)}
+              className="p-3 bg-slate-900 text-white rounded-2xl hover:bg-slate-800 transition-smooth shadow-lg active:scale-95"
+            >
+              <User className="w-6 h-6" />
+            </button>
+          )}
           <button 
             className="lg:hidden p-2 text-slate-600"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -117,6 +150,9 @@ export default function Header() {
             <Link to="/soluciones" onClick={() => setIsMenuOpen(false)}>Soluciones</Link>
             <Link to="/nosotros" onClick={() => setIsMenuOpen(false)}>Nosotros</Link>
             <Link to="/contacto" onClick={() => setIsMenuOpen(false)}>Contacto</Link>
+            {isAdmin && (
+              <Link to="/admin" className="text-accent" onClick={() => setIsMenuOpen(false)}>Panel Admin</Link>
+            )}
           </nav>
         </div>
       )}

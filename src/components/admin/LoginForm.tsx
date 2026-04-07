@@ -27,15 +27,20 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error, data } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        toast.success("¡Bienvenido de nuevo!");
+        
+        toast.success("¡Sesión iniciada!");
         if (onSuccess) onSuccess();
-        navigate("/admin");
+        
+        // Solo redirigir al panel si estamos en la página de login completa
+        if (window.location.pathname === '/admin/login') {
+          navigate("/admin");
+        }
       } else {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        toast.success("Cuenta creada. Ahora eres un 'Invitado'. Espera aprobación del Admin.");
+        toast.success("Cuenta creada. Ahora eres un 'Invitado'.");
         setIsLogin(true);
       }
     } catch (error: any) {
