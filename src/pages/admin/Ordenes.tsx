@@ -405,7 +405,9 @@ export default function AdminOrdenes() {
                   <button 
                     className="h-14 px-8 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 hover:bg-black active:scale-95"
                     onClick={() => {
-                        toast.info("Función de impresión todavía en desarrollo");
+                        toast("Función de impresión todavía en desarrollo", {
+                            icon: '🖨️',
+                        });
                     }}
                   >
                     <DownloadIcon className="w-4 h-4" /> Imprimir Comprobante
