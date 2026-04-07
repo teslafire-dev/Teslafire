@@ -3,7 +3,6 @@ import {
   CheckCircle2, 
   Download, 
   MessageCircle, 
-  Home, 
   ArrowRight, 
   Phone, 
   MapPin,
