@@ -52,10 +52,10 @@ export default function ProductDetail() {
   ];
 
   return (
-    <div className="bg-white min-h-screen py-16">
+    <div className="bg-white min-h-screen py-8">
       <div className="container mx-auto px-6">
         {/* Breadcrumbs */}
-        <div className="flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-[.2em] mb-16">
+        <div className="flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-[.2em] mb-8">
           <Link to="/" className="hover:text-accent transition-smooth">Home</Link>
           <ChevronRight className="w-3 h-3" />
           <Link to="/productos" className="hover:text-accent transition-smooth">Catálogo</Link>
@@ -63,11 +63,11 @@ export default function ProductDetail() {
           <span className="text-primary-950 font-black">{product.name}</span>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-24">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Gallery Side */}
-          <div className="flex flex-col gap-8">
-            <div className="relative aspect-square rounded-[3rem] overflow-hidden bg-slate-50 border border-slate-100 group shadow-inner">
-              <img src={selectedImage} alt={product.name} className="w-full h-full object-contain p-12 transition-smooth group-hover:scale-105" />
+          <div className="flex flex-col gap-6">
+            <div className="relative aspect-square max-h-[500px] rounded-[3rem] overflow-hidden bg-slate-50 border border-slate-100 group shadow-inner">
+              <img src={selectedImage} alt={product.name} className="w-full h-full object-contain p-8 transition-smooth group-hover:scale-105" />
               <button className="absolute top-6 right-6 p-4 bg-white/80 backdrop-blur-md rounded-2xl text-slate-600 hover:text-accent transition-smooth shadow-xl">
                 <Share2 className="w-5 h-5" />
               </button>
@@ -86,7 +86,7 @@ export default function ProductDetail() {
           </div>
 
           {/* Info Side */}
-          <div className="flex flex-col gap-10">
+          <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -96,24 +96,24 @@ export default function ProductDetail() {
                   <span className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">SKU: {product.sku}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  {[1,2,3,4,5].map(s => <Star key={s} className="w-3.5 h-3.5 fill-accent text-accent" />)}
-                  <span className="text-[10px] text-slate-400 font-black ml-1 uppercase tracking-widest">4.9 (124 reviews)</span>
+                  {[1,2,3,4,5].map(s => <Star key={s} className="w-3 h-3 fill-accent text-accent" />)}
+                  <span className="text-[10px] text-slate-400 font-black ml-1 uppercase tracking-widest leading-none">4.9 (124 reviews)</span>
                 </div>
               </div>
               
-              <h1 className="text-5xl md:text-7xl font-black text-primary-950 uppercase tracking-tighter leading-[0.95]">
+              <h1 className="text-3xl md:text-5xl font-black text-primary-950 uppercase tracking-tighter leading-[0.95]">
                 {product.name}
               </h1>
 
-              <div className="flex items-center gap-6 py-8 border-y border-slate-100">
+              <div className="flex items-center gap-6 py-4 border-y border-slate-100">
                 <div className="flex flex-col">
                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Precio Unitario</span>
-                   <span className="text-5xl font-black text-primary-950 font-outfit tracking-tighter leading-none">
+                   <span className="text-4xl font-black text-primary-950 font-outfit tracking-tighter leading-none">
                      {product.price ? `$${product.price.toFixed(2)}` : "A Cotizar"}
                    </span>
                 </div>
                 {product.price && (
-                  <span className="text-slate-300 line-through text-2xl font-bold mt-4">${(product.price * 1.2).toFixed(2)}</span>
+                  <span className="text-slate-300 line-through text-xl font-bold mt-2">${(product.price * 1.2).toFixed(2)}</span>
                 )}
                 <div className="ml-auto">
                    <div className="flex items-center gap-2 text-green-600 text-[10px] font-black px-4 py-2 bg-green-50 rounded-xl uppercase tracking-widest border border-green-100">
@@ -124,12 +124,12 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            <p className="text-lg text-slate-500 leading-relaxed font-medium">
+            <p className="text-base text-slate-500 leading-relaxed font-medium">
               Este equipo de protección personal ofrece la máxima seguridad y durabilidad en entornos industriales exigentes.
             </p>
 
             {/* Actions Area */}
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4">
               <div className="flex items-center gap-6">
                 <div className="flex items-center bg-slate-50 rounded-2xl overflow-hidden h-16 border border-slate-100 shrink-0">
                   <button 
