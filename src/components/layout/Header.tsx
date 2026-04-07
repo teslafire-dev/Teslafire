@@ -1,9 +1,10 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Search, ShoppingCart, User, Menu, X } from "lucide-react";
+import { Search, ShoppingCart, User, Menu, X, LogOut } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase/client";
 import LoginModal from "../admin/LoginModal";
 import { useAuth } from "@/hooks/useAuth";
+import { useCartStore } from "@/lib/store/cartStore";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -18,12 +19,34 @@ export default function Header() {
   const navigate = useNavigate();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const cartItems = useCartStore((state) => state.items);
+  const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   const handleLogout = async () => {
-    setIsUserMenuOpen(false);
-    await supabase.auth.signOut();
-    toast.success("Sesión cerrada");
-    navigate("/");
+    try {
+      setIsUserMenuOpen(false);
+      
+      // Competimos el cierre de sesión contra un timeout de 2s
+      const signOutPromise = supabase.auth.signOut();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Timeout logout")), 2000)
+      );
+
+      await Promise.race([signOutPromise, timeoutPromise]);
+      toast.success("Sesión cerrada");
+    } catch (error: any) {
+      console.error("Header: Error al cerrar sesión (o timeout):", error);
+      // Limpieza manual total por si acaso
+      localStorage.clear();
+      // Eliminar cookies de supabase si existen
+      document.cookie.split(";").forEach((c) => {
+        document.cookie = c
+          .replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+    } finally {
+      window.location.href = "/";
+    }
   };
 
   useEffect(() => {
@@ -119,12 +142,35 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-4">
-          <Link to="/carrito" className="relative p-3 bg-slate-100 rounded-2xl text-slate-600 hover:bg-accent hover:text-white transition-smooth shadow-inner">
-            <ShoppingCart className="w-6 h-6" />
-            <span className="absolute -top-1 -right-1 bg-destructive text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-md">
-              0
-            </span>
-          </Link>
+          <motion.div
+            key={totalItems}
+            initial={totalItems > 0 ? { scale: 1.2 } : {}}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 500, damping: 15 }}
+          >
+            <Link 
+              to="/carrito" 
+              className={`relative p-3 rounded-2xl transition-smooth shadow-inner border border-transparent ${
+                totalItems > 0 
+                  ? 'bg-accent text-white shadow-accent/20 border-accent/20' 
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              <ShoppingCart className="w-6 h-6" />
+              <AnimatePresence>
+                {totalItems > 0 && (
+                  <motion.span 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                    className="absolute -top-1 -right-1 bg-destructive text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-md"
+                  >
+                    {totalItems}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </Link>
+          </motion.div>
           {user ? (
             <div className="flex items-center gap-3 relative" ref={userMenuRef}>
               <div className="hidden lg:flex flex-col items-end mr-2">
@@ -168,9 +214,9 @@ export default function Header() {
 
                       <button 
                         onClick={handleLogout}
-                        className="flex items-center gap-3 px-4 py-3 text-[10px] font-black text-destructive hover:bg-destructive/10 rounded-2xl transition-smooth uppercase tracking-widest text-left"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-slate-500 hover:bg-destructive/5 hover:text-destructive transition-smooth rounded-xl"
                       >
-                        <X className="w-4 h-4" />
+                        <LogOut className="w-4 h-4" />
                         Cerrar Sesión
                       </button>
                     </div>

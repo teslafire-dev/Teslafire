@@ -10,12 +10,14 @@ import { useState } from "react";
 import ProductCard from "@/components/productos/ProductCard";
 import { useCartStore } from "@/lib/store/cartStore";
 import toast from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function ProductDetail() {
   const { id } = useParams();
   const product = featuredProducts.find((p) => p.id === id) || featuredProducts[0];
   const [selectedImage, setSelectedImage] = useState(product.image);
   const [quantity, setQuantity] = useState(1);
+  const [isAdded, setIsAdded] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
 
   const handleAddToCart = () => {
@@ -27,6 +29,7 @@ export default function ProductDetail() {
       image: product.image
     }, quantity);
 
+    setIsAdded(true);
     toast.success(`${quantity} ${quantity > 1 ? 'unidades añadidas' : 'unidad añadida'} al carrito`, {
       style: {
         borderRadius: '1rem',
@@ -144,11 +147,28 @@ export default function ProductDetail() {
                 </div>
                 <button 
                   onClick={handleAddToCart}
-                  className="flex-1 bg-primary-950 hover:bg-accent text-white font-black h-16 rounded-2xl flex items-center justify-center gap-4 transition-smooth shadow-2xl shadow-primary-950/20 active:scale-95 uppercase text-xs tracking-widest"
+                  className="flex-1 bg-primary-950 hover:bg-primary-900 text-white font-black h-16 rounded-2xl flex items-center justify-center gap-4 transition-smooth shadow-2xl shadow-primary-950/20 active:scale-95 uppercase text-xs tracking-widest"
                 >
                   <ShoppingCart className="w-5 h-5" /> Agregar al Carrito
                 </button>
               </div>
+
+              <AnimatePresence>
+                {isAdded && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="w-full"
+                  >
+                    <Link 
+                      to="/carrito"
+                      className="w-full bg-accent hover:bg-orange-600 text-white font-black h-16 rounded-2xl flex items-center justify-center gap-4 transition-smooth shadow-2xl shadow-accent/30 uppercase text-xs tracking-widest"
+                    >
+                      Ir al Carrito <ChevronRight className="w-5 h-5" />
+                    </Link>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </div>

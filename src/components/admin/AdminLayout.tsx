@@ -8,7 +8,8 @@ import {
   Bell,
   User,
   Users,
-  ShieldAlert
+  ShieldAlert,
+  ExternalLink
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase/client";
@@ -18,19 +19,38 @@ import { useEffect } from "react";
 export default function AdminLayout() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { role, isAdmin, user } = useAuth();
+  const { role, isAdmin, user, canManageProducts, canManageUsers, canManageSettings } = useAuth();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    toast.success("Sesión cerrada");
-    navigate("/admin/login");
+    try {
+      // Competimos el cierre de sesión contra un timeout de 2s
+      const signOutPromise = supabase.auth.signOut();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Timeout logout")), 2000)
+      );
+
+      await Promise.race([signOutPromise, timeoutPromise]);
+      toast.success("Sesión cerrada");
+    } catch (error: any) {
+      console.error("AdminLayout: Error al cerrar sesión (o timeout):", error);
+      // Limpieza manual total por si acaso
+      localStorage.clear();
+      // Eliminar cookies de supabase si existen
+      document.cookie.split(";").forEach((c) => {
+        document.cookie = c
+          .replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+    } finally {
+      window.location.href = "/admin/login";
+    }
   };
 
   const menuItems = [
-    { name: "Dashboard", icon: LayoutDashboard, href: "/admin", roles: ["admin", "editor", "invitado"] },
-    { name: "Productos", icon: Package, href: "/admin/productos", roles: ["admin", "editor", "invitado"] },
-    { name: "Usuarios", icon: Users, href: "/admin/usuarios", roles: ["admin"] },
-    { name: "Configuración", icon: Settings, href: "/admin/configuracion", roles: ["admin"] },
+    { name: "Dashboard", icon: LayoutDashboard, href: "/admin", permission: true },
+    { name: "Productos", icon: Package, href: "/admin/productos", permission: canManageProducts },
+    { name: "Usuarios", icon: Users, href: "/admin/usuarios", permission: canManageUsers },
+    { name: "Configuración", icon: Settings, href: "/admin/configuracion", permission: canManageSettings },
   ];
 
   return (
@@ -39,23 +59,23 @@ export default function AdminLayout() {
       <aside className="w-80 bg-primary-950 text-slate-400 flex flex-col fixed inset-y-0 z-50 shadow-2xl overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
         
-        <div className="p-10 pb-16 flex items-center gap-4 relative z-10">
-          <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-2xl">
+        <Link to="/" className="p-10 pb-16 flex items-center gap-4 relative z-10 group">
+          <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-2xl group-hover:scale-110 transition-smooth">
             <span className="text-primary-950 font-black text-2xl font-outfit">D</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-white font-black leading-none text-2xl font-outfit tracking-tighter uppercase">Dobell</span>
+            <span className="text-white font-black leading-none text-2xl font-outfit uppercase tracking-tighter uppercase group-hover:text-accent transition-smooth">Dobell</span>
             <div className="flex items-center gap-2 mt-1">
                <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest ${isAdmin ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'bg-slate-800 text-slate-400'}`}>
                  {role}
                </span>
             </div>
           </div>
-        </div>
+        </Link>
 
         <nav className="flex-1 flex flex-col gap-3 px-8 relative z-10">
           {menuItems.map((item) => {
-            if (role && !item.roles.includes(role)) return null;
+            if (!item.permission) return null;
             const isActive = pathname === item.href;
             return (
               <Link 
@@ -93,7 +113,7 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 ml-80 flex flex-col min-h-screen">
+      <main className="flex-1 ml-80 flex flex-col min-h-screen min-w-0">
         {/* Top Header */}
         <header className="h-24 bg-white/70 border-b border-slate-100 px-12 flex items-center justify-between sticky top-0 z-40 backdrop-blur-xl">
           <div className="flex flex-col">
@@ -108,6 +128,14 @@ export default function AdminLayout() {
             </button>
             <div className="h-10 w-[1px] bg-slate-100"></div>
             <div className="flex items-center gap-5 group cursor-pointer">
+              <Link 
+                to="/" 
+                className="flex items-center gap-2 px-6 py-2.5 bg-accent/10 hover:bg-accent text-accent hover:text-white rounded-xl transition-smooth text-[10px] font-black uppercase tracking-widest border border-accent/20 shadow-sm"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Ver Tienda
+              </Link>
+              <div className="h-10 w-[1px] bg-slate-100 ml-4"></div>
               <div className="flex flex-col items-end">
                 <span className="text-sm font-black text-primary-950 uppercase tracking-tighter leading-none">Dobell Staff</span>
                 <span className="text-[9px] font-black text-accent uppercase tracking-widest mt-1">{role}</span>
@@ -120,7 +148,7 @@ export default function AdminLayout() {
         </header>
 
         {/* Content Area */}
-        <div className="p-12 animate-in fade-in slide-in-from-right-12 duration-700 max-w-7xl mx-auto w-full">
+        <div className="p-8 md:p-12 animate-in fade-in slide-in-from-right-12 duration-700 w-full overflow-x-hidden">
            <Outlet />
         </div>
       </main>

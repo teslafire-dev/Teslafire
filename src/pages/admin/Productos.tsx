@@ -13,11 +13,25 @@ import {
 import { Link } from "react-router-dom";
 import { featuredProducts } from "@/data/mockData";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { AlertCircle, Package } from "lucide-react";
 
 export default function AdminProductos() {
   const [searchTerm, setSearchTerm] = useState("");
   const products = [...featuredProducts, ...featuredProducts]; 
+  const { canManageProducts, loading: authLoading } = useAuth();
 
+  if (authLoading) return null;
+
+  if (!canManageProducts) return (
+    <div className="p-24 text-center flex flex-col items-center gap-8 animate-in fade-in duration-1000">
+      <div className="w-24 h-24 bg-red-100 rounded-[2.5rem] flex items-center justify-center border-4 border-white shadow-2xl">
+        <Package className="w-12 h-12 text-red-600" />
+      </div>
+      <h2 className="text-4xl font-black text-primary-950 uppercase tracking-tighter">Acceso Restringido</h2>
+      <p className="text-slate-500 font-medium max-w-md uppercase tracking-widest text-[10px]">No tiene permisos para gestionar el inventario industrial.</p>
+    </div>
+  );
   return (
     <div className="flex flex-col gap-10">
       {/* Page Header */}
@@ -37,8 +51,8 @@ export default function AdminProductos() {
       </div>
 
       {/* Filters & Search Row */}
-      <div className="bg-white p-10 rounded-[3rem] border border-slate-50 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
-        <div className="relative w-full md:w-[500px]">
+      <div className="bg-white p-6 md:p-10 rounded-[2.5rem] md:rounded-[3rem] border border-slate-50 shadow-sm flex flex-col lg:flex-row justify-between items-center gap-6">
+        <div className="relative w-full lg:max-w-[500px]">
           <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-accent transition-smooth" />
           <input 
             type="text" 
@@ -59,9 +73,9 @@ export default function AdminProductos() {
       </div>
 
       {/* Table Container */}
-      <div className="bg-white rounded-[4rem] border border-slate-50 shadow-sm overflow-hidden mb-20">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
+      <div className="bg-white rounded-[3rem] border border-slate-50 shadow-sm overflow-hidden mb-20 w-full">
+        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+          <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
                 <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Producto / Fabricante</th>

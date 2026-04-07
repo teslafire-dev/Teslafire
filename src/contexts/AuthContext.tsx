@@ -7,21 +7,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<Role | null>(null);
   const [loading, setLoading] = useState(true);
+  const [canManageProducts, setCanManageProducts] = useState(false);
+  const [canManageUsers, setCanManageUsers] = useState(false);
+  const [canManageSettings, setCanManageSettings] = useState(false);
 
   // Function to fetch or refresh the profile
   const fetchProfile = async (userId: string) => {
     try {
       const { data: profile, error } = await supabase
         .from('perfiles')
-        .select('rol')
+        .select('rol, can_manage_products, can_manage_users, can_manage_settings')
         .eq('id', userId)
         .single();
       
       if (error) throw error;
       setRole(profile?.rol as Role ?? 'invitado');
+      setCanManageProducts(!!profile?.can_manage_products);
+      setCanManageUsers(!!profile?.can_manage_users);
+      setCanManageSettings(!!profile?.can_manage_settings);
     } catch (error) {
       console.error("AuthContext: Error al obtener el perfil:", error);
       setRole('invitado'); // Default safely
+      setCanManageProducts(false);
+      setCanManageUsers(false);
+      setCanManageSettings(false);
     }
   };
 
@@ -37,22 +46,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, 6000);
 
     const initialize = async () => {
+      console.log(`[${new Date().toISOString()}] AuthContext: Iniciando inicialización...`);
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        // Creamos una promesa que resuelve tras un pequeño timeout para no colgar la app
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Timeout getSession")), 2000)
+        );
+
+        // Competimos: si getSession tarda más de 2s, seguimos sin él
+        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+        
         const currentUser = session?.user ?? null;
+        console.log(`[${new Date().toISOString()}] AuthContext: Sesión obtenida:`, currentUser?.id || 'Ninguna');
         
         if (mounted) {
           setUser(currentUser);
           if (currentUser) {
-            await fetchProfile(currentUser.id);
+            fetchProfile(currentUser.id);
           }
         }
-      } catch (error) {
-        console.error("AuthContext: Error de inicialización:", error);
+      } catch (error: any) {
+        if (error.message === "Timeout getSession") {
+          console.warn("AuthContext: getSession ha tardado demasiado, continuando sin sesión inicial.");
+        } else {
+          console.error("AuthContext: Error de inicialización:", error);
+        }
       } finally {
         if (mounted) {
           setLoading(false);
           clearTimeout(forceStopLoading);
+          console.log(`[${new Date().toISOString()}] AuthContext: Loading finalizado`);
         }
       }
     };
@@ -90,6 +114,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     isAdmin: role === 'admin',
     isEditor: role === 'admin' || role === 'editor',
+    canManageProducts,
+    canManageUsers,
+    canManageSettings,
     refreshProfile: async () => {
       if (user) await fetchProfile(user.id);
     }

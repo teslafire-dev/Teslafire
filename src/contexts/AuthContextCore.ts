@@ -9,6 +9,9 @@ export interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   isEditor: boolean;
+  canManageProducts: boolean;
+  canManageUsers: boolean;
+  canManageSettings: boolean;
   refreshProfile: () => Promise<void>;
 }
 

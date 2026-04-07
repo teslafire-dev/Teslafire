@@ -5,7 +5,10 @@ import {
   Search,
   UserCircle2,
   Loader2,
-  ArrowRight
+  ArrowRight,
+  Package,
+  Users,
+  Settings
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import toast from "react-hot-toast";
@@ -13,11 +16,12 @@ import toast from "react-hot-toast";
 export default function AdminUsuarios() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const { isAdmin } = useAuth();
+  const { canManageUsers } = useAuth();
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isAdmin) fetchUsers();
-  }, [isAdmin]);
+    if (canManageUsers) fetchUsers();
+  }, [canManageUsers]);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -54,7 +58,23 @@ export default function AdminUsuarios() {
     }
   };
 
-  if (!isAdmin) return (
+  const togglePermission = async (userId: string, field: string, currentValue: boolean) => {
+    setUpdatingId(userId);
+    const { error } = await supabase
+      .from("perfiles")
+      .update({ [field]: !currentValue })
+      .eq("id", userId);
+
+    if (error) {
+      toast.error("Error al actualizar permiso");
+    } else {
+      toast.success("Permiso actualizado");
+      fetchUsers();
+    }
+    setUpdatingId(null);
+  };
+
+  if (!canManageUsers) return (
     <div className="p-24 text-center flex flex-col items-center gap-8 animate-in fade-in duration-1000">
       <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center border-4 border-white shadow-2xl">
         <ShieldCheck className="w-12 h-12 text-red-600" />
@@ -93,12 +113,13 @@ export default function AdminUsuarios() {
               <tr className="bg-slate-50/50 border-b border-slate-100">
                 <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Identidad de Usuario</th>
                 <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Nivel de Acceso</th>
+                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Permisos Modulares</th>
                 <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Escalación de Rango</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
               {loading ? (
-                <tr><td colSpan={3} className="px-10 py-32 text-center"><Loader2 className="w-12 h-12 text-accent animate-spin mx-auto" /></td></tr>
+                <tr><td colSpan={4} className="px-10 py-32 text-center"><Loader2 className="w-12 h-12 text-accent animate-spin mx-auto" /></td></tr>
               ) : users.map((user, i) => (
                 <tr key={user.id} className="hover:bg-slate-50/80 transition-smooth group active:bg-slate-100">
                   <td className="px-10 py-8">
@@ -119,6 +140,34 @@ export default function AdminUsuarios() {
                     }`}>
                       {user.rol}
                     </span>
+                  </td>
+                  <td className="px-10 py-8">
+                    <div className="flex items-center justify-center gap-2">
+                       <button 
+                        onClick={() => togglePermission(user.id, 'can_manage_products', user.can_manage_products)}
+                        disabled={updatingId === user.id}
+                        title="Gestionar Productos"
+                        className={`p-3 rounded-xl border transition-smooth ${user.can_manage_products ? 'bg-accent/10 border-accent/20 text-accent' : 'bg-slate-50 border-slate-100 text-slate-300'}`}
+                       >
+                          <Package className="w-4 h-4" />
+                       </button>
+                       <button 
+                        onClick={() => togglePermission(user.id, 'can_manage_users', user.can_manage_users)}
+                        disabled={updatingId === user.id}
+                        title="Gestionar Usuarios"
+                        className={`p-3 rounded-xl border transition-smooth ${user.can_manage_users ? 'bg-accent/10 border-accent/20 text-accent' : 'bg-slate-50 border-slate-100 text-slate-300'}`}
+                       >
+                          <Users className="w-4 h-4" />
+                       </button>
+                       <button 
+                        onClick={() => togglePermission(user.id, 'can_manage_settings', user.can_manage_settings)}
+                        disabled={updatingId === user.id}
+                        title="Configuración Global"
+                        className={`p-3 rounded-xl border transition-smooth ${user.can_manage_settings ? 'bg-accent/10 border-accent/20 text-accent' : 'bg-slate-50 border-slate-100 text-slate-300'}`}
+                       >
+                          <Settings className="w-4 h-4" />
+                       </button>
+                    </div>
                   </td>
                   <td className="px-10 py-8 text-right">
                     <div className="flex items-center justify-end gap-3">

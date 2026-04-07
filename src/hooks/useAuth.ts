@@ -10,6 +10,9 @@ export function useAuth() {
     loading: context.loading, 
     isAdmin: context.isAdmin, 
     isEditor: context.isEditor,
+    canManageProducts: context.canManageProducts,
+    canManageUsers: context.canManageUsers,
+    canManageSettings: context.canManageSettings,
     refreshProfile: context.refreshProfile
   };
 }
