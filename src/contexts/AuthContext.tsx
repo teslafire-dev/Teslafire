@@ -28,34 +28,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
+    // Safety timeout: forced end of loading after 5 seconds
+    const timeout = setTimeout(() => {
+      if (mounted) {
+        console.log("AuthContext: Tiempo de espera agotado. Forzando fin de carga.");
+        setLoading(false);
+      }
+    }, 5000);
+
     const initialize = async () => {
+      console.log("AuthContext: Iniciando fase de verificación...");
       setLoading(true);
       try {
-        // Obtenemos la sesion inicial
         const { data: { session } } = await supabase.auth.getSession();
         const currentUser = session?.user ?? null;
+        console.log("AuthContext: Sesión detectada:", currentUser?.email || "Ninguna");
         
         if (mounted) {
           setUser(currentUser);
           if (currentUser) {
+            console.log("AuthContext: Cargando perfil de usuario...");
             await fetchProfile(currentUser.id);
           }
         }
       } catch (error) {
         console.error("AuthContext: Error de inicialización:", error);
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) {
+          console.log("AuthContext: Verificación completada.");
+          setLoading(false);
+          clearTimeout(timeout);
+        }
       }
     };
 
     initialize();
 
-    // Suscribirse a cambios de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("AuthContext: Evento de Auth:", event);
       const currentUser = session?.user ?? null;
       
-      // Evitamos procesamiento redundante si ya fue manejado por initialize()
-      // PERO procesamos SIEMPRE si el evento es SIGNED_IN o SIGNED_OUT
       if (mounted) {
         if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
           setUser(currentUser);
@@ -64,12 +76,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           } else {
             setRole(null);
           }
+          // After auth change, also make sure loading is false
+          setLoading(false);
+          clearTimeout(timeout);
         }
       }
     });
 
     return () => {
       mounted = false;
+      clearTimeout(timeout);
       subscription.unsubscribe();
     };
   }, []);
