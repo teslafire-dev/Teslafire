@@ -1,0 +1,9 @@
+nombre,sku,categoria,marca,tipo_precio,precio,stock,atributos,imagenes_URL
+Arnés Pro Expert Full Body,ARN-001,Sistemas de Altura,Ansell,fijo,125.50,10,"{""talla"": ""L"", ""material"": ""Poliéster""}","https://via.placeholder.com/800x800.png?text=Arnes-Pro-Expert"
+Guantes de Nitrilo Industrial G50,GUA-002,Protección de Manos,Radians,fijo,12.99,500,"{""talla"": ""Standard"", ""color"": ""Azul""}","https://via.placeholder.com/800x800.png?text=Guantes-G50"
+Casco de Seguridad V-Gard White,CAS-003,Protección de Cabeza,Bullard,fijo,45.00,120,"{""suspension"": ""4 puntos"", ""material"": ""HDPE""}","https://via.placeholder.com/800x800.png?text=Casco-V-Gard"
+Lentes de Seguridad Mirage,LEN-004,Protección Visual,Radians,cotizacion,,0,"{""lente"": ""Transparente"", ""proteccion"": ""UV400""}","https://via.placeholder.com/800x800.png?text=Lentes-Mirage"
+Respirador 3M 6200,RES-005,Protección Respiratoria,3M,fijo,85.00,45,"{""valvula"": ""Simple"", ""filtro"": ""P100""}","https://via.placeholder.com/800x800.png?text=Respirador-3M"
+Chaleco Reflectante,ROP-007,Ropa de Trabajo,Ansell,fijo,15.00,200,"{""clase"": ""2"", ""bolsillos"": ""4""}","https://via.placeholder.com/800x800.png?text=Chaleco-Reflectante"
+Bota de Seguridad Dielectrica,CAL-006,Calzado,MSA,fijo,65.00,80,"{""punta"": ""Composite"", ""norma"": ""ASTM""}","https://via.placeholder.com/800x800.png?text=Bota-Dielectrica"
+Orejeras Peltor X5A,AUD-008,Protección Auditiva,3M,fijo,55.00,30,"{""nrr"": ""31dB"", ""diadema"": ""Ajustable""}","https://via.placeholder.com/800x800.png?text=Orejeras-X5A"
