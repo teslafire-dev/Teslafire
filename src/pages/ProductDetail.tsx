@@ -13,12 +13,33 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import ProductCard from "@/components/productos/ProductCard";
+import { useCartStore } from "@/lib/store/cartStore";
+import toast from "react-hot-toast";
 
 export default function ProductDetail() {
   const { id } = useParams();
   const product = featuredProducts.find((p) => p.id === id) || featuredProducts[0];
   const [selectedImage, setSelectedImage] = useState(product.image);
   const [quantity, setQuantity] = useState(1);
+  const addItem = useCartStore((state) => state.addItem);
+
+  const handleAddToCart = () => {
+    addItem({
+      id: product.id,
+      name: product.name,
+      sku: product.sku,
+      price: product.price || 0,
+      image: product.image
+    }, quantity);
+
+    toast.success(`${quantity} ${quantity > 1 ? 'unidades añadidas' : 'unidad añadida'} al carrito`, {
+      style: {
+        borderRadius: '1rem',
+        background: '#0F172A',
+        color: '#fff',
+      },
+    });
+  };
 
   const images = [
     product.image,
@@ -126,7 +147,10 @@ export default function ProductDetail() {
                     className="w-16 h-full hover:bg-slate-200 transition-smooth font-black text-primary-950 text-xl"
                   >+</button>
                 </div>
-                <button className="flex-1 bg-primary-950 hover:bg-accent text-white font-black h-16 rounded-2xl flex items-center justify-center gap-4 transition-smooth shadow-2xl shadow-primary-950/20 active:scale-95 uppercase text-xs tracking-widest">
+                <button 
+                  onClick={handleAddToCart}
+                  className="flex-1 bg-primary-950 hover:bg-accent text-white font-black h-16 rounded-2xl flex items-center justify-center gap-4 transition-smooth shadow-2xl shadow-primary-950/20 active:scale-95 uppercase text-xs tracking-widest"
+                >
                   <ShoppingCart className="w-5 h-5" /> Agregar al Carrito
                 </button>
               </div>

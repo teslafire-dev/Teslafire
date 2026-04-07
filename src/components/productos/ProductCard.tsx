@@ -28,7 +28,7 @@ export default function ProductCard({
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    addItem({ id, name, sku, price: price || 0, image, quantity: 1 });
+    addItem({ id, name, sku, price: price || 0, image });
     toast.success("Producto añadido al carrito", {
       style: {
         borderRadius: '1rem',
