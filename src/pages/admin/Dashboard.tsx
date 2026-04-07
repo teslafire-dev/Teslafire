@@ -3,7 +3,6 @@ import {
   Package, 
   Users, 
   AlertCircle, 
-  TrendingUp, 
   ChevronRight, 
   MoreHorizontal,
   Clock,

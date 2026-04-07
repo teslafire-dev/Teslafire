@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ShoppingCart, Eye, Plus, Star } from "lucide-react";
+import { Eye, Plus, Star } from "lucide-react";
 import { useCartStore } from "@/lib/store/cartStore";
 import toast from "react-hot-toast";
 

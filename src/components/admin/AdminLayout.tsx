@@ -2,17 +2,13 @@ import { Link, useLocation, useNavigate, Outlet } from "react-router-dom";
 import { 
   LayoutDashboard, 
   Package, 
-  ShoppingCart, 
-  Tags, 
   Settings, 
   LogOut, 
   ChevronRight,
   Bell,
-  Search,
   User,
   Users,
-  ShieldAlert,
-  Loader2
+  ShieldAlert
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase/client";
