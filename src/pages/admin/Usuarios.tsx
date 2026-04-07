@@ -20,13 +20,24 @@ export default function AdminUsuarios() {
   }, [isAdmin]);
 
   const fetchUsers = async () => {
-    const { data } = await supabase
-      .from("perfiles")
-      .select("*")
-      .order("created_at", { ascending: false });
-    
-    if (data) setUsers(data);
-    setLoading(false);
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("perfiles")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (error) {
+        toast.error("Error al cargar usuarios");
+      } else if (data) {
+        setUsers(data);
+      }
+    } catch (err) {
+      console.error("Usuarios: Error en fetchUsers:", err);
+      toast.error("Error de comunicación");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const updateRole = async (userId: string, newRole: string) => {

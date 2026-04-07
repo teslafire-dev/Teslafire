@@ -31,17 +31,23 @@ export default function Configuracion() {
 
   const fetchConfig = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('configuracion')
-      .select('*')
-      .order('clave');
-    
-    if (error) {
-      toast.error("Error al cargar configuración");
-    } else {
-      setConfig(data || []);
+    try {
+      const { data, error } = await supabase
+        .from('configuracion')
+        .select('*')
+        .order('clave');
+      
+      if (error) {
+        toast.error("Error al cargar configuración");
+      } else {
+        setConfig(data || []);
+      }
+    } catch (err) {
+      console.error("Configuracion: Error en fetchConfig:", err);
+      toast.error("Error de conexión con el sistema");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleChange = (clave: string, valor: string) => {
@@ -52,17 +58,23 @@ export default function Configuracion() {
 
   const handleSave = async (clave: string, valor: string) => {
     setSaving(true);
-    const { error } = await supabase
-      .from('configuracion')
-      .update({ valor, updated_at: new Date().toISOString() })
-      .eq('clave', clave);
+    try {
+      const { error } = await supabase
+        .from('configuracion')
+        .update({ valor, updated_at: new Date().toISOString() })
+        .eq('clave', clave);
 
-    if (error) {
-      toast.error(`Error al guardar ${clave}`);
-    } else {
-      toast.success(`${clave} actualizado`);
+      if (error) {
+        toast.error(`Error al guardar ${clave}`);
+      } else {
+        toast.success(`${clave} actualizado`);
+      }
+    } catch (err) {
+      console.error("Configuracion: Error en handleSave:", err);
+      toast.error("Error al guardar cambios");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const getIcon = (clave: string) => {
