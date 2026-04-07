@@ -2,12 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { featuredProducts } from "@/data/mockData";
 import { 
   ChevronRight, 
-  Download, 
-  MessageCircle, 
   ShoppingCart, 
-  Check, 
-  Info,
-  Youtube,
   Star,
   Share2
 } from "lucide-react";
