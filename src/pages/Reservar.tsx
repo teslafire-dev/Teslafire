@@ -16,6 +16,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import toast from "react-hot-toast";
@@ -39,6 +40,9 @@ export default function Reservar() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [whatsappNumber, setWhatsappNumber] = useState("+584141234567");
+  const [showWhatsappModal, setShowWhatsappModal] = useState(false);
+  const [pendingLocalizer, setPendingLocalizer] = useState("");
+  const [whatsappUrl, setWhatsappUrl] = useState("");
 
   const { register, handleSubmit, formState: { errors }, setValue } = useForm<ReservationFormValues>({
     resolver: zodResolver(reservationSchema),
@@ -109,10 +113,10 @@ export default function Reservar() {
         `*NOTAS:* ${data.mensaje || 'Ninguna'}\n\n` +
         `_Enviado desde el Portal de Seguridad Dobell_`;
 
-      const whatsappUrl = `https://wa.me/${whatsappNumber.replace(/\+/g, '')}?text=${encodeURIComponent(message)}`;
-
-      window.open(whatsappUrl, '_blank');
-      navigate(`/gracias/${localizer}`);
+      const url = `https://wa.me/${whatsappNumber.replace(/\+/g, '')}?text=${encodeURIComponent(message)}`;
+      setWhatsappUrl(url);
+      setPendingLocalizer(localizer);
+      setShowWhatsappModal(true);
       
     } catch (error: any) {
       console.error("Error saving reservation:", error);
@@ -301,6 +305,57 @@ export default function Reservar() {
           </div>
         </div>
       </div>
+
+      {/* WhatsApp Modal Confirmation */}
+      <AnimatePresence>
+        {showWhatsappModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center px-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-primary-950/40 backdrop-blur-md"
+              onClick={() => navigate(`/gracias/${pendingLocalizer}`)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[3rem] p-10 border border-slate-100 dark:border-slate-800 shadow-2xl relative z-10 flex flex-col items-center text-center gap-6"
+            >
+              <div className="w-20 h-20 bg-green-50 dark:bg-green-950/20 rounded-full flex items-center justify-center">
+                 <ShieldCheck className="w-10 h-10 text-green-500" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <h3 className="text-2xl font-black font-outfit text-primary-950 dark:text-white uppercase tracking-tighter leading-none">
+                  ¡Reserva Exitosa!
+                </h3>
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 px-4">
+                  ¿Desea enviar su reservación por WhatsApp a su asesor de ventas ahora?
+                </p>
+              </div>
+
+              <div className="flex flex-col w-full gap-3 mt-4">
+                <button
+                  onClick={() => {
+                    window.open(whatsappUrl, '_blank');
+                    navigate(`/gracias/${pendingLocalizer}`);
+                  }}
+                  className="w-full h-16 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest flex items-center justify-center gap-4 transition-smooth shadow-xl shadow-green-500/20 active:scale-95"
+                >
+                  <MessageSquare className="w-5 h-5" /> Enviar por WhatsApp
+                </button>
+                <button
+                  onClick={() => navigate(`/gracias/${pendingLocalizer}`)}
+                  className="w-full h-16 bg-slate-50 dark:bg-slate-800 text-primary-950 dark:text-white rounded-2xl font-black uppercase text-xs tracking-widest transition-smooth active:scale-95"
+                >
+                  Ir al resumen
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

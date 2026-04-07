@@ -2,10 +2,11 @@ import { ShieldCheck, Target, Users, MapPin, Phone, Mail, Send, ArrowRight } fro
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from '@/contexts/TranslationContext';
+import { motion } from 'framer-motion';
 
 export default function Nosotros() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
 
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,9 +24,15 @@ export default function Nosotros() {
   };
 
   return (
-    <div className="flex flex-col gap-24 pt-40 pb-20 dark:bg-slate-950 transition-colors duration-500">
+    <div className="flex flex-col gap-24 pt-40 pb-20 dark:bg-slate-950 transition-colors duration-500 overflow-hidden">
       {/* Hero Nosotros */}
-      <section className="container mx-auto px-6">
+      <motion.section 
+        initial={{ opacity: 0, x: -50 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true, amount: 0.1 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="container mx-auto px-6"
+      >
         <div className="max-w-4xl flex flex-col gap-8">
           <div className="inline-flex items-center gap-3 bg-accent/20 backdrop-blur-xl border border-accent/30 px-5 py-2 rounded-2xl w-fit">
             <span className="w-2.5 h-2.5 rounded-full bg-accent animate-pulse"></span>
@@ -33,19 +40,25 @@ export default function Nosotros() {
           </div>
           <h1 className="text-6xl md:text-8xl font-black text-primary-950 dark:text-white leading-[0.95] tracking-tighter font-outfit">
              {t('nosotros.history.title').split(' ').map((word, i) => (
-               word.toLowerCase() === 'seguridad' || word.toLowerCase() === 'safety' 
-                ? <span key={i} className="text-accent">{word} </span> 
-                : word + ' '
+                word.toLowerCase() === 'seguridad' || word.toLowerCase() === 'safety' 
+                 ? <span key={i} className="text-accent">{word} </span> 
+                 : word + ' '
              ))}
           </h1>
           <p className="text-xl text-slate-500 dark:text-slate-400 leading-relaxed max-w-2xl font-medium">
             {t('nosotros.history.desc')}
           </p>
         </div>
-      </section>
+      </motion.section>
 
       {/* Stats/Values Grid */}
-      <section className="container mx-auto px-6">
+      <motion.section 
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.1 }}
+        transition={{ duration: 0.8 }}
+        className="container mx-auto px-6"
+      >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           {[
             { 
@@ -64,24 +77,37 @@ export default function Nosotros() {
               desc: t('nosotros.values.team.desc') 
             }
           ].map((item, i) => (
-            <div key={i} className="bg-white dark:bg-slate-900 p-12 rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-xl hover:shadow-accent/5 transition-smooth group grow">
+            <motion.div 
+              key={i} 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+              className="bg-white dark:bg-slate-900 p-12 rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-xl hover:shadow-accent/5 transition-smooth group grow"
+            >
               <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-accent/10 transition-smooth">
                 <item.icon className="w-8 h-8 text-primary-950 dark:text-accent group-hover:text-accent transition-smooth" />
               </div>
               <h3 className="text-2xl font-black uppercase tracking-tighter mb-4 text-primary-950 dark:text-white font-outfit">{item.title}</h3>
               <p className="text-slate-500 dark:text-slate-400 leading-relaxed">{item.desc}</p>
-            </div>
+            </motion.div>
           ))}
         </div>
-      </section>
+      </motion.section>
 
       {/* Trust Markers Section */}
-      <section className="bg-primary-950 py-32 rounded-[5rem] mx-4 text-white overflow-hidden relative">
+      <motion.section 
+        initial={{ opacity: 0, scale: 0.95 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true, amount: 0.1 }}
+        transition={{ duration: 1 }}
+        className="bg-primary-950 py-32 rounded-[5rem] mx-4 text-white overflow-hidden relative"
+      >
         <div className="absolute top-0 right-0 w-1/3 h-full bg-accent/5 blur-[120px] rounded-full"></div>
         <div className="container mx-auto px-6 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <div className="flex flex-col gap-10">
-              <h2 className="text-5xl font-black uppercase tracking-tighter leading-tight font-outfit">
+              <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-tight font-outfit">
                 {t('nosotros.commitment.title').split(' ').map((word, i) => (
                   word.toLowerCase() === 'protección' || word.toLowerCase() === 'protection'
                    ? <span key={i} className="text-accent">{word} </span> 
@@ -119,10 +145,17 @@ export default function Nosotros() {
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Contact Form Section */}
-      <section className="container mx-auto px-6 mb-20 animate-in fade-in duration-1000">
+      <motion.section 
+        id="contacto" 
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.1 }}
+        transition={{ duration: 0.8 }}
+        className="container mx-auto px-6 mb-20"
+      >
          <div className="flex flex-col lg:flex-row gap-20">
             {/* Left: Contact Info */}
             <div className="lg:w-2/5 flex flex-col gap-10">
@@ -200,7 +233,7 @@ export default function Nosotros() {
                </form>
             </div>
          </div>
-      </section>
+      </motion.section>
     </div>
   );
 }

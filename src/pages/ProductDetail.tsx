@@ -227,51 +227,8 @@ export default function ProductDetail() {
             </div>
           </div>
         </div>
-
-        {/* Suggestions Section */}
-        <section className="mt-32 pt-20 border-t border-slate-100 animate-in fade-in duration-1000">
-           <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-12">
-              <div className="flex flex-col gap-3">
-                 <div className="flex items-center gap-3 text-accent font-black uppercase text-[10px] tracking-[0.4em]">
-                    <TrendingUp className="w-4 h-4" /> {t('product.recommendations')}
-                 </div>
-                 <h2 className="text-3xl md:text-5xl font-black font-outfit text-primary-950 uppercase tracking-tighter leading-none">
-                    {t('product.similar_title_1')} <span className="text-accent underline decoration-4 decoration-accent/20 underline-offset-8">{t('product.similar_title_2')}</span>
-                 </h2>
-              </div>
-              <Link to="/productos" className="flex items-center gap-3 text-slate-400 font-black uppercase text-[10px] tracking-widest hover:text-primary-950 transition-smooth pb-1 border-b-2 border-transparent hover:border-slate-200">
-                 {t('product.view_full_catalog')} <Package className="w-4 h-4" />
-              </Link>
-           </div>
-
-           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {suggestionsLoading ? (
-                 Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="aspect-[3/4] bg-slate-50 rounded-[2.5rem] animate-pulse"></div>
-                 ))
-              ) : suggestions.length > 0 ? (
-                 suggestions.map((item) => (
-                    <ProductCard 
-                       key={item.id}
-                       id={item.id}
-                       name={(lang === 'EN' && item.nombre_en) ? item.nombre_en : item.nombre}
-                       sku={item.sku}
-                       price={item.precio}
-                       category={item.categorias?.nombre || 'General'}
-                       image={item.imagenes_urls?.[0] || '/placeholder-product.png'}
-                       isNew={item.is_new}
-                       isOffer={item.is_offer}
-                    />
-                 ))
-              ) : (
-                 <div className="col-span-full py-20 text-center bg-slate-50 rounded-[3rem]">
-                    <AlertCircle className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-                    <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">{t('product.no_similar_products')}</p>
-                 </div>
-              )}
-           </div>
-        </section>
       </div>
     </div>
   );
 }
+

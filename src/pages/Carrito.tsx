@@ -2,6 +2,7 @@ import { useCartStore } from "@/lib/store/cartStore";
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, ShieldCheck, ChevronLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "@/contexts/TranslationContext";
+import { motion } from "framer-motion";
 
 export default function Carrito() {
   const { items, removeItem, updateQuantity, getTotal } = useCartStore();
@@ -43,9 +44,16 @@ export default function Carrito() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
             {/* Items List */}
             <div className="lg:col-span-2 flex flex-col gap-8">
-              {items.map((item) => (
-                <div key={item.id} className="bg-white p-8 rounded-[2rem] border border-slate-100 flex flex-col sm:flex-row gap-8 items-center group transition-smooth hover:shadow-2xl hover:shadow-primary-950/10">
-                  <div className="w-32 h-32 bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 shrink-0">
+              {items.map((item, i) => (
+                <motion.div 
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.1 }}
+                  transition={{ delay: i * 0.1 }}
+                  key={item.id} 
+                  className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 flex flex-col sm:flex-row gap-6 md:gap-8 items-center group transition-smooth hover:shadow-2xl hover:shadow-primary-950/10"
+                >
+                  <div className="w-40 h-40 md:w-32 md:h-32 bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 shrink-0">
                     <img src={item.image} alt={item.name} className="w-full h-full object-contain p-4 group-hover:scale-110 transition-smooth" />
                   </div>
                   <div className="flex-1 flex flex-col gap-2">
@@ -74,20 +82,12 @@ export default function Carrito() {
                       <Trash2 className="w-6 h-6" />
                     </button>
                   </div>
-                </div>
+                </motion.div>
               ))}
-              {/* Assistance Box */}
-              <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm flex flex-col gap-6 group hover:border-accent/30 transition-smooth mt-8">
-                 <h4 className="text-xl font-black font-outfit text-primary-950 uppercase tracking-tighter leading-none">{t('cart.help_title')}</h4>
-                 <p className="text-slate-500 font-medium tracking-wide text-sm">{t('cart.help_desc')}</p>
-                 <button className="flex items-center gap-3 text-accent font-black uppercase text-[10px] tracking-widest group-hover:gap-5 transition-smooth">
-                    {t('cart.chat_expert')} <ArrowRight className="w-4 h-4" />
-                 </button>
-              </div>
             </div>
 
             {/* Summary Box */}
-            <div className="flex flex-col gap-8">
+            <div className="flex flex-col gap-8 order-first lg:order-none">
               <div className="bg-primary-950 text-white p-10 rounded-[3rem] shadow-2xl shadow-primary-950/40 flex flex-col gap-10 h-fit sticky top-28 overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
                 <h3 className="text-3xl font-black font-outfit uppercase tracking-tighter relative z-10">{t('cart.summary_title')}</h3>
@@ -116,6 +116,20 @@ export default function Carrito() {
                   </Link>
                 </div>
               </div>
+
+              {/* Assistance Box (Now after summary on mobile) */}
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm flex flex-col gap-6 group hover:border-accent/30 transition-smooth"
+              >
+                  <h4 className="text-xl font-black font-outfit text-primary-950 uppercase tracking-tighter leading-none">{t('cart.help_title')}</h4>
+                  <p className="text-slate-500 font-medium tracking-wide text-sm">{t('cart.help_desc')}</p>
+                  <button className="flex items-center gap-3 text-accent font-black uppercase text-[10px] tracking-widest group-hover:gap-5 transition-smooth">
+                    {t('cart.chat_expert')} <ArrowRight className="w-4 h-4" />
+                  </button>
+              </motion.div>
             </div>
           </div>
         </div>

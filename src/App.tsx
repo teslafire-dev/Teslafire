@@ -71,7 +71,21 @@ function App() {
               {/* Fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-            <Toaster position="bottom-right" />
+            <Toaster 
+              position="top-center" 
+              toastOptions={{
+                duration: 3000,
+                style: {
+                  borderRadius: '1rem',
+                  background: '#0F172A',
+                  color: '#fff',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em'
+                }
+              }}
+            />
           </div>
         </Router>
       </AuthProvider>

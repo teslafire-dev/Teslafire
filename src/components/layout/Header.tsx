@@ -72,14 +72,7 @@ export default function Header() {
     const controlNavbar = () => {
       const currentScrollY = window.scrollY;
       setIsScrolled(currentScrollY > 20);
-      if (currentScrollY < 50) {
-        setIsVisible(true);
-      } else if (currentScrollY > lastScrollY) {
-        setIsVisible(false);
-      } else {
-        setIsVisible(true);
-      }
-      setLastScrollY(currentScrollY);
+      setIsVisible(true); // Header always visible as requested
     };
     window.addEventListener("scroll", controlNavbar);
     return () => window.removeEventListener("scroll", controlNavbar);
@@ -101,8 +94,6 @@ export default function Header() {
 
   return (
     <header className={`fixed top-0 z-50 w-full transition-all duration-500 ease-in-out ${
-      isVisible ? 'translate-y-0' : '-translate-y-full'
-    } ${
       isScrolled 
         ? 'bg-white/95 dark:bg-slate-900/95 shadow-xl py-2' 
         : 'bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl py-4'
@@ -313,7 +304,7 @@ export default function Header() {
               { to: '/productos', label: t('nav.productos') },
               { to: '/soluciones', label: t('nav.soluciones') },
               { to: '/nosotros', label: t('nav.nosotros') },
-              { to: '/contacto', label: t('nav.contacto') }
+              { to: '/nosotros#contacto', label: t('nav.contacto') }
             ].map((item) => (
               <NavLink 
                 key={item.to}
@@ -331,6 +322,24 @@ export default function Header() {
                 {t('admin.panel')}
               </Link>
             )}
+
+            {/* Mobile Controls */}
+            <div className="flex items-center justify-center gap-4 pt-8 border-t border-slate-100 dark:border-slate-800">
+               <button 
+                  onClick={toggleDarkMode}
+                  className="flex-1 flex items-center justify-center gap-3 bg-slate-50 dark:bg-slate-800 py-4 rounded-2xl text-[10px] font-black text-slate-400"
+               >
+                  {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                  {isDarkMode ? 'MODO LUZ' : 'MODO OSCURO'}
+               </button>
+               <button 
+                  onClick={toggleLanguage}
+                  className="flex-1 flex items-center justify-center gap-3 bg-slate-50 dark:bg-slate-800 py-4 rounded-2xl text-[10px] font-black text-slate-400"
+               >
+                  <Languages className="w-4 h-4" />
+                  {lang}
+               </button>
+            </div>
           </nav>
         </div>
       )}

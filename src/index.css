@@ -64,7 +64,9 @@
 }
 
 .glass {
-  @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-xl;
+  @apply bg-white/70 border border-white/20 shadow-xl;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
 }
 
 .transition-standard {

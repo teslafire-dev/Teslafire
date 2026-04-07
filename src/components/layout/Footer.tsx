@@ -1,20 +1,21 @@
 import { Link } from "react-router-dom";
-import { Mail, Phone, MapPin, Facebook, Instagram, Linkedin, ShieldCheck } from "lucide-react";
+import { Mail, Phone, MapPin, Facebook, Instagram, Linkedin, ShieldCheck, ArrowRight } from "lucide-react";
 import { useTranslation } from "@/contexts/TranslationContext";
+import { motion } from "framer-motion";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const { t } = useTranslation();
 
   return (
-    <footer className="bg-primary-950 text-white pt-32 pb-20 relative overflow-hidden">
+    <footer className="bg-primary-950 text-white pt-16 pb-8 md:pt-32 md:pb-20 relative overflow-hidden">
       {/* Decorative background element */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[120px] -translate-y-1/2"></div>
       
       <div className="container mx-auto px-6 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-24">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-16 mb-12 md:mb-24">
           {/* Company Info */}
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-6">
             <Link to="/" className="flex items-center gap-4 group">
               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center group-hover:scale-110 transition-smooth shadow-xl shadow-white/5">
                 <span className="text-primary-950 font-black text-2xl font-outfit">D</span>
@@ -34,9 +35,9 @@ export default function Footer() {
           </div>
 
           {/* Categories Quick Links */}
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-6">
             <h4 className="text-xs font-black uppercase tracking-[0.3em] text-slate-500">{t('footer.categories.title')}</h4>
-            <nav className="flex flex-col gap-5">
+            <nav className="flex flex-col gap-4">
               {[
                 { key: 'footer.category.gloves', slug: 'manos' },
                 { key: 'footer.category.helmets', slug: 'cabeza' },
@@ -57,13 +58,13 @@ export default function Footer() {
           </div>
 
           {/* Company Links */}
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-6">
             <h4 className="text-xs font-black uppercase tracking-[0.3em] text-slate-500">{t('footer.info.title')}</h4>
-            <nav className="flex flex-col gap-5">
+            <nav className="flex flex-col gap-4">
               {[
                 { key: 'footer.link.about', to: '/nosotros' },
                 { key: 'footer.link.solutions', to: '/soluciones' },
-                { key: 'footer.link.contact', to: '/contacto' },
+                { key: 'footer.link.contact', to: '/nosotros#contacto' },
                 { key: 'footer.link.terms', to: '#' },
                 { key: 'footer.link.privacy', to: '#' }
               ].map((item) => (
@@ -80,9 +81,9 @@ export default function Footer() {
           </div>
 
           {/* Contact Info */}
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-6">
             <h4 className="text-xs font-black uppercase tracking-[0.3em] text-slate-500">{t('footer.contact.title')}</h4>
-            <div className="flex flex-col gap-6 font-medium">
+            <div className="flex flex-col gap-4 font-medium">
               <div className="flex items-start gap-4 group">
                 <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-accent/10 transition-smooth">
                   <MapPin className="w-5 h-5 text-accent" />
@@ -105,7 +106,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8">
+        <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
           <p className="text-slate-500 text-xs font-medium tracking-wide">
             © {currentYear} {t('footer.copyright')}
           </p>

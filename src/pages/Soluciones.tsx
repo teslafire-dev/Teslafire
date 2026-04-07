@@ -1,5 +1,6 @@
 import { Building2, ShieldCheck, Zap, Factory } from "lucide-react";
 import { useTranslation } from "@/contexts/TranslationContext";
+import { motion } from "framer-motion";
 
 export default function Soluciones() {
   const { t } = useTranslation();
@@ -32,9 +33,15 @@ export default function Soluciones() {
   ];
 
   return (
-    <div className="min-h-screen pt-40 pb-40">
+    <div className="min-h-screen pt-40 pb-40 overflow-hidden dark:bg-slate-950 transition-colors duration-500">
       <div className="container mx-auto px-6">
-        <div className="max-w-4xl mx-auto text-center mb-20 animate-in fade-in slide-in-from-bottom-5 duration-700">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.1 }}
+          transition={{ duration: 0.8 }}
+          className="max-w-4xl mx-auto text-center mb-20"
+        >
           <span className="text-accent font-black uppercase tracking-[0.4em] text-[10px] mb-4 block">
             {t('solutions.tagline')}
           </span>
@@ -48,14 +55,17 @@ export default function Soluciones() {
           <p className="text-slate-500 dark:text-slate-400 font-medium text-lg lg:px-20 leading-relaxed">
              {t('solutions.description')}
           </p>
-        </div>
+        </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {solutions.map((sol, index) => (
-            <div 
+            <motion.div 
               key={sol.id} 
-              className="group bg-white dark:bg-slate-900 p-12 rounded-[3.5rem] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-2xl hover:shadow-primary-950/20 dark:hover:shadow-black/40 transition-smooth relative overflow-hidden animate-in fade-in slide-in-from-bottom-10 duration-700"
-              style={{ animationDelay: `${index * 150}ms` }}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              whileInView={{ opacity: 1, scale: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              className="group bg-white dark:bg-slate-900 p-12 rounded-[3.5rem] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-2xl hover:shadow-primary-950/20 dark:hover:shadow-black/40 transition-smooth relative overflow-hidden"
             >
                <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 dark:bg-slate-800/50 rounded-bl-[10rem] transition-smooth group-hover:bg-accent/5"></div>
                <div className="relative z-10">
@@ -70,7 +80,7 @@ export default function Soluciones() {
                     {t('solutions.cta')}
                   </button>
                </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>

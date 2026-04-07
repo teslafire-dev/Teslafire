@@ -4,7 +4,12 @@ import { supabase } from "@/lib/supabase/client";
 import { useState, useEffect } from "react";
 import { useTranslation } from "@/contexts/TranslationContext";
 
-export default function ProductFilters() {
+interface ProductFiltersProps {
+  onFilterChange?: () => void;
+  isMobile?: boolean;
+}
+
+export default function ProductFilters({ onFilterChange, isMobile }: ProductFiltersProps = {}) {
   const { t, lang } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -51,6 +56,7 @@ export default function ProductFilters() {
       params.delete(key);
     }
     navigate(`${pathname}?${params.toString()}`);
+    if (onFilterChange) onFilterChange();
   }
 
   return (

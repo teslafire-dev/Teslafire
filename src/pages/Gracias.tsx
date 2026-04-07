@@ -19,6 +19,7 @@ import toast from "react-hot-toast";
 import FichaReserva from "@/components/reservar/FichaReserva";
 import { useCartStore } from "@/lib/store/cartStore";
 import { useTranslation } from "@/contexts/TranslationContext";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Gracias() {
   const { t } = useTranslation();
@@ -131,162 +132,126 @@ export default function Gracias() {
   };
 
   return (
-    <div className="min-h-screen pt-40 pb-20 flex items-center overflow-x-hidden selection:bg-accent/20">
-      <div className="container mx-auto px-6 max-w-4xl flex flex-col items-center gap-8">
+    <div className="min-h-screen pt-40 pb-20 flex items-center overflow-x-hidden selection:bg-accent/20 bg-slate-50 dark:bg-slate-950 transition-colors duration-500">
+      <div className="container mx-auto px-6 max-w-4xl flex flex-col items-center gap-12">
         
-        {/* Success Header - Premium Layout */}
-        <div className="flex flex-col items-center gap-6 text-center animate-in fade-in zoom-in slide-in-from-bottom-10 duration-1000">
+        {/* TOP SECTION: Success & Localizer (First Fold) */}
+        <div className="w-full flex flex-col items-center gap-8 text-center animate-in fade-in zoom-in duration-1000">
           <div className="relative">
-             <div className="absolute inset-0 bg-green-400 blur-2xl opacity-20 animate-pulse"></div>
-             <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center border-8 border-green-50 dark:border-green-950/30 shadow-2xl relative z-10 transition-smooth hover:scale-110">
-                <CheckCircle2Icon className="w-10 h-10 text-green-600 dark:text-green-400" />
-             </div>
+             <div className="absolute inset-0 bg-green-400 blur-3xl opacity-20 animate-pulse"></div>
+             <motion.div 
+               initial={{ scale: 0 }}
+               animate={{ scale: 1 }}
+               className="w-24 h-24 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center border-8 border-green-50 dark:border-green-950/20 shadow-2xl relative z-10"
+             >
+                <CheckCircle2Icon className="w-12 h-12 text-green-500" />
+             </motion.div>
           </div>
-          <div className="flex flex-col gap-3">
-            <h1 className="text-3xl md:text-5xl font-black font-outfit text-slate-950 dark:text-white uppercase tracking-tighter leading-none">
-              {t('success.title').split(' ').map((word, i) => (
-                word.toLowerCase().includes('exitosa') || word.toLowerCase().includes('successful')
-                ? <span key={i} className="text-accent">{word} </span>
-                : word + ' '
-              ))}
+
+          <div className="flex flex-col gap-4">
+            <h1 className="text-4xl md:text-5xl font-black font-outfit text-slate-950 dark:text-white uppercase tracking-tighter leading-none">
+              Reserva de Equipos <span className="text-accent underline decoration-4 decoration-accent/20 underline-offset-8">Exitosa</span>
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 font-bold max-w-lg text-sm mx-auto leading-relaxed border-t border-slate-200 dark:border-slate-800 pt-4 px-4 md:px-10 uppercase tracking-tight">
-              {t('success.subtitle')}
+            <p className="text-slate-500 dark:text-slate-400 font-bold max-w-md text-sm mx-auto leading-relaxed border-t border-slate-200 dark:border-slate-800 pt-6 uppercase tracking-tight">
+               Su solicitud técnica ha sido procesada. Por favor, conserve los siguientes detalles:
             </p>
           </div>
 
-          {/* Action Buttons */}
+          {/* CRITICAL INFO: LOCALIZER MOVED UP FOR MOBILE FOLD */}
+          <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="w-full max-w-lg bg-primary-950 dark:bg-slate-900 p-8 rounded-[3rem] border border-white/10 shadow-2xl relative overflow-hidden"
+          >
+             <div className="absolute top-0 right-0 w-24 h-24 bg-accent/10 rounded-full -mr-12 -mt-12 blur-2xl"></div>
+             <span className="text-[10px] font-black text-accent uppercase tracking-[0.4em] mb-3 block">Localizador Oficial</span>
+             <div className="flex items-center justify-center gap-6">
+                <span className="text-4xl md:text-6xl font-black text-white font-outfit tracking-tighter">{localizador}</span>
+                <button 
+                  onClick={handleCopy}
+                  className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-white hover:bg-accent transition-all active:scale-90"
+                >
+                  {isCopied ? <CheckIcon className="w-6 h-6 text-green-400" /> : <CopyIcon className="w-5 h-5" />}
+                </button>
+             </div>
+             <p className="mt-6 text-[9px] font-black text-slate-400 uppercase tracking-widest leading-loose max-w-[280px] mx-auto">
+               Conserve este código oficial para la validación y retiro de su orden en tienda física.
+             </p>
+          </motion.div>
+
+          {/* Action Buttons Layer */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl px-4 mt-2">
             <button 
               onClick={handleDownload}
               disabled={loading || !orderData}
-              className="group relative h-16 bg-primary-950 dark:bg-accent text-white rounded-2xl font-black uppercase text-[11px] tracking-widest overflow-hidden transition-all hover:bg-black dark:hover:bg-accent/80 active:scale-95 disabled:opacity-50 shadow-xl"
+              className="h-16 bg-white dark:bg-slate-800 text-slate-950 dark:text-white border-2 border-primary-950 dark:border-slate-700 rounded-2xl font-black uppercase text-[11px] tracking-widest transition-all hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 disabled:opacity-50 shadow-xl flex items-center justify-center gap-3"
             >
-              <div className="flex items-center justify-center gap-3 relative z-10">
-                 <DownloadIcon className="w-6 h-6" /> {t('success.download_pdf')}
-              </div>
+               <DownloadIcon className="w-6 h-6" /> {t('success.download_pdf')}
             </button>
 
             <button 
               onClick={handleShare}
               disabled={loading || !orderData}
-              className="group relative h-16 bg-white dark:bg-slate-800 text-slate-950 dark:text-white border-2 border-slate-900 dark:border-slate-700 rounded-2xl font-black uppercase text-[11px] tracking-widest overflow-hidden transition-all hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 disabled:opacity-50 shadow-lg"
+              className="h-16 bg-green-500 text-white rounded-2xl font-black uppercase text-[11px] tracking-widest transition-all hover:bg-green-600 active:scale-95 disabled:opacity-50 shadow-xl flex items-center justify-center gap-3"
             >
-              <div className="flex items-center justify-center gap-3">
-                 <Share2Icon className="w-6 h-6 text-accent" /> {t('success.share_whatsapp')}
-              </div>
+               <Share2Icon className="w-6 h-6" /> {t('success.share_whatsapp')}
             </button>
           </div>
         </div>
 
-        {/* Info & Localizer Card */}
-        <div className="w-full bg-white dark:bg-slate-900 rounded-[3rem] p-8 md:p-16 border border-slate-100 dark:border-slate-800 shadow-2xl shadow-primary-950/10 dark:shadow-black/40 flex flex-col gap-12 relative overflow-hidden group/card transition-smooth">
-           {/* Section 1: Digital Localizer Centered */}
-           <div className="flex flex-col items-center gap-4 text-center pb-10 border-b-2 border-slate-50 dark:border-slate-800/50 relative z-10 transition-standard group-hover/card:border-accent/10">
-              <span className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.5em] animate-in fade-in slide-in-from-top duration-700">
-                {t('success.localizer_title')}
-              </span>
-              <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10">
-                <div className="text-4xl md:text-7xl font-black font-outfit text-slate-950 dark:text-white tracking-tighter leading-none animate-in zoom-in duration-500">
-                  {localizador}
-                </div>
-                <button 
-                  onClick={handleCopy} 
-                  className="p-5 bg-slate-50 dark:bg-slate-800 rounded-3xl text-slate-400 dark:text-slate-500 hover:bg-primary-950 dark:hover:bg-accent hover:text-white transition-all active:scale-95 shadow-inner border border-slate-100 dark:border-slate-700 group/copy"
-                  title={t('success.copy')}
-                >
-                  {isCopied ? (
-                    <div className="flex items-center gap-3">
-                       <CheckIcon className="w-8 h-8 text-green-400" />
-                       <span className="text-[10px] font-black uppercase tracking-widest hidden md:block">{t('success.copied')}</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3">
-                       <CopyIcon className="w-8 h-8 group-hover/copy:rotate-12 transition-transform" />
-                       <span className="text-[10px] font-black uppercase tracking-widest hidden md:block">{t('success.copy')}</span>
-                    </div>
-                  )}
-                </button>
-              </div>
-           </div>
-
-           {/* Section 2: Full Width Products Detailed Summary */}
-           <div className="flex flex-col gap-6 relative z-10">
-              <div className="flex flex-col md:flex-row justify-between items-end gap-4 px-2">
-                <div className="flex flex-col">
-                  <h3 className="text-xl font-black font-outfit text-slate-950 dark:text-white uppercase tracking-tighter">
-                    {t('success.reserved_equipment')}
-                  </h3>
-                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">
-                    {t('success.validation_hint')}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3 bg-accent/5 px-4 py-2 rounded-xl border border-accent/10">
-                   <PackageIcon className="w-4 h-4 text-accent" />
-                   <span className="text-xs font-bold text-slate-600 dark:text-slate-400">
-                     {t('success.different_items').replace('{count}', (orderData?.productos?.length || 0).toString())}
-                   </span>
-                </div>
+        {/* DETAILS SECTION */}
+        <div className="w-full bg-white dark:bg-slate-900 rounded-[4rem] p-8 md:p-14 border border-slate-100 dark:border-slate-800 shadow-2xl relative overflow-hidden">
+           <div className="flex flex-col gap-10">
+              <div className="flex flex-col md:flex-row justify-between items-end gap-4 border-b border-slate-50 dark:border-slate-800 pb-8">
+                 <div className="flex flex-col">
+                    <h3 className="text-2xl font-black font-outfit text-slate-950 dark:text-white uppercase tracking-tighter">
+                      Equipamiento Reservado
+                    </h3>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Sujeto a validación física en tienda</span>
+                 </div>
+                 <div className="bg-slate-50 dark:bg-slate-800 px-6 py-3 rounded-2xl border border-slate-100 dark:border-slate-700 flex items-center gap-4">
+                    <PackageIcon className="w-5 h-5 text-accent" />
+                    <span className="text-xs font-black text-slate-950 dark:text-white uppercase tracking-widest">{(orderData?.productos?.length || 0)} Equipos</span>
+                 </div>
               </div>
 
-              <div className="bg-slate-50/50 dark:bg-slate-800/10 p-6 md:p-10 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-inner group/box overflow-hidden max-h-[450px] flex flex-col">
-                <div className="overflow-y-auto custom-scrollbar flex-1 pr-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {orderData?.productos?.map((p: any, i: number) => (
-                      <div 
-                        key={i} 
-                        className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-50 dark:border-slate-700 shadow-sm flex flex-col gap-1.5 transition-all hover:bg-slate-50 dark:hover:bg-slate-700 hover:shadow-xl hover:shadow-primary-950/5 dark:hover:shadow-black/20 group/item"
-                      >
-                         <div className="flex justify-between items-start gap-4">
-                            <span className="text-[11px] font-black text-slate-950 dark:text-white uppercase tracking-tight line-clamp-2 leading-tight group-hover/item:text-accent transition-colors flex-1">{p.nombre}</span>
-                            <span className="bg-primary-950 dark:bg-accent text-white text-[9px] font-black w-7 h-7 rounded-lg flex items-center justify-center shrink-0 shadow-lg shadow-primary-950/20">×{p.cantidad}</span>
-                         </div>
-                         <div className="flex items-center gap-2 mt-auto pt-2 border-t border-slate-50 dark:border-slate-700 overflow-hidden">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-300 dark:text-slate-600 truncate transition-colors group-hover/item:text-slate-400">SKU: {p.sku || 'N/A'}</span>
-                         </div>
-                      </div>
-                    ))}
-                    {loading && (
-                      <div className="col-span-full py-10 flex flex-col items-center gap-4">
-                        <Loader2Icon className="w-10 h-10 text-accent animate-spin" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                          {t('success.fetching_record')}
-                        </span>
-                      </div>
-                    )}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {orderData?.productos?.map((p: any, i: number) => (
+                  <div key={i} className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 transition-smooth hover:bg-white dark:hover:bg-slate-800 hover:shadow-xl group">
+                     <div className="flex justify-between items-start gap-3 mb-4">
+                        <span className="text-xs font-black text-slate-950 dark:text-white uppercase leading-tight line-clamp-2">{p.nombre}</span>
+                        <span className="bg-accent text-white text-[9px] font-black w-7 h-7 rounded-lg flex items-center justify-center shrink-0">×{p.cantidad}</span>
+                     </div>
+                     <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">SKU: {p.sku || 'N/A'}</span>
                   </div>
-                </div>
+                ))}
               </div>
-           </div>
 
-           {/* Section 3: Professional Info Cards Grid */}
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full relative z-10 pt-6">
-              {[
-                { icon: PhoneIcon, title: t('success.confirmation_title'), desc: t('success.confirmation_desc') },
-                { icon: MapPinIcon, title: t('success.pickup_title'), desc: t('success.pickup_desc') },
-                { icon: MapIcon, title: t('success.digital_box_title'), desc: t('success.digital_box_desc') }
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-5 bg-slate-50/80 dark:bg-slate-800/30 p-6 rounded-3xl border border-slate-50 dark:border-slate-800 transition-all hover:bg-white dark:hover:bg-slate-800 hover:shadow-xl hover:shadow-primary-950/5 dark:hover:shadow-black/20 group/micro">
-                    <div className="w-14 h-14 bg-white dark:bg-slate-700 rounded-2xl flex items-center justify-center shrink-0 border border-slate-100 dark:border-slate-600 shadow-sm transition-smooth group-hover/micro:scale-110">
-                       <item.icon className="w-6 h-6 text-accent" />
-                    </div>
-                    <div className="flex flex-col">
-                      <h3 className="text-sm font-black text-slate-950 dark:text-white uppercase leading-none mb-1.5 tracking-tighter">{item.title}</h3>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight font-bold uppercase tracking-tight">{item.desc}</p>
-                    </div>
-                </div>
-              ))}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
+                {[
+                  { icon: PhoneIcon, title: "Confirmación", desc: "Su asesor validará cantidades vía telefónica pronto." },
+                  { icon: MapPinIcon, title: "Punto Retiro", desc: "Calle Principal #123. Use este localizador en taquilla." },
+                  { icon: MapIcon, title: "Caja Digital", desc: "Válido para Zelle, Divisas y Pago Móvil." }
+                ].map((item, i) => (
+                  <div key={i} className="flex gap-4 items-center bg-white dark:bg-slate-900 border border-slate-50 dark:border-slate-800 p-6 rounded-3xl shadow-sm">
+                     <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center shrink-0">
+                        <item.icon className="w-6 h-6 text-accent" />
+                     </div>
+                     <div>
+                        <h4 className="text-[11px] font-black uppercase text-slate-950 dark:text-white tracking-widest leading-none mb-1">{item.title}</h4>
+                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 leading-tight uppercase">{item.desc}</p>
+                     </div>
+                  </div>
+                ))}
+              </div>
            </div>
         </div>
 
-        {/* Action Footer Navigation */}
-        <div className="flex flex-col md:flex-row items-center gap-10 pt-10">
-           <Link to="/productos" className="flex items-center gap-4 text-accent font-black uppercase text-sm tracking-[0.2em] hover:gap-6 transition-all group">
-             {t('success.continue_shopping')} <ArrowRightIcon className="w-6 h-6" />
-           </Link>
-           <div className="w-1.5 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full hidden md:block"></div>
-           <Link to="/" className="text-slate-400 dark:text-slate-500 font-black uppercase text-sm tracking-widest hover:text-slate-900 dark:hover:text-white transition-colors">
-              {t('success.go_home')}
+        {/* Footer Navigation */}
+        <div className="flex items-center gap-10">
+           <Link to="/productos" className="flex items-center gap-4 text-accent font-black uppercase text-sm tracking-[0.2em] hover:gap-6 transition-all">
+             Continuar Comprando <ArrowRightIcon className="w-6 h-6" />
            </Link>
         </div>
       </div>
@@ -294,23 +259,10 @@ export default function Gracias() {
       <FichaReserva order={orderData} />
 
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
-
         @media print {
-          @page { size: auto; margin: 0mm; }
-          body { 
-            -webkit-print-color-adjust: exact; 
-            print-color-adjust: exact; 
-            margin: 0 !important; 
-            padding: 0 !important;
-            background: white !important; 
-          }
-          canvas { display: none !important; }
+          body { margin: 0 !important; background: white !important; }
           #ficha-impresion { display: block !important; visibility: visible !important; width: 210mm; }
-          .container, nav, header, footer, button, [role="status"], .go2072402232 { display: none !important; }
+          .container, nav, header, footer, button { display: none !important; }
         }
       `}</style>
     </div>

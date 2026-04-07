@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { supabase } from "@/lib/supabase/client";
 import { Link } from "react-router-dom";
 import { 
@@ -157,7 +158,13 @@ export default function Home() {
       </section>
 
       {/* Categories Grid */}
-      <section className="container mx-auto px-6">
+      <motion.section 
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.1 }}
+        transition={{ duration: 0.8 }}
+        className="container mx-auto px-6"
+      >
         <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
           <div className="flex flex-col gap-4">
             <h2 className="text-5xl font-black text-primary-950 dark:text-white uppercase tracking-tighter leading-none font-outfit">{t('home.categories.title')}</h2>
@@ -183,10 +190,16 @@ export default function Home() {
             </Link>
           ))}
         </div>
-      </section>
+      </motion.section>
 
       {/* Featured Products */}
-      <section className="bg-slate-50 dark:bg-slate-900/50 py-32 rounded-[5rem] mx-4 shadow-inner relative z-10 border border-slate-100 dark:border-slate-800 transition-colors duration-500">
+      <motion.section 
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, amount: 0.1 }}
+        transition={{ duration: 1 }}
+        className="bg-slate-50 dark:bg-slate-900/50 py-32 rounded-[5rem] mx-4 shadow-inner relative z-10 border border-slate-100 dark:border-slate-800 transition-colors duration-500"
+      >
         <div className="container mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
             <div className="flex flex-col gap-4">
@@ -219,10 +232,15 @@ export default function Home() {
             )}
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Trust Markers */}
-      <section className="container mx-auto px-6 mb-32">
+      <motion.section 
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="container mx-auto px-6 mb-32"
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 bg-primary-950 rounded-[4rem] p-16 text-white shadow-2xl shadow-primary-950/40 relative overflow-hidden group border border-white/5">
           <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent"></div>
           {[
@@ -240,7 +258,7 @@ export default function Home() {
             </div>
           ))}
         </div>
-      </section>
+      </motion.section>
     </div>
   );
 }
