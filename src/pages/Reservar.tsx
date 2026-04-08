@@ -131,7 +131,7 @@ export default function Reservar() {
   if (items.length === 0) return null;
 
   return (
-    <div className="min-h-screen pt-40 pb-16">
+    <div className="min-h-screen pt-40 pb-32">
       <div className="container mx-auto px-6 max-w-7xl">
         <div className="flex flex-col gap-8">
           <div className="flex justify-between items-end">
@@ -297,18 +297,18 @@ export default function Reservar() {
                   {errors.acceptTerms && <span className="text-[9px] font-black text-red-500 flex items-center gap-1 px-1"><AlertCircle className="w-2.5 h-2.5"/> {errors.acceptTerms.message}</span>}
                 </div>
 
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-6 mt-4">
                   <button 
                     type="submit"
                     disabled={isSubmitting}
-                    className={`w-full h-14 rounded-xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 transition-smooth shadow-xl ${isSubmitting ? 'bg-slate-100 dark:bg-slate-800 text-slate-400' : 'bg-slate-950 dark:bg-accent text-white hover:bg-accent dark:hover:bg-accent/80 shadow-primary-950/20 active:scale-95'}`}
+                    className={`w-full h-16 rounded-2xl font-black uppercase text-xs tracking-[0.2em] flex items-center justify-center gap-4 transition-smooth shadow-2xl ${isSubmitting ? 'bg-slate-100 dark:bg-slate-800 text-slate-400' : 'bg-accent text-white hover:bg-orange-600 shadow-accent/40 active:scale-95'}`}
                   >
                     {isSubmitting ? t('reservation.form.processing') : (
-                      <>{t('reservation.form.confirm')} <ArrowRight className="w-4 h-4" /></>
+                      <>{t('reservation.form.confirm')} <ArrowRight className="w-5 h-5" /></>
                     )}
                   </button>
 
-                  <div className="flex items-center justify-center gap-3 text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
+                  <div className="flex items-center justify-center gap-3 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.3em] bg-slate-50 dark:bg-slate-800/50 py-3 rounded-xl border border-slate-100 dark:border-slate-800">
                     <ShieldCheck className="w-4 h-4 text-green-500" /> {t('reservation.form.secure')}
                   </div>
                 </div>
