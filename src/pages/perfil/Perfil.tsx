@@ -108,15 +108,7 @@ export default function Perfil() {
             <p className="text-slate-500 font-bold text-sm tracking-tight">{t('profile.subtitle')}</p>
           </div>
 
-          <div className="flex items-center gap-4 bg-white p-4 rounded-3xl border border-slate-100 shadow-xl shadow-primary-950/5">
-             <div className="w-14 h-14 bg-primary-950 rounded-2xl flex items-center justify-center">
-                <User className="w-7 h-7 text-white" />
-             </div>
-             <div className="flex flex-col">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{t('profile.user_id')}</span>
-                <span className="text-xs font-bold text-primary-950 mt-1 truncate max-w-[150px]">{user?.id}</span>
-             </div>
-          </div>
+
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

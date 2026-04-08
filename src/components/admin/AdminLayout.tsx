@@ -10,7 +10,9 @@ import {
   Users,
   ShieldAlert,
   ExternalLink,
-  ShoppingBag
+  ShoppingBag,
+  Tags,
+  Image as ImageIcon
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase/client";
@@ -75,6 +77,7 @@ export default function AdminLayout() {
   const menuItems = [
     { name: "Dashboard", icon: LayoutDashboard, href: "/admin", permission: true },
     { name: "Órdenes", icon: ShoppingBag, href: "/admin/ordenes", permission: canManageOrders },
+    { name: "Categorías", icon: Tags, href: "/admin/categorias", permission: canManageProducts },
     { name: "Productos", icon: Package, href: "/admin/productos", permission: canManageProducts },
     { name: "Usuarios", icon: Users, href: "/admin/usuarios", permission: canManageUsers },
     { name: "Configuración", icon: Settings, href: "/admin/configuracion", permission: canManageSettings },

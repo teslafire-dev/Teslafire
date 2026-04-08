@@ -9,6 +9,7 @@ interface ProductCardProps {
   id: string;
   name: string;
   sku: string;
+  slug: string;
   category: string;
   price: number | null;
   moneda?: string;
@@ -21,6 +22,7 @@ export default function ProductCard({
   id, 
   name, 
   sku, 
+  slug,
   category, 
   price, 
   moneda = "USD",
@@ -46,7 +48,7 @@ export default function ProductCard({
 
   return (
     <Link 
-      to={`/productos/${id}`}
+      to={`/productos/${slug}`}
       className="group bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden hover:shadow-xl hover:shadow-primary-950/5 transition-smooth flex flex-col h-full relative"
     >
       {/* Badges */}
@@ -101,11 +103,13 @@ export default function ProductCard({
             <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest mb-1">SKU: {sku}</span>
             <div className="flex flex-col">
               <span className="text-lg font-black text-primary-950 font-outfit tracking-tighter leading-none">
-                {price ? `${(moneda === 'EUR' || moneda === 'EUR_ONLY') ? '€' : '$'}${price.toFixed(2)}` : "Cotizar"}
+                {Number(price) > 0 ? (
+                  `${(moneda === 'EUR' || moneda === 'EUR_ONLY') ? '€' : '$'}${Number(price).toFixed(2)}`
+                ) : "Cotizar"}
               </span>
-              {price && (moneda !== 'NONE' && moneda !== 'USD_ONLY' && moneda !== 'EUR_ONLY') && (
+              {Number(price) > 0 && (moneda !== 'NONE' && moneda !== 'USD_ONLY' && moneda !== 'EUR_ONLY') && (
                 <span className="text-[10px] font-black text-slate-400 mt-1 uppercase tracking-widest">
-                  Bs. {(((moneda === 'EUR' || moneda === 'EUR_ONLY') ? eurRate : usdRate) * price).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  Bs. {(((moneda === 'EUR' || moneda === 'EUR_ONLY') ? eurRate : usdRate) * Number(price)).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               )}
             </div>

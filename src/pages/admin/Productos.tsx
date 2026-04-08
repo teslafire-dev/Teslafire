@@ -26,14 +26,12 @@ import { useSyncProducts } from "@/hooks/useSyncProducts";
 import { supabase } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
 import ProductModal from "@/components/admin/ProductModal";
-import CategoryManagerModal from "@/components/admin/CategoryManagerModal";
 
 export default function AdminProductos() {
   const [searchTerm, setSearchTerm] = useState("");
   const [dbProducts, setDbProducts] = useState<any[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<any | null>(null);
   const { canManageProducts, loading: authLoading } = useAuth();
   const { syncFromExcel, isSyncing, progress } = useSyncProducts();
@@ -48,7 +46,14 @@ export default function AdminProductos() {
     try {
       const { data, error } = await supabase
         .from('productos')
-        .select('*, categorias(nombre), marcas(nombre)')
+        .select(`
+          *,
+          marcas(nombre),
+          producto_categorias(
+            categoria_id,
+            categorias(nombre)
+          )
+        `)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -180,12 +185,6 @@ export default function AdminProductos() {
             {isSyncing ? 'Sincronizando...' : 'Importar XLS'}
           </button>
           <button 
-            onClick={() => setIsCategoryModalOpen(true)}
-            className="bg-white border border-slate-200 text-slate-600 font-black uppercase text-[10px] tracking-widest px-8 py-3 rounded-2xl hover:border-accent transition-smooth active:scale-95 flex items-center gap-3"
-          >
-            <Tags className="w-4 h-4 text-accent" /> Categorías
-          </button>
-          <button 
             onClick={() => { setEditProduct(null); setIsModalOpen(true); }}
             className="bg-primary-950 text-white font-black uppercase text-[10px] tracking-widest px-8 py-3 rounded-2xl hover:bg-black transition-smooth shadow-2xl shadow-primary-950/20 active:scale-95 flex items-center gap-3"
           >
@@ -225,12 +224,12 @@ export default function AdminProductos() {
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Producto / Fabricante</th>
-                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Localizador SKU</th>
-                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Categoría</th>
-                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Inversión</th>
-                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado Stock</th>
-                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
+                <th className="px-5 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest w-[35%]">Producto</th>
+                <th className="px-5 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest w-[15%]">SKU</th>
+                <th className="px-5 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest w-[25%]">Categorías</th>
+                <th className="px-5 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center w-[10%]">Precio</th>
+                <th className="px-5 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest w-[10%]">Stock</th>
+                <th className="px-5 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right w-[5%]">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -257,49 +256,51 @@ export default function AdminProductos() {
                   p.sku.toLowerCase().includes(searchTerm.toLowerCase())
                 )
                 .map((prod, i) => (
-                <tr key={`${prod.id}-${i}`} className="hover:bg-slate-50/80 transition-smooth group active:bg-slate-100">
-                  <td className="px-10 py-6">
-                    <div className="flex items-center gap-6">
-                       <div className="w-14 h-14 bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 p-2 group-hover:rotate-3 group-hover:scale-110 transition-smooth shadow-inner shrink-0">
+                <tr key={`${prod.id}-${i}`} className="hover:bg-slate-50/80 transition-smooth group active:bg-slate-100 border-b border-slate-50 last:border-0">
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-4">
+                       <div className="w-10 h-10 bg-slate-50 rounded-xl overflow-hidden border border-slate-100 p-1 shrink-0">
                           <img src={(prod.imagenes_urls && prod.imagenes_urls[0]) || '/placeholder-product.png'} alt={prod.nombre} className="w-full h-full object-contain" />
                        </div>
-                       <div className="flex flex-col">
-                          <span className="text-sm font-black text-primary-950 group-hover:text-accent transition-smooth line-clamp-1 uppercase tracking-tight">{prod.nombre}</span>
-                          <span className="text-[9px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1">{prod.marcas?.nombre || 'Fabricante No Definido'}</span>
+                       <div className="flex flex-col min-w-0">
+                          <span className="text-[13px] font-black text-primary-950 truncate uppercase tracking-tight leading-tight">{prod.nombre}</span>
+                          <span className="text-[8px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{prod.marcas?.nombre || 'S/M'}</span>
                        </div>
                     </div>
                   </td>
-                  <td className="px-10 py-6">
-                    <span className="text-xs font-black font-outfit text-primary-950 tracking-tighter bg-slate-100 px-3 py-1 rounded-lg uppercase">{prod.sku}</span>
+                  <td className="px-5 py-3">
+                    <span className="text-[10px] font-black font-outfit text-primary-950 bg-slate-100 px-2 py-0.5 rounded-md uppercase">{prod.sku}</span>
                   </td>
-                  <td className="px-10 py-6">
-                    <span className="bg-slate-100 text-slate-500 text-[9px] font-black px-4 py-1.5 rounded-xl uppercase tracking-widest border border-slate-200/50">
-                      {prod.categorias?.nombre || 'Sin Categoría'}
-                    </span>
+                  <td className="px-5 py-3">
+                    <div className="flex flex-wrap gap-1">
+                      {prod.producto_categorias?.map((pc: any) => (
+                        <span key={pc.categoria_id} className="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded-lg uppercase tracking-tight border border-slate-200/50">
+                          {pc.categorias?.nombre}
+                        </span>
+                      ))}
+                      {(!prod.producto_categorias || prod.producto_categorias.length === 0) && (
+                        <span className="text-[8px] font-bold text-slate-300 italic">Sin Categoría</span>
+                      )}
+                    </div>
                   </td>
-                  <td className="px-10 py-6 text-center">
-                    <span className="text-lg font-black text-primary-950 font-outfit tracking-tighter">
+                  <td className="px-5 py-3 text-center">
+                    <span className="text-sm font-black text-primary-950 font-outfit tracking-tighter">
                       {prod.tipo_precio === 'cotizacion' ? "A Cotizar" : `$${prod.precio.toFixed(2)}`}
                     </span>
                   </td>
-                  <td className="px-10 py-6">
-                    <div className="flex flex-col gap-2">
-                       <div className="flex justify-between items-end">
-                          <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest">{prod.stock} Unid.</span>
-                          <span className={`text-[9px] font-black uppercase ${prod.stock > 10 ? 'text-green-600' : 'text-red-600'}`}>
-                            {prod.stock > 10 ? 'Saludable' : 'Stock Bajo'}
-                          </span>
-                       </div>
-                       <div className="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden shadow-inner">
-                          <div 
-                            className={`h-full rounded-full shadow-[0_0_10px_rgba(34,197,94,0.4)] ${prod.stock > 10 ? 'bg-green-500 w-3/4' : 'bg-red-500 w-1/4'}`}
-                          ></div>
+                  <td className="px-5 py-3">
+                    <div className="flex flex-col gap-1">
+                       <span className={`text-[9px] font-black uppercase ${prod.stock > 10 ? 'text-green-600' : 'text-red-600'}`}>
+                         {prod.stock} Unid.
+                       </span>
+                       <div className="w-20 h-1 bg-slate-100 rounded-full overflow-hidden">
+                          <div className={`h-full ${prod.stock > 10 ? 'bg-green-500 w-3/4' : 'bg-red-500 w-1/4'}`}></div>
                        </div>
                     </div>
                   </td>
-                  <td className="px-10 py-6 text-right">
+                  <td className="px-5 py-3 text-right">
                     <div className="flex items-center justify-end gap-3">
-                       <Link to={`/productos/${prod.id}`} target="_blank" className="p-3 text-slate-300 hover:text-accent transition-smooth bg-slate-50 rounded-xl active:scale-90 border border-transparent hover:border-slate-200">
+                       <Link to={`/productos/${prod.slug || prod.id}`} target="_blank" className="p-3 text-slate-300 hover:text-accent transition-smooth bg-slate-50 rounded-xl active:scale-90 border border-transparent hover:border-slate-200">
                           <Eye className="w-5 h-5" />
                        </Link>
                        <button onClick={() => { setEditProduct(prod); setIsModalOpen(true); }} className="p-3 text-slate-300 hover:text-blue-600 transition-smooth bg-slate-50 rounded-xl active:scale-90 border border-transparent hover:border-slate-200">
@@ -364,11 +365,6 @@ export default function AdminProductos() {
         onClose={() => { setIsModalOpen(false); setEditProduct(null); }} 
         onSuccess={fetchProducts} 
         editProduct={editProduct}
-      />
-      {/* Category Manager Modal */}
-      <CategoryManagerModal
-        isOpen={isCategoryModalOpen}
-        onClose={() => setIsCategoryModalOpen(false)}
       />
     </div>
   );

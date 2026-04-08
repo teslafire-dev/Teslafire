@@ -11,6 +11,7 @@ import Login from './pages/admin/Login';
 import AdminProductos from './pages/admin/Productos';
 import AdminOrdenes from './pages/admin/Ordenes';
 import AdminUsuarios from './pages/admin/Usuarios';
+import AdminCategorias from './pages/admin/Categorias';
 import AdminConfiguracion from './pages/admin/Configuracion';
 import AdminLayout from './components/admin/AdminLayout';
 import Header from './components/layout/Header';
@@ -46,7 +47,7 @@ function App() {
               <Route element={<><Header /><main className="flex-grow"><NavigationWrapper /></main><Footer /></>}>
                 <Route path="/" element={<Home />} />
                 <Route path="/productos" element={<Productos />} />
-                <Route path="/productos/:id" element={<ProductDetail />} />
+                <Route path="/productos/:slug" element={<ProductDetail />} />
                 <Route path="/carrito" element={<Carrito />} />
                 <Route path="/reservar" element={<Reservar />} />
                 <Route path="/nosotros" element={<Nosotros />} />
@@ -63,6 +64,7 @@ function App() {
               <Route element={<ProtectedRoute />}>
                 <Route element={<AdminLayout />}>
                   <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/admin/categorias" element={<AdminCategorias />} />
                   <Route path="/admin/productos" element={<AdminProductos />} />
                   <Route path="/admin/ordenes" element={<AdminOrdenes />} />
                   <Route path="/admin/usuarios" element={<AdminUsuarios />} />

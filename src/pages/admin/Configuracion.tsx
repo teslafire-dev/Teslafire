@@ -15,7 +15,9 @@ import {
   Languages,
   Settings,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Image as ImageIcon,
+  Upload
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import toast from "react-hot-toast";
@@ -30,6 +32,7 @@ interface ConfigItem {
 
 const categories = [
   { id: 'contacto', name: 'Canales de Contacto', icon: Search, keys: ['email_contacto', 'telefono_whatsapp', 'direccion'] },
+  { id: 'brand', name: 'Identidad Visual (Multimedia)', icon: ImageIcon, keys: ['site_logo', 'site_favicon'] },
   { id: 'identidad', name: 'Identidad Visual (Paleta)', icon: Palette, keys: ['color_primario', 'color_acento', 'color_header', 'color_footer', 'color_body_bg', 'color_botones_bg'] },
   { id: 'hero', name: 'Contenido del Hero', icon: Type, keys: ['hero_h1', 'hero_p', 'hero_imagen_url'] },
   { id: 'general', name: 'Ajustes Generales', icon: Settings, keys: ['mostrar_resegnas', 'whatsapp_notificaciones'] },
@@ -119,7 +122,36 @@ export default function Configuracion() {
   const [config, setConfig] = useState<ConfigItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [expandedCats, setExpandedCats] = useState<string[]>(['contacto', 'identidad', 'general']);
+  const [uploadingAsset, setUploadingAsset] = useState<string | null>(null);
+  const [expandedCats, setExpandedCats] = useState<string[]>(['contacto', 'brand', 'identidad', 'general']);
+  
+  const handleAssetUpload = async (file: File, clave: string) => {
+    if (!file) return;
+    setUploadingAsset(clave);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${clave}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `brand/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('assets')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('assets')
+        .getPublicUrl(filePath);
+
+      await handleSave(clave, publicUrl);
+      handleChange(clave, publicUrl);
+      toast.success("Imagen de marca actualizada");
+    } catch (err: any) {
+      toast.error("Error al subir imagen");
+    } finally {
+      setUploadingAsset(null);
+    }
+  };
   const [searchKey, setSearchKey] = useState("");
   
   const { 
@@ -347,7 +379,40 @@ export default function Configuracion() {
                                     <Save className="w-4 h-4" />
                                   </button>
                                 </div>
-                                {item.clave.startsWith('color_') ? (
+                                {item.clave === 'site_logo' || item.clave === 'site_favicon' ? (
+                                  <div className="flex flex-col gap-4">
+                                     <div className="relative group aspect-video bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100 flex flex-col items-center justify-center overflow-hidden transition-smooth hover:border-accent">
+                                        {item.valor ? (
+                                          <img src={item.valor} className="w-full h-full object-contain p-4" />
+                                        ) : (
+                                          <div className="flex flex-col items-center gap-2">
+                                             <ImageIcon className="w-6 h-6 text-slate-300 group-hover:text-accent transition-smooth" />
+                                             <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Subir Imagen</span>
+                                          </div>
+                                        )}
+                                        <div className="absolute inset-0 bg-white/60 opacity-0 group-hover:opacity-100 transition-smooth flex items-center justify-center cursor-pointer">
+                                           <span className="text-[10px] font-black uppercase text-accent">Cambiar Imagen</span>
+                                           <input 
+                                              type="file" 
+                                              accept="image/*" 
+                                              onChange={(e) => e.target.files?.[0] && handleAssetUpload(e.target.files[0], item.clave)}
+                                              className="absolute inset-0 opacity-0 cursor-pointer"
+                                           />
+                                        </div>
+                                        {uploadingAsset === item.clave && (
+                                          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center">
+                                            <RefreshCcw className="w-6 h-6 text-accent animate-spin" />
+                                          </div>
+                                        )}
+                                     </div>
+                                     <div className="flex flex-col gap-1 px-1">
+                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Medida Recomendada:</span>
+                                        <span className="text-[10px] font-black text-primary-950 uppercase tracking-widest">
+                                           {item.clave === 'site_logo' ? '500px x 150px (Horizontal)' : '64px x 64px (Cuadrado)'}
+                                        </span>
+                                     </div>
+                                  </div>
+                                ) : item.clave.startsWith('color_') ? (
                                   <div className="flex items-center gap-3">
                                     <input type="color" value={item.valor} onChange={(e) => handleChange(item.clave, e.target.value)} className="w-14 h-12 rounded-xl cursor-pointer" />
                                     <input type="text" value={item.valor} onChange={(e) => handleChange(item.clave, e.target.value)} className="flex-1 bg-slate-50 border border-slate-50 rounded-xl px-4 py-2 text-xs font-bold font-mono" />

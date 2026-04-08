@@ -20,7 +20,7 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 
 export default function ProductDetail() {
   const { t, lang } = useTranslation();
-  const { id } = useParams();
+  const { slug } = useParams();
   const [product, setProduct] = useState<any>(null);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,27 +33,46 @@ export default function ProductDetail() {
 
   useEffect(() => {
     async function fetchProduct() {
+      console.log("🔍 Cargando detalle del producto:", slug);
       setLoading(true);
       try {
+        // Intento 1: Carga completa con relaciones
         const { data, error } = await supabase
           .from('productos')
-          .select('*, categorias(id, nombre), marcas(nombre)')
-          .eq('id', id)
+          .select('*, marcas(nombre), producto_categorias(categoria_id, categorias(nombre, nombre_en, slug))')
+          .eq('slug', slug)
           .single();
-        if (error) throw error;
-        setProduct(data);
-        if (data.imagenes_urls && data.imagenes_urls.length > 0) {
-          setSelectedImage(data.imagenes_urls[0]);
+
+        if (error) {
+          console.warn("⚠️ Fallo consulta compleja, reintentando carga simple...", error);
+          // Intento 2: Carga simple (Salvavidas)
+          const { data: simpleData, error: simpleError } = await supabase
+            .from('productos')
+            .select('*')
+            .eq('slug', slug)
+            .single();
+          
+          if (simpleError) throw simpleError;
+          setProduct(simpleData);
+          updateImages(simpleData);
         } else {
-          setSelectedImage("https://images.unsplash.com/photo-1542282088-fe8426682b8f?w=800&q=80"); // fallback
+          setProduct(data);
+          updateImages(data);
+          // Solo si tenemos éxito, buscamos sugerencias
+          fetchSuggestions(data.categoria_id, data.id);
         }
-        
-        // Fetch suggestions now that we have the product category
-        fetchSuggestions(data.categoria_id, data.id);
       } catch (err) {
-        console.error("Error fetching product:", err);
+        console.error("❌ Error fatal cargando producto:", err);
       } finally {
         setLoading(false);
+      }
+    }
+
+    function updateImages(data: any) {
+      if (data?.imagenes_urls && data.imagenes_urls.length > 0) {
+        setSelectedImage(data.imagenes_urls[0]);
+      } else {
+        setSelectedImage("https://images.unsplash.com/photo-1542282088-fe8426682b8f?w=800&q=80");
       }
     }
 
@@ -62,8 +81,7 @@ export default function ProductDetail() {
        try {
          const { data, error } = await supabase
           .from('productos')
-          .select('*, categorias(nombre)')
-          .eq('categoria_id', categoryId)
+          .select('*, marcas(nombre), producto_categorias(categoria_id, categorias(nombre, nombre_en))')
           .neq('id', currentId)
           .limit(4);
          
@@ -77,12 +95,30 @@ export default function ProductDetail() {
        }
     }
 
-    if (id) fetchProduct();
-  }, [id]);
+    if (slug) fetchProduct();
+  }, [slug]);
 
   if (loading) return (
     <div className="flex justify-center items-center h-screen bg-slate-50">
       <Loader2 className="w-12 h-12 animate-spin text-accent" />
+    </div>
+  );
+
+  if (!product) return (
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
+      <div className="w-24 h-24 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-red-500/10">
+        <AlertCircle className="w-12 h-12" />
+      </div>
+      <h2 className="text-3xl font-black text-primary-950 uppercase tracking-tighter mb-4 leading-none">
+        {t('product_not_found') || 'Producto No Encontrado'}
+      </h2>
+      <p className="text-slate-500 font-bold max-w-md mb-8">
+        El enlace que seguiste podría estar roto o el producto ha sido actualizado con una nueva URL.
+      </p>
+      <Link to="/productos" className="bg-primary-950 text-white px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest hover:bg-accent transition-smooth shadow-2xl flex items-center gap-4">
+        <ChevronRight className="w-4 h-4 rotate-180" />
+        {t('back_to_catalog')}
+      </Link>
     </div>
   );
 
@@ -149,9 +185,16 @@ export default function ProductDetail() {
             <div className="flex flex-col gap-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="bg-accent/10 text-accent text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest">
-                    {product.categorias?.nombre || 'Sin Categoría'}
-                  </span>
+                  {product.producto_categorias?.map((pc: any) => (
+                    <span key={pc.categoria_id} className="bg-accent/10 text-accent text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest">
+                      {(lang === 'EN' && pc.categorias?.nombre_en) ? pc.categorias?.nombre_en : pc.categorias?.nombre}
+                    </span>
+                  ))}
+                  {(!product.producto_categorias || product.producto_categorias.length === 0) && (
+                    <span className="bg-slate-100 text-slate-400 text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest">
+                      Sin Categoría
+                    </span>
+                  )}
                   <span className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">SKU: {product.sku}</span>
                 </div>
                 {t('mostrar_resegnas') === 'true' && (
@@ -171,7 +214,7 @@ export default function ProductDetail() {
                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('product.unit_price')}</span>
                    <div className="flex items-end gap-3">
                      <span className="text-4xl font-black text-primary-950 font-outfit tracking-tighter leading-none">
-                       {product.precio ? `${(product.moneda === 'EUR' || product.moneda === 'EUR_ONLY') ? '€' : '$'}${product.precio.toFixed(2)}` : t('product.get_quote')}
+                       {Number(product.precio) > 0 ? `${(product.moneda === 'EUR' || product.moneda === 'EUR_ONLY') ? '€' : '$'}${Number(product.precio).toFixed(2)}` : t('product.get_quote')}
                      </span>
                      {product.precio && (product.moneda !== 'NONE' && product.moneda !== 'USD_ONLY' && product.moneda !== 'EUR_ONLY') && (
                        <span className="text-sm font-black text-slate-400 mb-1 tracking-widest">

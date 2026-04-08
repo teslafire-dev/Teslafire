@@ -48,37 +48,28 @@ export default function Productos() {
 
     setLoading(true);
     try {
-      let query = supabase
-        .from('productos')
-        .select('*, categorias(nombre), marcas(nombre)');
+      console.log("🔍 Catálogo: Cargando productos con relaciones...");
+      let query = supabase.from('productos').select(`
+        *,
+        marcas(nombre),
+        producto_categorias(
+          categoria_id,
+          categorias(nombre, nombre_en, slug)
+        )
+      `);
 
-      if (currentCategory) {
-        const { data: catData } = await supabase
-          .from('categorias')
-          .select('id')
-          .eq('slug', currentCategory)
-          .single();
-        if (catData) query = query.eq('categoria_id', catData.id);
+      const { data, error } = await query
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error("❌ Error en consulta con relaciones:", error);
+        // Si falla con relaciones, volvemos a carga simple para no dejar la web vacía
+        const fallback = await supabase.from('productos').select('*').order('created_at', { ascending: false });
+        setProducts(fallback.data || []);
+        return;
       }
 
-      if (currentBrand) {
-        const { data: brandData } = await supabase
-          .from('marcas')
-          .select('id')
-          .eq('nombre', currentBrand)
-          .single();
-        if (brandData) query = query.eq('marca_id', brandData.id);
-      }
-
-      if (minPrice) query = query.gte('precio', parseFloat(minPrice));
-      if (maxPrice) query = query.lte('precio', parseFloat(maxPrice));
-
-      if (sortBy === "price_asc") query = query.order('precio', { ascending: true });
-      else if (sortBy === "price_desc") query = query.order('precio', { ascending: false });
-      else query = query.order('created_at', { ascending: false });
-
-      const { data, error } = await query;
-      if (error) throw error;
+      console.log("✅ Productos obtenidos con éxito:", data?.length || 0);
       setProducts(data || []);
       // Store in cache for future instant reuse
       if (data && data.length > 0) {
@@ -206,7 +197,14 @@ export default function Productos() {
                           id={product.id}
                           name={(lang === 'EN' && product.nombre_en) ? product.nombre_en : product.nombre}
                           sku={product.sku}
-                          category={(lang === 'EN' && product.categorias?.nombre_en) ? product.categorias?.nombre_en : (product.categorias?.nombre || 'General')}
+                          slug={product.slug || product.id}
+                          category={
+                            product.producto_categorias?.length > 0
+                              ? (lang === 'EN' && product.producto_categorias[0].categorias?.nombre_en)
+                                ? product.producto_categorias[0].categorias?.nombre_en
+                                : product.producto_categorias[0].categorias?.nombre
+                              : 'General'
+                          }
                           price={product.precio}
                           moneda={product.moneda}
                           image={(product.imagenes_urls && product.imagenes_urls[0]) || '/placeholder-product.png'}

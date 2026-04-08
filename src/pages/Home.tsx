@@ -26,20 +26,34 @@ export default function Home() {
 
   const fetchData = async () => {
     try {
-      const [prodRes, catRes] = await Promise.all([
-        supabase
+      console.log("🔍 Home: Cargando destacados con relaciones...");
+      const prodRes = await supabase
           .from('productos')
-          .select('*, categorias(nombre)')
+          .select(`
+            *,
+            marcas(nombre),
+            producto_categorias(
+              categoria_id,
+              categorias(nombre, nombre_en)
+            )
+          `)
           .limit(8)
-          .order('created_at', { ascending: false }),
-        supabase
+          .order('created_at', { ascending: false });
+
+      const catRes = await supabase
           .from('categorias')
-          .select('*, productos(count)')
-      ]);
+          .select('*, productos(count)');
       
       if (!prodRes.error && prodRes.data) {
+        console.log("✅ Home: Destacados con relaciones listos:", prodRes.data.length);
         setFeaturedProducts(prodRes.data);
+      } else {
+        console.error("❌ Home Error (Relaciones):", prodRes.error);
+        // Fallback simple
+        const fallback = await supabase.from('productos').select('*').limit(8).order('created_at', { ascending: false });
+        if (fallback.data) setFeaturedProducts(fallback.data);
       }
+
       if (!catRes.error && catRes.data) {
         setDbCategories(catRes.data);
       }
@@ -222,7 +236,14 @@ export default function Home() {
                   id={prod.id}
                   name={(lang === 'EN' && prod.nombre_en) ? prod.nombre_en : prod.nombre}
                   sku={prod.sku}
-                  category={prod.categorias?.nombre || 'General'}
+                  slug={prod.slug || prod.id}
+                  category={
+                    prod.producto_categorias?.length > 0
+                      ? (lang === 'EN' && prod.producto_categorias[0].categorias?.nombre_en)
+                        ? prod.producto_categorias[0].categorias?.nombre_en
+                        : prod.producto_categorias[0].categorias?.nombre
+                      : 'General'
+                  }
                   price={prod.precio}
                   moneda={prod.moneda}
                   image={(prod.imagenes_urls && prod.imagenes_urls[0]) || '/placeholder-product.png'}
