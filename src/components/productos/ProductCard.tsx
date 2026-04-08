@@ -3,6 +3,7 @@ import { Eye, Plus, Star } from "lucide-react";
 import { useCartStore } from "@/lib/store/cartStore";
 import toast from "react-hot-toast";
 import { useTranslation } from "@/contexts/TranslationContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 interface ProductCardProps {
   id: string;
@@ -10,6 +11,7 @@ interface ProductCardProps {
   sku: string;
   category: string;
   price: number | null;
+  moneda?: string;
   image: string;
   isNew?: boolean;
   isOffer?: boolean;
@@ -21,16 +23,18 @@ export default function ProductCard({
   sku, 
   category, 
   price, 
+  moneda = "USD",
   image, 
   isNew, 
   isOffer 
 }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem);
   const { t } = useTranslation();
+  const { usdRate, eurRate } = useCurrency();
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    addItem({ id, name, sku, price: price || 0, image });
+    addItem({ id, name, sku, price: price || 0, moneda, image });
     toast.success("Producto añadido al carrito", {
       style: {
         borderRadius: '1rem',
@@ -95,9 +99,16 @@ export default function ProductCard({
         <div className="mt-auto flex items-end justify-between gap-3 pt-2">
           <div className="flex flex-col">
             <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest mb-1">SKU: {sku}</span>
-            <span className="text-xl font-black text-primary-950 font-outfit tracking-tighter leading-none">
-              {price ? `$${price.toFixed(2)}` : "Cotizar"}
-            </span>
+            <div className="flex flex-col">
+              <span className="text-lg font-black text-primary-950 font-outfit tracking-tighter leading-none">
+                {price ? `${(moneda === 'EUR' || moneda === 'EUR_ONLY') ? '€' : '$'}${price.toFixed(2)}` : "Cotizar"}
+              </span>
+              {price && (moneda !== 'NONE' && moneda !== 'USD_ONLY' && moneda !== 'EUR_ONLY') && (
+                <span className="text-[10px] font-black text-slate-400 mt-1 uppercase tracking-widest">
+                  Bs. {(((moneda === 'EUR' || moneda === 'EUR_ONLY') ? eurRate : usdRate) * price).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              )}
+            </div>
           </div>
           <button 
             onClick={handleAddToCart}

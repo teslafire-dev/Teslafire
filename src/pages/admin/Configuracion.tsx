@@ -20,12 +20,100 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 interface ConfigItem {
   id: string;
   clave: string;
   valor: string;
 }
+
+const categories = [
+  { id: 'contacto', name: 'Canales de Contacto', icon: Search, keys: ['email_contacto', 'telefono_whatsapp', 'direccion'] },
+  { id: 'identidad', name: 'Identidad Visual (Paleta)', icon: Palette, keys: ['color_primario', 'color_acento', 'color_header', 'color_footer', 'color_body_bg', 'color_botones_bg'] },
+  { id: 'hero', name: 'Contenido del Hero', icon: Type, keys: ['hero_h1', 'hero_p', 'hero_imagen_url'] },
+  { id: 'general', name: 'Ajustes Generales', icon: Settings, keys: ['mostrar_resegnas', 'whatsapp_notificaciones'] },
+  { id: 'moneda', name: 'Tasas y Monedas BCV (Markup Suma Fija)', icon: Settings, keys: ['markup_bcv_usd', 'markup_bcv_eur'] },
+  { id: 'ingles', name: 'Contenido Inglés (Dynamic)', icon: Languages, keys: [
+    'en_home_hero_tag',
+    'en_home_hero_title',
+    'en_home_hero_subtitle',
+    'en_home_hero_stats_products',
+    'en_home_hero_stats_delivery',
+    'en_home_hero_stats_brands',
+    'en_home_hero_cta_catalog',
+    'en_home_hero_cta_company',
+    'en_home_categories_title',
+    'en_home_categories_subtitle',
+    'en_home_categories_view_all',
+    'en_home_featured_title',
+    'en_home_featured_subtitle',
+    'en_home_featured_cta',
+    'en_home_trust_cert_title',
+    'en_home_trust_cert_desc',
+    'en_home_trust_delivery_title',
+    'en_home_trust_delivery_desc',
+    'en_home_trust_stock_title',
+    'en_home_trust_stock_desc',
+    'en_home_trust_support_title',
+    'en_home_trust_support_desc',
+    'en_footer_tagline',
+    'en_footer_categories_title',
+    'en_footer_info_title',
+    'en_footer_contact_title',
+    'en_footer_address',
+    'en_footer_copyright',
+    'en_footer_iso',
+    'en_footer_link_about',
+    'en_footer_link_solutions',
+    'en_footer_link_contact',
+    'en_footer_link_terms',
+    'en_footer_link_privacy',
+    'en_footer_category_gloves',
+    'en_footer_category_helmets',
+    'en_footer_category_hearing',
+    'en_footer_category_height',
+    'en_footer_category_footwear',
+    'en_cart_empty_title',
+    'en_cart_empty_desc',
+    'en_cart_empty_cta',
+    'en_cart_title',
+    'en_cart_subtitle',
+    'en_cart_continue_shopping',
+    'en_cart_sku_label',
+    'en_cart_price_quote',
+    'en_cart_help_title',
+    'en_cart_help_desc',
+    'en_cart_chat_expert',
+    'en_cart_summary_title',
+    'en_cart_subtotal',
+    'en_cart_total_label',
+    'en_cart_quote_disclaimer',
+    'en_cart_certification_label',
+    'en_cart_finalize_btn',
+    'en_nosotros_contact_support',
+    'en_nosotros_contact_title',
+    'en_nosotros_contact_desc',
+    'en_nosotros_contact_info_address_title',
+    'en_nosotros_contact_info_address_val',
+    'en_nosotros_contact_info_phone_title',
+    'en_nosotros_contact_info_phone_val',
+    'en_nosotros_contact_info_email_title',
+    'en_nosotros_contact_info_email_val',
+    'en_nosotros_form_name',
+    'en_nosotros_form_name_placeholder',
+    'en_nosotros_form_email',
+    'en_nosotros_form_email_placeholder',
+    'en_nosotros_form_subject',
+    'en_nosotros_form_subject_placeholder',
+    'en_nosotros_form_message',
+    'en_nosotros_form_message_placeholder',
+    'en_nosotros_form_submit',
+    'en_nosotros_form_whatsapp_hint',
+    'en_nosotros_form_sending'
+  ]},
+  { id: 'social', name: 'Redes Sociales', icon: LinkIcon, keys: ['social_facebook', 'social_instagram'] }
+];
 
 export default function Configuracion() {
   const [config, setConfig] = useState<ConfigItem[]>([]);
@@ -41,6 +129,8 @@ export default function Configuracion() {
     telefono: dbTelefono,
     updateProfile 
   } = useAuth();
+  
+  const { usdRate, eurRate, loading: currencyLoading } = useCurrency();
 
   const [profileForm, setProfileForm] = useState({
     nombre_completo: "",
@@ -70,7 +160,17 @@ export default function Configuracion() {
       if (error) {
         toast.error("Error al cargar configuración");
       } else {
-        setConfig(data || []);
+        const allExpectedKeys = categories.flatMap(c => c.keys);
+        const existingKeys = data ? data.map(d => d.clave) : [];
+        const missingKeys = allExpectedKeys.filter(k => !existingKeys.includes(k));
+        
+        const synthetic = missingKeys.map(k => ({
+          id: `temp-${Math.random()}`,
+          clave: k,
+          valor: (k === 'markup_bcv_usd' || k === 'markup_bcv_eur') ? '0' : ''
+        }));
+
+        setConfig([...(data || []), ...synthetic]);
       }
     } catch (err) {
       console.error("Configuracion: Error en fetchConfig:", err);
@@ -91,8 +191,10 @@ export default function Configuracion() {
     try {
       const { error } = await supabase
         .from('configuracion')
-        .update({ valor, updated_at: new Date().toISOString() })
-        .eq('clave', clave);
+        .upsert(
+          { clave, valor, updated_at: new Date().toISOString() },
+          { onConflict: 'clave' }
+        );
 
       if (error) {
         toast.error(`Error al guardar ${clave}`);
@@ -124,92 +226,6 @@ export default function Configuracion() {
       <span className="text-[10px] font-black uppercase tracking-[0.3em]">Sincronizando Sistema</span>
     </div>
   );
-
-  const categories = [
-    { id: 'contacto', name: 'Canales de Contacto', icon: Search, keys: ['email_contacto', 'telefono_whatsapp', 'direccion'] },
-    { id: 'identidad', name: 'Identidad Visual (Paleta)', icon: Palette, keys: ['color_primario', 'color_acento', 'color_header', 'color_footer', 'color_body_bg', 'color_botones_bg'] },
-    { id: 'hero', name: 'Contenido del Hero', icon: Type, keys: ['hero_h1', 'hero_p', 'hero_imagen_url'] },
-    { id: 'general', name: 'Ajustes Generales', icon: Settings, keys: ['mostrar_resegnas', 'bcv_rate', 'whatsapp_notificaciones'] },
-    { id: 'ingles', name: 'Contenido Inglés (Dynamic)', icon: Languages, keys: [
-      'en_home_hero_tag',
-      'en_home_hero_title',
-      'en_home_hero_subtitle',
-      'en_home_hero_stats_products',
-      'en_home_hero_stats_delivery',
-      'en_home_hero_stats_brands',
-      'en_home_hero_cta_catalog',
-      'en_home_hero_cta_company',
-      'en_home_categories_title',
-      'en_home_categories_subtitle',
-      'en_home_categories_view_all',
-      'en_home_featured_title',
-      'en_home_featured_subtitle',
-      'en_home_featured_cta',
-      'en_home_trust_cert_title',
-      'en_home_trust_cert_desc',
-      'en_home_trust_delivery_title',
-      'en_home_trust_delivery_desc',
-      'en_home_trust_stock_title',
-      'en_home_trust_stock_desc',
-      'en_home_trust_support_title',
-      'en_home_trust_support_desc',
-      'en_footer_tagline',
-      'en_footer_categories_title',
-      'en_footer_info_title',
-      'en_footer_contact_title',
-      'en_footer_address',
-      'en_footer_copyright',
-      'en_footer_iso',
-      'en_footer_link_about',
-      'en_footer_link_solutions',
-      'en_footer_link_contact',
-      'en_footer_link_terms',
-      'en_footer_link_privacy',
-      'en_footer_category_gloves',
-      'en_footer_category_helmets',
-      'en_footer_category_hearing',
-      'en_footer_category_height',
-      'en_footer_category_footwear',
-      'en_cart_empty_title',
-      'en_cart_empty_desc',
-      'en_cart_empty_cta',
-      'en_cart_title',
-      'en_cart_subtitle',
-      'en_cart_continue_shopping',
-      'en_cart_sku_label',
-      'en_cart_price_quote',
-      'en_cart_help_title',
-      'en_cart_help_desc',
-      'en_cart_chat_expert',
-      'en_cart_summary_title',
-      'en_cart_subtotal',
-      'en_cart_total_label',
-      'en_cart_quote_disclaimer',
-      'en_cart_certification_label',
-      'en_cart_finalize_btn',
-      'en_nosotros_contact_support',
-      'en_nosotros_contact_title',
-      'en_nosotros_contact_desc',
-      'en_nosotros_contact_info_address_title',
-      'en_nosotros_contact_info_address_val',
-      'en_nosotros_contact_info_phone_title',
-      'en_nosotros_contact_info_phone_val',
-      'en_nosotros_contact_info_email_title',
-      'en_nosotros_contact_info_email_val',
-      'en_nosotros_form_name',
-      'en_nosotros_form_name_placeholder',
-      'en_nosotros_form_email',
-      'en_nosotros_form_email_placeholder',
-      'en_nosotros_form_subject',
-      'en_nosotros_form_subject_placeholder',
-      'en_nosotros_form_message',
-      'en_nosotros_form_message_placeholder',
-      'en_nosotros_form_submit',
-      'en_nosotros_form_whatsapp_hint',
-      'en_nosotros_form_sending'
-    ]},
-    { id: 'social', name: 'Redes Sociales', icon: LinkIcon, keys: ['social_facebook', 'social_instagram'] }
-  ];
 
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -255,6 +271,29 @@ export default function Configuracion() {
         {/* DYNAMIC CONFIG */}
         {canManageSettings && (
           <div className="flex flex-col gap-8">
+            
+            {/* Tasa BCV Widget en vivo */}
+            <div className="bg-primary-950 p-8 rounded-[3rem] shadow-xl text-white flex flex-col md:flex-row md:items-center justify-between gap-6 overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-accent/20 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+              <div className="flex flex-col gap-2 relative z-10">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent flex items-center gap-2">
+                  <RefreshCcw className={`w-3 h-3 ${currencyLoading ? 'animate-spin' : ''}`} /> Monitor de Cambio BCV
+                </span>
+                <h3 className="text-2xl font-black uppercase tracking-tighter loading-none">Tasa Activa del Sistema</h3>
+                <p className="text-xs text-slate-400 font-medium tracking-wide">Incluye el valor BCV oficial más tus ajustes fijos ("markup").</p>
+              </div>
+              <div className="flex gap-4 relative z-10">
+                <div className="bg-slate-900 border border-slate-800 px-6 py-4 rounded-2xl flex flex-col items-center">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">1 USD =</span>
+                  <span className="text-2xl font-black font-outfit text-white tracking-tighter overflow-hidden text-clip whitespace-nowrap">Bs. {usdRate.toLocaleString('es-VE', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+                </div>
+                <div className="bg-slate-900 border border-slate-800 px-6 py-4 rounded-2xl flex flex-col items-center">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">1 EUR =</span>
+                  <span className="text-2xl font-black font-outfit text-white tracking-tighter overflow-hidden text-clip whitespace-nowrap">Bs. {eurRate.toLocaleString('es-VE', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+                </div>
+              </div>
+            </div>
+
             <div className="relative mb-4">
               <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <input 
@@ -312,6 +351,39 @@ export default function Configuracion() {
                                   <div className="flex items-center gap-3">
                                     <input type="color" value={item.valor} onChange={(e) => handleChange(item.clave, e.target.value)} className="w-14 h-12 rounded-xl cursor-pointer" />
                                     <input type="text" value={item.valor} onChange={(e) => handleChange(item.clave, e.target.value)} className="flex-1 bg-slate-50 border border-slate-50 rounded-xl px-4 py-2 text-xs font-bold font-mono" />
+                                  </div>
+                                ) : item.clave.startsWith('markup_bcv_') ? (
+                                  <div className="flex flex-col gap-3">
+                                    <div className="flex flex-col">
+                                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
+                                        Tasa Oficial Detectada: Bs. {(
+                                          item.clave === 'markup_bcv_usd' ? (usdRate - parseFloat(item.valor || '0')) : (eurRate - parseFloat(item.valor || '0'))
+                                        ).toFixed(2)}
+                                      </span>
+                                      <div className="flex items-center relative">
+                                        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                                          <span className="font-bold text-accent">Bs.</span>
+                                        </div>
+                                        <input 
+                                          type="number" 
+                                          step="0.01"
+                                          className="w-full bg-slate-50 focus:bg-white border border-slate-100 rounded-xl py-3 pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-accent outline-none text-slate-900 transition-smooth" 
+                                          value={(
+                                            (item.clave === 'markup_bcv_usd' ? (usdRate - parseFloat(item.valor || '0')) : (eurRate - parseFloat(item.valor || '0'))) 
+                                            + parseFloat(item.valor || '0')
+                                          ).toFixed(2).replace(/\.00$/, '')}
+                                          onChange={(e) => {
+                                            const baseRate = item.clave === 'markup_bcv_usd' ? (usdRate - parseFloat(item.valor || '0')) : (eurRate - parseFloat(item.valor || '0'));
+                                            const finalDesired = parseFloat(e.target.value) || baseRate;
+                                            const diff = finalDesired - baseRate;
+                                            handleChange(item.clave, diff.toString());
+                                          }}
+                                        />
+                                      </div>
+                                    </div>
+                                    <span className="text-[10px] text-slate-500 font-medium leading-relaxed">
+                                      Edita este número para establecer el monto final (ya incluye el BCV). La diferencia se guardará como un cargo oculto adicional (+ {(parseFloat(item.valor || '0')).toFixed(2)} Bs.).
+                                    </span>
                                   </div>
                                 ) : (
                                   <textarea 

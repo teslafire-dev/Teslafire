@@ -224,6 +224,7 @@ export default function Home() {
                   sku={prod.sku}
                   category={prod.categorias?.nombre || 'General'}
                   price={prod.precio}
+                  moneda={prod.moneda}
                   image={(prod.imagenes_urls && prod.imagenes_urls[0]) || '/placeholder-product.png'}
                   isNew={prod.is_new || false}
                   isOffer={prod.is_offer || false}

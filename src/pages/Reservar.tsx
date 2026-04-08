@@ -21,6 +21,7 @@ import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import toast from "react-hot-toast";
 import { useTranslation } from "@/contexts/TranslationContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 const reservationSchema = z.object({
   nombre: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
@@ -36,6 +37,7 @@ type ReservationFormValues = z.infer<typeof reservationSchema>;
 export default function Reservar() {
   const { t } = useTranslation();
   const { items, getTotal } = useCartStore();
+  const { usdRate, eurRate } = useCurrency();
   const { user, nombre_completo, apellido, telefono } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -92,7 +94,7 @@ export default function Reservar() {
         cliente_email: data.email,
         cliente_cedula: data.cedula,
         mensaje: data.mensaje,
-        productos: items.map(i => ({ sku: i.sku, nombre: i.name, cantidad: i.quantity, precio: i.price })),
+        productos: items.map(i => ({ sku: i.sku, nombre: i.name, cantidad: i.quantity, precio: i.price, moneda: i.moneda })),
         total: getTotal(),
         estado: 'pendiente'
       });
@@ -164,16 +166,25 @@ export default function Reservar() {
                           <span className="text-[9px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-widest mt-0.5">Cant: {item.quantity} • {item.sku}</span>
                         </div>
                         <span className="text-base font-black text-slate-950 dark:text-white font-outfit tracking-tighter shrink-0">
-                           {item.price ? `$${(item.price * item.quantity).toFixed(2)}` : "Cotizar"}
+                           {item.price ? `${(item.moneda === 'EUR' || item.moneda === 'EUR_ONLY') ? '€' : '$'}${(item.price * item.quantity).toFixed(2)}` : "Cotizar"}
                         </span>
                       </div>
                     ))}
                   </div>
                   <div className="pt-6 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                    <span className="text-lg font-black font-outfit text-slate-950 dark:text-white uppercase tracking-tighter">
-                      {t('reservation.total_estimated')}
-                    </span>
-                    <span className="text-3xl font-black font-outfit text-accent tracking-tighter">${getTotal().toFixed(2)}</span>
+                    <div className="flex flex-col">
+                      <span className="text-lg font-black font-outfit text-slate-950 dark:text-white uppercase tracking-tighter">
+                        {t('reservation.total_estimated')}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
+                        Total Bs.{' '} 
+                        {items.reduce((acc, item) => {
+                          if (item.moneda === 'NONE' || item.moneda === 'USD_ONLY' || item.moneda === 'EUR_ONLY') return acc;
+                          return acc + ((item.price || 0) * item.quantity * ((item.moneda === 'EUR' || item.moneda === 'EUR_ONLY') ? eurRate : usdRate));
+                        }, 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <span className="text-3xl font-black font-outfit text-accent tracking-tighter shrink-0 block pl-2">${(items.reduce((acc, item) => acc + ((item.price || 0) * item.quantity), 0)).toFixed(2)}</span>
                   </div>
                </div>
 

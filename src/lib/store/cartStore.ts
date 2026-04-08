@@ -8,6 +8,7 @@ interface CartItem {
   name: string;
   sku: string;
   price: number | null;
+  moneda: string; // 'USD' | 'EUR' | 'NONE' | 'USD_ONLY' | 'EUR_ONLY'
   image: string;
   quantity: number;
 }

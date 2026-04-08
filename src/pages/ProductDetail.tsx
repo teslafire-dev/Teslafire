@@ -16,6 +16,7 @@ import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import ProductCard from "@/components/productos/ProductCard";
 import { useTranslation } from "@/contexts/TranslationContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 export default function ProductDetail() {
   const { t, lang } = useTranslation();
@@ -27,6 +28,7 @@ export default function ProductDetail() {
   const [selectedImage, setSelectedImage] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
+  const { usdRate, eurRate } = useCurrency();
   const addItem = useCartStore((state) => state.addItem);
 
   useEffect(() => {
@@ -90,6 +92,7 @@ export default function ProductDetail() {
       name: product.nombre,
       sku: product.sku,
       price: product.precio || 0,
+      moneda: product.moneda || 'USD',
       image: selectedImage
     }, quantity);
 
@@ -166,12 +169,21 @@ export default function ProductDetail() {
               <div className="flex items-center gap-6 py-4 border-y border-slate-100">
                 <div className="flex flex-col">
                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('product.unit_price')}</span>
-                   <span className="text-4xl font-black text-primary-950 font-outfit tracking-tighter leading-none">
-                     {product.precio ? `$${product.precio.toFixed(2)}` : t('product.get_quote')}
-                   </span>
+                   <div className="flex items-end gap-3">
+                     <span className="text-4xl font-black text-primary-950 font-outfit tracking-tighter leading-none">
+                       {product.precio ? `${(product.moneda === 'EUR' || product.moneda === 'EUR_ONLY') ? '€' : '$'}${product.precio.toFixed(2)}` : t('product.get_quote')}
+                     </span>
+                     {product.precio && (product.moneda !== 'NONE' && product.moneda !== 'USD_ONLY' && product.moneda !== 'EUR_ONLY') && (
+                       <span className="text-sm font-black text-slate-400 mb-1 tracking-widest">
+                         Bs. {(((product.moneda === 'EUR' || product.moneda === 'EUR_ONLY') ? eurRate : usdRate) * product.precio).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                       </span>
+                     )}
+                   </div>
                 </div>
                 {product.precio && (
-                  <span className="text-slate-300 line-through text-xl font-bold mt-2">${(product.precio * 1.2).toFixed(2)}</span>
+                  <span className="text-slate-300 line-through text-xl font-bold mt-2">
+                    {(product.moneda === 'EUR' || product.moneda === 'EUR_ONLY') ? '€' : '$'}{(product.precio * 1.2).toFixed(2)}
+                  </span>
                 )}
                 <div className="ml-auto px-4 py-2 bg-green-50 rounded-xl border border-green-100">
                    <div className="flex items-center gap-2 text-green-600 text-[10px] font-black uppercase tracking-widest">

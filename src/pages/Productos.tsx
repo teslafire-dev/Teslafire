@@ -169,6 +169,7 @@ export default function Productos() {
                       sku={product.sku}
                       category={(lang === 'EN' && product.categorias?.nombre_en) ? product.categorias?.nombre_en : (product.categorias?.nombre || 'General')}
                       price={product.precio}
+                      moneda={product.moneda}
                       image={(product.imagenes_urls && product.imagenes_urls[0]) || '/placeholder-product.png'}
                       isNew={product.is_new}
                       isOffer={product.is_offer}

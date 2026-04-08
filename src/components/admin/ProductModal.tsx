@@ -24,6 +24,7 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editProduct }
     marca_id: "",
     nueva_marca: "",
     precio: "",
+    moneda: "USD",
     stock: "",
     descripcion: "",
     descripcion_en: ""
@@ -41,12 +42,13 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editProduct }
           marca_id: editProduct.marca_id || "",
           nueva_marca: "",
           precio: editProduct.precio || "",
+          moneda: editProduct.moneda || "USD",
           stock: editProduct.stock || "",
           descripcion: editProduct.descripcion || "",
           descripcion_en: editProduct.descripcion_en || ""
         });
       } else {
-        setFormData({ sku: "", nombre: "", nombre_en: "", categoria_id: "", nueva_categoria: "", marca_id: "", nueva_marca: "", precio: "", stock: "", descripcion: "", descripcion_en: "" });
+        setFormData({ sku: "", nombre: "", nombre_en: "", categoria_id: "", nueva_categoria: "", marca_id: "", nueva_marca: "", precio: "", moneda: "USD", stock: "", descripcion: "", descripcion_en: "" });
       }
       fetchRelations();
     }
@@ -103,6 +105,7 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editProduct }
         categoria_id: finalCatId || null,
         marca_id: finalMarcaId || null,
         precio: parseFloat(formData.precio) || 0,
+        moneda: formData.moneda,
         stock: parseInt(formData.stock) || 0,
         descripcion: formData.descripcion,
         descripcion_en: formData.descripcion_en,
@@ -198,7 +201,7 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editProduct }
             <textarea value={formData.descripcion_en} onChange={e => setFormData({...formData, descripcion_en: e.target.value})} className="bg-accent/5 border border-accent/10 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-accent outline-none min-h-[100px] resize-none" placeholder="Detailed features, certifications in English..." />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
              <div className="flex flex-col gap-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Fabricante</label>
               <select value={formData.marca_id} onChange={e => setFormData({...formData, marca_id: e.target.value})} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-accent outline-none">
@@ -209,12 +212,35 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editProduct }
                 <option value="new" className="font-black text-accent">+ Nueva Marca</option>
               </select>
             </div>
+            
             <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Inversión (USD)</label>
-              <input required type="number" step="0.01" value={formData.precio} onChange={e => setFormData({...formData, precio: e.target.value})} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-accent outline-none" placeholder="0.00" />
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Base Inversión y Equivalente Bs.</label>
+              <div className="relative">
+                <select value={formData.moneda} onChange={e => setFormData({...formData, moneda: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold text-accent focus:ring-2 focus:ring-accent outline-none appearance-none cursor-pointer">
+                  <option value="USD">Dólares (US$) + Mostrar Bs. (Tasa Regular)</option>
+                  <option value="EUR">Euros (€) + Mostrar Bs. (Tasa Premium)</option>
+                  <option value="USD_ONLY">Dólares (US$) (NO mostrar Bs.)</option>
+                  <option value="EUR_ONLY">Euros (€) (NO mostrar Bs.)</option>
+                  <option value="NONE">Sin definir (Ocultar Bs.)</option>
+                </select>
+                <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+                  <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+              </div>
             </div>
+
             <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Stock</label>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Inversión Base ({(formData.moneda === 'EUR' || formData.moneda === 'EUR_ONLY') ? '€' : '$'})</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                  <span className="text-slate-400 font-bold">{(formData.moneda === 'EUR' || formData.moneda === 'EUR_ONLY') ? '€' : '$'}</span>
+                </div>
+                <input required type="number" step="0.01" value={formData.precio} onChange={e => setFormData({...formData, precio: e.target.value})} className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-8 text-sm font-bold focus:ring-2 focus:ring-accent outline-none" placeholder="0.00" />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Stock Disponible</label>
               <input required type="number" value={formData.stock} onChange={e => setFormData({...formData, stock: e.target.value})} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-accent outline-none" placeholder="0" />
             </div>
           </div>

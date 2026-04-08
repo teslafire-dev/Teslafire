@@ -34,6 +34,7 @@ CREATE TABLE productos (
   imagenes_urls TEXT[] DEFAULT '{}',
   etiquetas TEXT[] DEFAULT '{}',
   destacado BOOLEAN DEFAULT FALSE,
+  moneda TEXT DEFAULT 'USD',
   estado TEXT DEFAULT 'activo' CHECK (estado IN ('activo', 'inactivo')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

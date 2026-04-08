@@ -22,6 +22,7 @@ import Historial from './pages/perfil/Historial';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import { TranslationProvider } from './contexts/TranslationContext';
+import { CurrencyProvider } from './contexts/CurrencyContext';
 import ProtectedRoute from './components/admin/ProtectedRoute';
 
 function ScrollToTop() {
@@ -35,7 +36,8 @@ function ScrollToTop() {
 function App() {
   return (
     <TranslationProvider>
-      <AuthProvider>
+      <CurrencyProvider>
+        <AuthProvider>
         <Router>
           <ScrollToTop />
           <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-500">
@@ -88,7 +90,8 @@ function App() {
             />
           </div>
         </Router>
-      </AuthProvider>
+        </AuthProvider>
+      </CurrencyProvider>
     </TranslationProvider>
   );
 }

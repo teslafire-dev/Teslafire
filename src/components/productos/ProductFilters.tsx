@@ -155,7 +155,7 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
                           type="number" 
                           value={maxPrice || ""} 
                           onChange={(e) => handleFilterChange("max_precio", e.target.value || null)}
-                          placeholder="9990"
+                          placeholder="1000"
                           className="w-full bg-transparent text-sm font-black text-primary-950 outline-none"
                          />
                       </div>
@@ -165,9 +165,9 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
                 <input 
                   type="range" 
                   min="0" 
-                  max="9990" 
+                  max="1000" 
                   step="10"
-                  value={maxPrice || "9990"}
+                  value={maxPrice || "1000"}
                   onChange={(e) => handleFilterChange("max_precio", e.target.value)}
                   className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-accent transition-smooth"
                 />
@@ -179,7 +179,7 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
                    </div>
                    <div className="flex flex-col items-end gap-1">
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('catalog.max_price')}</span>
-                      <span className="text-sm font-black text-accent font-outfit">${maxPrice || "9990"}</span>
+                      <span className="text-sm font-black text-accent font-outfit">${maxPrice || "1000"}</span>
                    </div>
                 </div>
                 <p className="text-[9px] font-medium text-slate-400 italic">
