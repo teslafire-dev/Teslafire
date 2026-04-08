@@ -24,6 +24,49 @@ export default function Header() {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const cartItems = useCartStore((state) => state.items);
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (searchQuery.length >= 4) {
+        setIsSearching(true);
+        try {
+          const { data } = await supabase
+            .from('productos')
+            .select('id, nombre, nombre_en, sku, slug, imagenes_urls')
+            .or(`nombre.ilike.%${searchQuery}%,sku.ilike.%${searchQuery}%,nombre_en.ilike.%${searchQuery}%`)
+            .limit(6);
+          
+          setSearchResults(data || []);
+        } catch (error) {
+          console.error("Error searching:", error);
+        } finally {
+          setIsSearching(false);
+        }
+      } else {
+        setSearchResults([]);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Click outside to close search results
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setSearchResults([]);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
@@ -128,25 +171,67 @@ export default function Header() {
               {item.label}
             </NavLink>
           ))}
-          {isAdmin && (
-            <Link 
-              to="/admin" 
-              className="text-primary-950 dark:text-white px-4 py-2 bg-accent/10 rounded-xl border border-accent/20 hover:bg-accent hover:text-white transition-smooth flex items-center gap-2"
-            >
-              {t('admin.panel')}
-            </Link>
-          )}
         </nav>
 
         {/* Search & Actions */}
-        <div className="hidden md:flex items-center gap-3 flex-1 max-w-[380px] mx-8">
+        <div className="hidden md:flex items-center gap-3 flex-1 max-w-[600px] mx-8 relative" ref={searchRef}>
           <div className="relative flex-1 group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-accent transition-smooth w-4 h-4" />
+            <Search className={`absolute left-4 top-1/2 -translate-y-1/2 transition-smooth w-4 h-4 ${isSearching ? 'text-accent animate-pulse' : 'text-slate-400 dark:text-slate-500 group-focus-within:text-accent'}`} />
             <input 
               type="text" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('search.placeholder')}
               className="w-full bg-slate-100/50 dark:bg-slate-800/50 border border-transparent rounded-2xl py-2.5 pl-11 pr-4 text-xs font-bold focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-accent outline-none transition-smooth shadow-inner dark:text-slate-100 uppercase tracking-wider"
             />
+            
+            {/* Search Results Dropdown */}
+            <AnimatePresence>
+              {searchResults.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden z-[60]"
+                >
+                  <div className="max-h-[380px] overflow-y-auto p-2">
+                    <p className="px-4 py-2 text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-50 dark:border-slate-800 mb-1">Resultados encontrados</p>
+                    {searchResults.map((prod) => (
+                      <Link
+                        key={prod.id}
+                        to={`/productos/${prod.slug || prod.id}`}
+                        onClick={() => {
+                          setSearchQuery("");
+                          setSearchResults([]);
+                        }}
+                        className="flex items-center gap-4 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-smooth group"
+                      >
+                        <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden flex-shrink-0">
+                          <img 
+                            src={prod.imagenes_urls?.[0] || '/placeholder-product.png'} 
+                            alt={prod.nombre}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-[11px] font-black text-primary-950 dark:text-white uppercase truncate tracking-tight group-hover:text-accent transition-colors">
+                            {(lang === 'EN' && prod.nombre_en) ? prod.nombre_en : prod.nombre}
+                          </span>
+                          <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">SKU: {prod.sku}</span>
+                        </div>
+                      </Link>
+                    ))}
+                    <Link 
+                      to="/productos" 
+                      onClick={() => setSearchResults([])}
+                      className="block text-center py-3 text-[9px] font-black text-accent uppercase tracking-widest hover:bg-accent/5 transition-smooth mt-1 rounded-xl"
+                    >
+                      Ver todos los productos
+                    </Link>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
           
           <div className="flex items-center gap-1.5 p-1 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">

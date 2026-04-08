@@ -49,7 +49,7 @@ export default function ProductCard({
   return (
     <Link 
       to={`/productos/${slug}`}
-      className="group bg-white rounded-[2.5rem] border border-slate-100 overflow-hidden hover:shadow-xl hover:shadow-primary-950/5 transition-smooth flex flex-col h-full relative"
+      className="group bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 overflow-hidden hover:shadow-xl hover:shadow-primary-950/5 transition-smooth flex flex-col h-full relative"
     >
       {/* Badges */}
       <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
@@ -66,9 +66,9 @@ export default function ProductCard({
       </div>
 
       {/* Image Container */}
-      <div className="relative aspect-square overflow-hidden bg-slate-50 p-4 group-hover:p-2 transition-smooth">
+      <div className="relative aspect-square overflow-hidden bg-slate-50 dark:bg-slate-800 p-4 group-hover:p-2 transition-smooth">
         <img 
-          src={image} 
+          src={image || '/placeholder-product.png'} 
           alt={name} 
           className="w-full h-full object-contain group-hover:scale-105 transition-smooth duration-700"
         />
@@ -76,7 +76,7 @@ export default function ProductCard({
         
         {/* Quick Actions Overlay (Hidden on Mobile) */}
         <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-smooth translate-y-2 group-hover:translate-y-0 hidden md:flex">
-          <button className="p-3 bg-white rounded-xl text-primary-950 shadow-xl hover:bg-accent hover:text-white transition-smooth active:scale-95">
+          <button className="p-3 bg-white dark:bg-slate-900 rounded-xl text-primary-950 dark:text-white shadow-xl hover:bg-accent hover:text-white transition-smooth active:scale-95">
             <Eye className="w-4 h-4" />
           </button>
         </div>
@@ -85,8 +85,8 @@ export default function ProductCard({
       {/* Content */}
       <div className="p-5 flex flex-col gap-3 flex-1">
         <div className="flex flex-col gap-0.5">
-          <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">{category}</span>
-          <h3 className="text-[15px] font-black text-primary-950 leading-snug group-hover:text-accent transition-smooth line-clamp-2 uppercase tracking-tight">
+          <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em]">{category}</span>
+          <h3 className="text-[15px] font-black text-primary-950 dark:text-white leading-snug group-hover:text-accent transition-smooth line-clamp-2 uppercase tracking-tight">
             {name}
           </h3>
         </div>
@@ -100,9 +100,9 @@ export default function ProductCard({
 
         <div className="mt-auto flex items-end justify-between gap-3 pt-2">
           <div className="flex flex-col">
-            <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest mb-1">SKU: {sku}</span>
+            <span className="text-[8px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest mb-1">SKU: {sku}</span>
             <div className="flex flex-col">
-              <span className="text-lg font-black text-primary-950 font-outfit tracking-tighter leading-none">
+              <span className="text-lg font-black text-primary-950 dark:text-white font-outfit tracking-tighter leading-none">
                 {Number(price) > 0 ? (
                   `${(moneda === 'EUR' || moneda === 'EUR_ONLY') ? '€' : '$'}${Number(price).toFixed(2)}`
                 ) : "Cotizar"}

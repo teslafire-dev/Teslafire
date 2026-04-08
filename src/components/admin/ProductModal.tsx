@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Package, Loader2, PlusCircle } from "lucide-react";
+import { X, Package, Loader2, PlusCircle, Star } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
 
@@ -30,7 +30,8 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editProduct }
     stock: "",
     descripcion: "",
     descripcion_en: "",
-    imagen_url: ""
+    imagen_url: "",
+    imagenes_urls: [] as string[]
   });
 
   const [uploading, setUploading] = useState(false);
@@ -53,7 +54,8 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editProduct }
           stock: editProduct.stock || "",
           descripcion: editProduct.descripcion || "",
           descripcion_en: editProduct.descripcion_en || "",
-          imagen_url: editProduct.imagen_url || ""
+          imagen_url: editProduct.imagen_url || "",
+          imagenes_urls: editProduct.imagenes_urls || (editProduct.imagen_url ? [editProduct.imagen_url] : [])
         });
       } else {
         setFormData({ 
@@ -71,7 +73,8 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editProduct }
           stock: "", 
           descripcion: "", 
           descripcion_en: "", 
-          imagen_url: "" 
+          imagen_url: "",
+          imagenes_urls: []
         });
       }
       fetchRelations();
@@ -80,8 +83,12 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editProduct }
 
   const handleFileUpload = async (file: File) => {
     if (!file) return;
-    if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
-      toast.error("Solo JPG/PNG");
+    if (formData.imagenes_urls.length >= 6) {
+      toast.error("Máximo 6 fotos por producto");
+      return;
+    }
+    if (!['image/jpeg', 'image/png', 'image/jpg', 'image/webp'].includes(file.type)) {
+      toast.error("Solo JPG/PNG/WEBP");
       return;
     }
 
@@ -89,7 +96,9 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editProduct }
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `prod_${fileName}`;
+      // Usar el SKU como carpeta para mantener el Storage ordenado
+      const folder = formData.sku.trim() || 'sin-sku';
+      const filePath = `${folder}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('products')
@@ -101,13 +110,37 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editProduct }
         .from('products')
         .getPublicUrl(filePath);
 
-      setFormData(prev => ({ ...prev, imagen_url: publicUrl }));
-      toast.success("Foto cargada");
+      const newImages = [...formData.imagenes_urls, publicUrl];
+      setFormData(prev => ({ 
+        ...prev, 
+        imagenes_urls: newImages,
+        imagen_url: prev.imagen_url || publicUrl // Set as main if none exists
+      }));
+      toast.success("Foto añadida a la galería");
     } catch (err: any) {
       toast.error("Error al subir");
     } finally {
       setUploading(false);
     }
+  };
+
+  const removeImage = (index: number) => {
+    if (formData.imagenes_urls.length <= 1) {
+      toast.error("El producto debe tener al menos una imagen");
+      return;
+    }
+    const newImages = formData.imagenes_urls.filter((_, i) => i !== index);
+    setFormData(prev => ({
+      ...prev,
+      imagenes_urls: newImages,
+      // Si borramos la principal, la siguiente pasa a ser principal
+      imagen_url: prev.imagen_url === formData.imagenes_urls[index] ? newImages[0] : prev.imagen_url
+    }));
+  };
+
+  const setAsMain = (url: string) => {
+    setFormData(prev => ({ ...prev, imagen_url: url }));
+    toast.success("Imagen de portada actualizada");
   };
 
   const fetchRelations = async () => {
@@ -173,7 +206,8 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editProduct }
         stock: parseInt(formData.stock) || 0,
         descripcion: formData.descripcion,
         descripcion_en: formData.descripcion_en,
-        imagen_url: formData.imagen_url,
+        imagen_url: formData.imagen_url || formData.imagenes_urls[0] || "",
+        imagenes_urls: formData.imagenes_urls,
         updated_at: new Date().toISOString()
       };
 
@@ -308,32 +342,57 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editProduct }
               </div>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Imagen del Producto (800x800px)</label>
-              <div className="relative group">
-                <div className="w-full aspect-video bg-slate-50 rounded-3xl border-2 border-dashed border-slate-100 flex flex-col items-center justify-center gap-2 group-hover:border-accent transition-smooth relative overflow-hidden">
-                  {formData.imagen_url ? (
-                    <>
-                      <img src={formData.imagen_url} className="w-full h-full object-contain" />
-                      <button type="button" onClick={() => setFormData({...formData, imagen_url: ""})} className="absolute top-4 right-4 bg-red-500 text-white p-2 rounded-xl shadow-xl hover:scale-110 transition-smooth">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <div className="p-4 bg-white rounded-2xl shadow-xl shadow-slate-200 group-hover:bg-accent group-hover:text-white transition-smooth">
-                        <PlusCircle className="w-8 h-8" />
-                      </div>
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-accent transition-smooth">Click para subir JPG/PNG</span>
-                      <input type="file" accept="image/*" onChange={e => e.target.files?.[0] && handleFileUpload(e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" />
-                    </>
-                  )}
-                  {uploading && (
-                    <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-20">
-                      <Loader2 className="w-8 h-8 text-accent animate-spin" />
+            <div className="flex flex-col gap-4">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Galería de Imágenes (Máx. 6 - La primera es la portada)</label>
+              
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {formData.imagenes_urls.map((url, index) => (
+                  <div key={index} className={`relative group aspect-square rounded-[2rem] overflow-hidden border-2 transition-smooth shadow-sm ${formData.imagen_url === url ? 'border-accent ring-4 ring-accent/10' : 'border-slate-100 hover:border-slate-300'}`}>
+                    <img src={url} className="w-full h-full object-contain p-2" />
+                    
+                    <div className="absolute inset-0 bg-primary-950/40 opacity-0 group-hover:opacity-100 transition-smooth flex items-center justify-center gap-2">
+                       {formData.imagen_url !== url && (
+                         <button 
+                            type="button" 
+                            onClick={() => setAsMain(url)}
+                            className="p-2 bg-white text-primary-950 rounded-xl hover:bg-accent hover:text-white transition-smooth shadow-lg"
+                            title="Poner como principal"
+                         >
+                            <Star className="w-4 h-4" />
+                         </button>
+                       )}
+                       <button 
+                          type="button" 
+                          onClick={() => removeImage(index)}
+                          className={`p-2 bg-white text-destructive rounded-xl hover:bg-destructive hover:text-white transition-smooth shadow-lg ${formData.imagenes_urls.length <= 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          title="Eliminar foto"
+                       >
+                          <X className="w-4 h-4" />
+                       </button>
                     </div>
-                  )}
-                </div>
+                    {formData.imagen_url === url && (
+                      <div className="absolute top-2 left-2 bg-accent text-white text-[8px] font-black px-2 py-1 rounded-full uppercase tracking-widest shadow-lg">Portada</div>
+                    )}
+                  </div>
+                ))}
+
+                {formData.imagenes_urls.length < 6 && (
+                  <div className="relative group aspect-square bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 hover:border-accent hover:bg-accent/5 transition-smooth cursor-pointer overflow-hidden">
+                    <PlusCircle className="w-8 h-8 text-slate-300 group-hover:text-accent transition-smooth" />
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest group-hover:text-accent">Añadir</span>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={e => e.target.files?.[0] && handleFileUpload(e.target.files[0])} 
+                      className="absolute inset-0 opacity-0 cursor-pointer" 
+                    />
+                    {uploading && (
+                      <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-20">
+                        <Loader2 className="w-6 h-6 text-accent animate-spin" />
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 

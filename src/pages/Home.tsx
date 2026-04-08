@@ -246,7 +246,7 @@ export default function Home() {
                   }
                   price={prod.precio}
                   moneda={prod.moneda}
-                  image={(prod.imagenes_urls && prod.imagenes_urls[0]) || '/placeholder-product.png'}
+                  image={(prod.imagenes_urls && prod.imagenes_urls[0]) || prod.imagen_url || '/placeholder-product.png'}
                   isNew={prod.is_new || false}
                   isOffer={prod.is_offer || false}
                 />

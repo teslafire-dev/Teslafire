@@ -83,7 +83,7 @@ export default function Productos() {
   };
 
   return (
-    <div className="bg-slate-50 min-h-screen pt-32 md:pt-40 pb-40 relative">
+    <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pt-32 md:pt-40 pb-40 relative transition-colors duration-500">
       {/* Mobile Filters Drawer */}
       <AnimatePresence>
         {isMobileFilterOpen && (
@@ -126,14 +126,14 @@ export default function Productos() {
             {/* Catalog Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
               <div className="flex flex-col gap-3">
-                <h1 className="text-4xl md:text-6xl font-black font-outfit text-primary-950 uppercase tracking-tighter leading-none">
+                <h1 className="text-4xl md:text-6xl font-black font-outfit text-primary-950 dark:text-white uppercase tracking-tighter leading-none">
                    {t('catalog.title').split(' ').map((word, i) => (
                       word === 'Productos' || word === 'Products' 
                       ? <span key={i} className="text-accent underline decoration-4 decoration-accent/20 underline-offset-8 transition-smooth" style={{ textDecorationThickness: '6px' }}>{word}</span> 
                       : word + ' '
                    ))}
                 </h1>
-                <p className="text-slate-500 font-medium tracking-wide">
+                <p className="text-slate-500 dark:text-slate-400 font-medium tracking-wide">
                    {t('catalog.showing_results').replace('{count}', products.length.toString())}
                 </p>
               </div>
@@ -144,7 +144,7 @@ export default function Productos() {
                   <select 
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="appearance-none bg-white border border-slate-200 rounded-2xl px-6 py-3.5 pr-12 text-xs font-black uppercase tracking-widest text-primary-950 outline-none focus:ring-2 focus:ring-accent transition-smooth shadow-sm cursor-pointer"
+                    className="appearance-none bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-3.5 pr-12 text-xs font-black uppercase tracking-widest text-primary-950 dark:text-white outline-none focus:ring-2 focus:ring-accent transition-smooth shadow-sm cursor-pointer"
                   >
                     <option value="newest">{t('catalog.sort.newest')}</option>
                     <option value="price_asc">{t('catalog.sort.price_asc')}</option>
@@ -156,7 +156,7 @@ export default function Productos() {
                 
                 <button 
                   onClick={() => setIsMobileFilterOpen(true)}
-                  className="lg:hidden flex items-center gap-3 px-6 py-3.5 bg-primary-950 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-primary-950/20 active:scale-95 transition-smooth"
+                  className="lg:hidden flex items-center gap-3 px-6 py-3.5 bg-primary-950 dark:bg-accent text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-primary-950/20 active:scale-95 transition-smooth"
                 >
                   <SlidersHorizontal className="w-4 h-4" /> {t('catalog.filters')}
                 </button>
@@ -175,7 +175,7 @@ export default function Productos() {
                     className="flex flex-col items-center justify-center py-40 gap-6 text-slate-400"
                   >
                     <Loader2 className="w-16 h-16 animate-spin text-accent" />
-                    <span className="text-[10px] font-black uppercase tracking-[.4em] animate-pulse italic">Sincronizando Inventario Técnico...</span>
+                    <span className="text-[10px] font-black uppercase tracking-[.4em] animate-pulse italic dark:text-slate-500">Sincronizando Inventario Técnico...</span>
                   </motion.div>
                 ) : products.length > 0 ? (
                   <motion.div 
@@ -207,7 +207,7 @@ export default function Productos() {
                           }
                           price={product.precio}
                           moneda={product.moneda}
-                          image={(product.imagenes_urls && product.imagenes_urls[0]) || '/placeholder-product.png'}
+                          image={(product.imagenes_urls && product.imagenes_urls[0]) || product.imagen_url || '/placeholder-product.png'}
                           isNew={product.is_new}
                           isOffer={product.is_offer}
                         />
@@ -220,14 +220,14 @@ export default function Productos() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="flex flex-col items-center justify-center py-40 gap-8 bg-white rounded-[4rem] border border-slate-100 border-dashed"
+                    className="flex flex-col items-center justify-center py-40 gap-8 bg-white dark:bg-slate-900 rounded-[4rem] border border-slate-100 dark:border-slate-800 border-dashed"
                   >
-                    <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center">
-                      <Package className="w-12 h-12 text-slate-200" />
+                    <div className="w-24 h-24 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center">
+                      <Package className="w-12 h-12 text-slate-200 dark:text-slate-700" />
                     </div>
                     <div className="text-center">
-                      <h3 className="text-2xl font-black text-primary-950 uppercase tracking-tighter mb-2">{t('catalog.no_products')}</h3>
-                      <p className="text-slate-500 font-medium tracking-wide">{t('catalog.no_products_desc')}</p>
+                      <h3 className="text-2xl font-black text-primary-950 dark:text-white uppercase tracking-tighter mb-2">{t('catalog.no_products')}</h3>
+                      <p className="text-slate-500 dark:text-slate-400 font-medium tracking-wide">{t('catalog.no_products_desc')}</p>
                     </div>
                   </motion.div>
                 )}
@@ -237,8 +237,8 @@ export default function Productos() {
             {/* End of results */}
             {!loading && products.length > 0 && (
               <div className="flex flex-col items-center gap-6 pt-20">
-                <div className="w-px h-20 bg-gradient-to-b from-slate-200 to-transparent"></div>
-                <span className="text-[10px] font-black uppercase tracking-[.6em] text-slate-300">
+                <div className="w-px h-20 bg-gradient-to-b from-slate-200 dark:from-slate-800 to-transparent"></div>
+                <span className="text-[10px] font-black uppercase tracking-[.6em] text-slate-300 dark:text-slate-700">
                    {t('catalog.end')}
                 </span>
               </div>

@@ -259,9 +259,9 @@ export default function AdminProductos() {
                 <tr key={`${prod.id}-${i}`} className="hover:bg-slate-50/80 transition-smooth group active:bg-slate-100 border-b border-slate-50 last:border-0">
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-4">
-                       <div className="w-10 h-10 bg-slate-50 rounded-xl overflow-hidden border border-slate-100 p-1 shrink-0">
-                          <img src={(prod.imagenes_urls && prod.imagenes_urls[0]) || '/placeholder-product.png'} alt={prod.nombre} className="w-full h-full object-contain" />
-                       </div>
+                        <div className="w-10 h-10 bg-slate-50 rounded-xl overflow-hidden border border-slate-100 p-1 shrink-0">
+                          <img src={(prod.imagenes_urls && prod.imagenes_urls[0]) || prod.imagen_url || '/placeholder-product.png'} alt={prod.nombre} className="w-full h-full object-contain" />
+                        </div>
                        <div className="flex flex-col min-w-0">
                           <span className="text-[13px] font-black text-primary-950 truncate uppercase tracking-tight leading-tight">{prod.nombre}</span>
                           <span className="text-[8px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{prod.marcas?.nombre || 'S/M'}</span>

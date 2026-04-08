@@ -69,10 +69,11 @@ export default function ProductDetail() {
     }
 
     function updateImages(data: any) {
-      if (data?.imagenes_urls && data.imagenes_urls.length > 0) {
+      // Solo para inicializar la galería si es necesario
+      if (data?.imagen_url) {
+        setSelectedImage(data.imagen_url);
+      } else if (data?.imagenes_urls?.[0]) {
         setSelectedImage(data.imagenes_urls[0]);
-      } else {
-        setSelectedImage("https://images.unsplash.com/photo-1542282088-fe8426682b8f?w=800&q=80");
       }
     }
 
@@ -142,7 +143,15 @@ export default function ProductDetail() {
     });
   };
 
-  const images = (product.imagenes_urls && product.imagenes_urls.length > 0) ? product.imagenes_urls : [selectedImage];
+  // Construir la galería: Foto principal + Fotos adicionales
+  const gallery = [];
+  if (product.imagen_url) gallery.push(product.imagen_url);
+  if (product.imagenes_urls && Array.isArray(product.imagenes_urls)) {
+    product.imagenes_urls.forEach((url: string) => {
+      if (url !== product.imagen_url) gallery.push(url);
+    });
+  }
+  const images = gallery.length > 0 ? gallery : [selectedImage || "/placeholder-product.png"];
 
   return (
     <div className="bg-white min-h-screen py-8 pb-32">

@@ -72,9 +72,9 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
   }, [localMaxPrice]);
 
   return (
-    <aside className="bg-white rounded-[3.5rem] border border-slate-100 shadow-sm p-10 flex flex-col gap-10 sticky top-28">
+    <aside className="bg-white dark:bg-slate-900 rounded-[3.5rem] border border-slate-100 dark:border-slate-800 shadow-sm p-10 flex flex-col gap-10 sticky top-28 transition-colors duration-500">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-black text-primary-950 uppercase tracking-tighter flex items-center gap-3">
+        <h2 className="text-xl font-black text-primary-950 dark:text-white uppercase tracking-tighter flex items-center gap-3">
           <Filter className="w-5 h-5 text-accent" /> {t('catalog.filters')}
         </h2>
         {(currentCategory || currentBrand || minPrice || maxPrice) && (
@@ -83,7 +83,7 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
               setLocalMaxPrice("1000");
               navigate(pathname, { replace: true });
             }}
-            className="text-[10px] font-black text-accent uppercase tracking-widest hover:text-primary-950 transition-smooth"
+            className="text-[10px] font-black text-accent uppercase tracking-widest hover:text-primary-950 dark:hover:text-white transition-smooth"
           >
             {t('catalog.clear')}
           </button>
@@ -93,7 +93,7 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-accent" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">Sincronizando...</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 dark:text-slate-600">Sincronizando...</span>
         </div>
       ) : (
         <>
@@ -103,7 +103,7 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
               onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
               className="w-full flex items-center justify-between text-left group"
             >
-              <h3 className="text-xs font-black uppercase tracking-widest text-primary-950 flex items-center gap-3">
+              <h3 className="text-xs font-black uppercase tracking-widest text-primary-950 dark:text-white flex items-center gap-3">
                  <span className="w-1.5 h-1.5 rounded-full bg-accent"></span>
                  {t('catalog.categories')}
               </h3>
@@ -111,7 +111,7 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
             </button>
             
             {isCategoriesOpen && (
-              <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent animate-in slide-in-from-top-2 duration-300">
+              <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent animate-in slide-in-from-top-2 duration-300">
                 <label 
                   className="flex items-center gap-3 cursor-pointer group"
                   onClick={() => handleFilterChange("categoria", null)}
@@ -121,9 +121,9 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
                     name="category"
                     checked={!currentCategory}
                     readOnly
-                    className="w-4 h-4 text-primary-600 border-slate-300 focus:ring-primary-500" 
+                    className="w-4 h-4 text-accent border-slate-300 dark:border-slate-700 focus:ring-accent bg-transparent" 
                   />
-                  <span className={`text-sm ${!currentCategory ? 'text-primary-600 font-bold' : 'text-slate-600 font-medium'} group-hover:text-primary-600 transition-standard grow`}>
+                  <span className={`text-sm ${!currentCategory ? 'text-accent font-bold' : 'text-slate-600 dark:text-slate-400 font-medium'} group-hover:text-accent transition-standard grow uppercase tracking-tight`}>
                     {t('catalog.all_categories')}
                   </span>
                 </label>
@@ -135,9 +135,9 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
                       name="category"
                       checked={currentCategory === cat.slug}
                       onChange={() => handleFilterChange("categoria", currentCategory === cat.slug ? null : cat.slug)}
-                      className="w-4 h-4 text-primary-600 border-slate-300 focus:ring-primary-500" 
+                      className="w-4 h-4 text-accent border-slate-300 dark:border-slate-700 focus:ring-accent bg-transparent" 
                     />
-                    <span className={`text-sm ${currentCategory === cat.slug ? 'text-primary-600 font-bold' : 'text-slate-600 font-medium'} group-hover:text-primary-600 transition-standard grow`}>
+                    <span className={`text-sm ${currentCategory === cat.slug ? 'text-accent font-bold' : 'text-slate-600 dark:text-slate-400 font-medium'} group-hover:text-accent transition-standard grow uppercase tracking-tight`}>
                       {(lang === 'EN' && cat.nombre_en) ? cat.nombre_en : cat.nombre}
                     </span>
                   </label>
@@ -152,7 +152,7 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
               onClick={() => setIsPriceOpen(!isPriceOpen)}
               className="w-full flex items-center justify-between text-left group"
             >
-              <h3 className="text-xs font-black uppercase tracking-widest text-primary-950 flex items-center gap-3">
+              <h3 className="text-xs font-black uppercase tracking-widest text-primary-950 dark:text-white flex items-center gap-3">
                  <span className="w-1.5 h-1.5 rounded-full bg-accent"></span>
                  {t('catalog.price_range')}
               </h3>
@@ -161,9 +161,9 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
             
             {isPriceOpen && (
               <div className="px-2 flex flex-col gap-6 animate-in slide-in-from-top-2 duration-300">
-                <div className="flex items-center gap-4 bg-slate-50 border border-slate-100 rounded-2xl p-4">
+                <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 rounded-2xl p-4">
                    <div className="flex-1 flex flex-col">
-                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{t('catalog.max_price')}</span>
+                      <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">{t('catalog.max_price')}</span>
                       <div className="flex items-center gap-2">
                          <span className="text-xs font-bold text-slate-400">$</span>
                          <input 
@@ -171,7 +171,7 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
                           value={localMaxPrice} 
                           onChange={(e) => setLocalMaxPrice(e.target.value)}
                           placeholder="1000"
-                          className="w-full bg-transparent text-sm font-black text-primary-950 outline-none"
+                          className="w-full bg-transparent text-sm font-black text-primary-950 dark:text-white outline-none"
                          />
                       </div>
                    </div>
@@ -184,22 +184,19 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
                   step="10"
                   value={localMaxPrice}
                   onChange={(e) => setLocalMaxPrice(e.target.value)}
-                  className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-accent transition-smooth"
+                  className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-accent transition-smooth"
                 />
                 
                 <div className="flex justify-between">
                    <div className="flex flex-col gap-1">
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('catalog.min_price')}</span>
-                      <span className="text-sm font-black text-primary-950 font-outfit">$0</span>
+                      <span className="text-sm font-black text-primary-950 dark:text-white font-outfit">$0</span>
                    </div>
                    <div className="flex flex-col items-end gap-1">
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('catalog.max_price')}</span>
                       <span className="text-sm font-black text-accent font-outfit">${localMaxPrice}</span>
                    </div>
                 </div>
-                <p className="text-[9px] font-medium text-slate-400 italic">
-                  * {t('catalog.filter_disclaimer')}
-                </p>
               </div>
             )}
           </div>
@@ -210,7 +207,7 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
               onClick={() => setIsBrandsOpen(!isBrandsOpen)}
               className="w-full flex items-center justify-between text-left group"
             >
-              <h3 className="text-xs font-black uppercase tracking-widest text-primary-950 flex items-center gap-3">
+              <h3 className="text-xs font-black uppercase tracking-widest text-primary-950 dark:text-white flex items-center gap-3">
                  <span className="w-1.5 h-1.5 rounded-full bg-accent"></span>
                  {t('catalog.brands')}
               </h3>
@@ -218,7 +215,7 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
             </button>
             
             {isBrandsOpen && (
-              <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent animate-in slide-in-from-top-2 duration-300">
+              <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent animate-in slide-in-from-top-2 duration-300">
                 {brands.map((brand) => (
                   <label key={brand.id} className="flex items-center gap-3 cursor-pointer group">
                     <input 
@@ -226,9 +223,9 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
                       name="brand"
                       checked={currentBrand === brand.nombre}
                       onChange={() => handleFilterChange("marca", currentBrand === brand.nombre ? null : brand.nombre)}
-                      className="w-4 h-4 text-primary-600 border-slate-300 focus:ring-primary-500" 
+                      className="w-4 h-4 text-accent border-slate-300 dark:border-slate-700 focus:ring-accent bg-transparent" 
                     />
-                    <span className={`text-sm ${currentBrand === brand.nombre ? 'text-primary-600 font-bold' : 'text-slate-600 font-medium'} group-hover:text-primary-600 transition-standard grow`}>
+                    <span className={`text-sm ${currentBrand === brand.nombre ? 'text-accent font-bold' : 'text-slate-600 dark:text-slate-400 font-medium'} group-hover:text-accent transition-standard grow uppercase tracking-tight`}>
                       {brand.nombre}
                     </span>
                   </label>
@@ -237,7 +234,7 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
             )}
           </div>
         </>
-      )}
+      ) }
     </aside>
   );
 }
