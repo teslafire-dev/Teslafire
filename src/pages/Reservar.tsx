@@ -137,7 +137,7 @@ const Reservar = () => {
                <div className="pt-6 border-t border-slate-100 dark:border-slate-800 mt-auto flex justify-between items-end relative z-10">
                  <div className="flex flex-col">
                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">SUBTOTAL</span>
-                   <span className="text-[10px] text-slate-400 font-bold uppercase">Bs. {(total * usdRate).toLocaleString()}</span>
+                   <span className="text-[10px] text-slate-400 font-bold uppercase">Bs. {Math.round(total * usdRate).toLocaleString()}</span>
                  </div>
                  <span className="text-4xl font-black text-accent tracking-tighter leading-none">${total.toFixed(2)}</span>
                </div>

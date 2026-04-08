@@ -7,14 +7,44 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Outfit', sans-serif; scroll-behavior: smooth; }
+        body { font-family: 'Outfit', sans-serif; scroll-behavior: smooth; counter-reset: section_counter; }
         .admin-gradient { background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); }
         .section-card { @apply bg-white p-10 rounded-[2.5rem] shadow-sm border border-slate-200 mb-16; }
+        .photo-frame { @apply shadow-2xl border-4 border-white rounded-[2rem] overflow-hidden; }
+        
+        @page {
+            margin: 1cm;
+            @bottom-right {
+                content: "Página " counter(page);
+                font-family: 'Outfit', sans-serif;
+                font-size: 10px;
+            }
+        }
+
         @media print {
             .no-print { display: none; }
-            body { background: white; }
+            body { background: white; padding: 0; margin: 0; }
             .page-break { page-break-before: always; }
-            img { max-height: 400px; object-fit: contain; width: 100%; border-radius: 1.5rem; }
+            .max-w-5xl { max-width: 100% !important; padding: 0.5in !important; margin: 0 !important; width: 100% !important; }
+            .section-card { margin-bottom: 0.5rem !important; padding: 1.5rem !important; border-radius: 0.5rem !important; box-shadow: none !important; border-color: #e2e8f0 !important; }
+            .photo-frame { border: 2px solid #f1f5f9 !important; box-shadow: none !important; margin-top: 0.5rem !important; }
+            img { max-height: 240px !important; object-fit: contain; width: auto; margin: 0 auto; display: block; border-radius: 0.5rem; }
+            header { padding-top: 2rem !important; padding-bottom: 2rem !important; border-radius: 1rem !important; margin-bottom: 1rem !important; }
+            footer { padding-top: 1rem !important; padding-bottom: 1rem !important; border-radius: 1rem !important; margin-top: 1rem !important; }
+            h1 { font-size: 2.5rem !important; }
+            h2 { font-size: 1.4rem !important; }
+            h3 { font-size: 1.1rem !important; }
+            p { font-size: 0.9rem !important; margin-bottom: 0.5rem !important; }
+            
+            /* Simulación de numeración para navegadores */
+            .print-footer {
+                position: fixed;
+                bottom: 0;
+                right: 0;
+                font-size: 10px;
+                color: #94a3b8;
+                padding: 10px;
+            }
         }
     </style>
 </head>
@@ -24,96 +54,219 @@
         
         <!-- Portada Brillante -->
         <header class="text-center py-24 admin-gradient rounded-[3.5rem] text-white shadow-2xl relative overflow-hidden mb-20">
-            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-orange-500 via-yellow-500 to-orange-500 text-slate-100"></div>
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-orange-500 via-yellow-500 to-orange-500"></div>
             <h1 class="text-7xl font-black uppercase tracking-tighter mb-4">Manual <span class="text-orange-500">Total</span></h1>
-            <p class="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Gestión Integral Dobell Industrial v1.2</p>
+            <p class="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Gestión de Catálogo y Dashboard Industrial v1.6</p>
             <div class="mt-12 flex justify-center gap-4 flex-wrap">
-                <span class="bg-white/10 px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border border-white/5">Catálogo</span>
-                <span class="bg-white/10 px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border border-white/5">Órdenes</span>
-                <span class="bg-white/10 px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border border-white/5">Perfiles</span>
-                <span class="bg-white/10 px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border border-white/5">Configuración</span>
+                <span class="bg-white/10 px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border border-white/5">Experiencia Cliente</span>
+                <span class="bg-white/10 px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border border-white/5">Admin Core</span>
+                <span class="bg-white/10 px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border border-white/5">Control Total</span>
             </div>
         </header>
 
-        <!-- SECCIÓN ADMIN CORE -->
-        <section class="mb-24">
-            <div class="flex items-center gap-4 mb-12 border-b-2 border-orange-500 pb-4">
-                <span class="text-4xl font-black text-orange-500 italic">01</span>
-                <h2 class="text-4xl font-black uppercase tracking-tight">Centro de Operaciones (Admin)</h2>
+        <div class="page-break"></div>
+
+        <!-- ÍNDICE DE CONTENIDOS -->
+        <section class="mb-24 px-10">
+            <div class="flex items-center gap-4 mb-12 border-b-2 border-slate-900 pb-4">
+                <h2 class="text-4xl font-black uppercase tracking-tight">Índice de Contenidos</h2>
             </div>
-
-            <!-- Dashboard Home -->
-            <div class="section-card">
-                <h3 class="text-2xl font-black uppercase mb-4 text-slate-900">1. Dashboard (Home)</h3>
-                <p class="text-slate-500 mb-8 font-medium italic">La pantalla principal muestra las métricas de inventario, las reservas más recientes y un historial cronológico de operaciones.</p>
-                <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/admin_dashboard_1775656145317.png" class="shadow-2xl border" alt="Dashboard Home">
-            </div>
-
-            <!-- Historial de Órdenes -->
-            <div class="section-card">
-                <h3 class="text-2xl font-black uppercase mb-4 text-slate-900">2. Historial de Órdenes</h3>
-                <p class="text-slate-500 mb-8 font-medium italic">Registro histórico de todas las reservas. Permite filtrar y revisar los detalles de contacto de los clientes que han solicitado presupuestos.</p>
-                <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/admin_ordenes_1775656162518.png" class="shadow-2xl border" alt="Historial Órdenes">
-            </div>
-
-            <div class="page-break"></div>
-
-            <!-- Perfil de Usuario -->
-            <div class="section-card border-l-8 border-l-orange-500">
-                <h3 class="text-2xl font-black uppercase mb-4 text-slate-900">3. Perfil de Administrador</h3>
-                <p class="text-slate-500 mb-8 font-medium italic">Gestión de la identidad del administrador actual. Permite visualizar el rol asignado y los parámetros de acceso al sistema.</p>
-                <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/admin_perfil_config_1775656407181.png" class="shadow-2xl border" alt="Perfil Usuario">
-            </div>
-
-            <!-- Gestión de Usuarios -->
-            <div class="section-card">
-                <h3 class="text-2xl font-black uppercase mb-4 text-slate-900">4. Gestión de Usuarios del Sistema</h3>
-                <p class="text-slate-500 mb-8 font-medium italic">Control de la lista de personas autorizadas para gestionar el inventario y las ventas.</p>
-                <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/admin_usuarios_1775656174364.png" class="shadow-2xl border" alt="Lista Usuarios">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div>
+                    <h3 class="text-orange-500 font-black uppercase mb-6 tracking-widest text-sm italic">01 Experiencia Cliente</h3>
+                    <ul class="space-y-4 text-sm font-bold uppercase tracking-tight text-slate-600">
+                        <li class="flex justify-between border-b border-slate-200 pb-2"><span>1. Inicio (Home)</span> <span class="text-slate-300">Pág. 03</span></li>
+                        <li class="flex justify-between border-b border-slate-200 pb-2"><span>2. Catálogo Técnico</span> <span class="text-slate-300">Pág. 03</span></li>
+                        <li class="flex justify-between border-b border-slate-200 pb-2"><span>3. Carrito de Compras</span> <span class="text-slate-300">Pág. 04</span></li>
+                        <li class="flex justify-between border-b border-slate-200 pb-2"><span>4. Reservas (3 Col)</span> <span class="text-slate-300">Pág. 04</span></li>
+                        <li class="flex justify-between border-b border-slate-200 pb-2"><span>5. WhatsApp Verification</span> <span class="text-slate-300">Pág. 05</span></li>
+                        <li class="flex justify-between border-b border-slate-200 pb-2"><span>6. Soluciones Ind.</span> <span class="text-slate-300">Pág. 05</span></li>
+                        <li class="flex justify-between border-b border-slate-200 pb-2"><span>7. Sobre Nosotros</span> <span class="text-slate-300">Pág. 06</span></li>
+                        <li class="flex justify-between border-b border-slate-200 pb-2"><span>8. Perfil Usuario</span> <span class="text-slate-300">Pág. 06</span></li>
+                        <li class="flex justify-between border-b border-slate-200 pb-2"><span>9. Historial Pedidos</span> <span class="text-slate-300">Pág. 07</span></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-slate-900 font-black uppercase mb-6 tracking-widest text-sm italic">02 Centro Operativo</h3>
+                    <ul class="space-y-4 text-sm font-bold uppercase tracking-tight text-slate-600">
+                        <li class="flex justify-between border-b border-slate-200 pb-2"><span>1. Dashboard Admin</span> <span class="text-slate-300">Pág. 08</span></li>
+                        <li class="flex justify-between border-b border-slate-200 pb-2"><span>2. Gestión de Órdenes</span> <span class="text-slate-300">Pág. 08</span></li>
+                        <li class="flex justify-between border-b border-slate-200 pb-2"><span>3. Inventario (Prod)</span> <span class="text-slate-300">Pág. 09</span></li>
+                        <li class="flex justify-between border-b border-slate-200 pb-2"><span>4. Usuarios & Roles</span> <span class="text-slate-300">Pág. 09</span></li>
+                        <li class="flex justify-between border-b border-slate-200 pb-2"><span>5. Configuración BCV</span> <span class="text-slate-300">Pág. 10</span></li>
+                    </ul>
+                </div>
             </div>
         </section>
 
         <div class="page-break"></div>
 
-        <!-- SECCIÓN CONFIGURACIÓN MASTER -->
+        <!-- PARTE 01: EXPERIENCIA DEL CLIENTE -->
         <section class="mb-24">
-            <div class="flex items-center gap-4 mb-12 border-b-2 border-slate-900 pb-4">
-                <span class="text-4xl font-black text-slate-900 italic">02</span>
-                <h2 class="text-4xl font-black uppercase tracking-tight">Configuración Maestra del Sitio</h2>
+            <div class="flex items-center gap-4 mb-12 border-b-2 border-orange-500 pb-4">
+                <span class="text-4xl font-black text-orange-500 italic">01</span>
+                <h2 class="text-4xl font-black uppercase tracking-tight">Experiencia del Cliente (Público)</h2>
             </div>
 
-            <div class="space-y-16">
-                <!-- Monitor BCV -->
-                <div class="section-card">
-                    <h3 class="text-2xl font-black uppercase mb-4 text-slate-900 underline decoration-orange-500 decoration-4 underline-offset-8">1. Monitor de Tasas (BCV)</h3>
-                    <p class="text-slate-500 mb-8 font-medium italic">Control centralizado de la tasa de cambio. Este valor actualiza automáticamente todos los precios en Bolívares en el catálogo público.</p>
-                    <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/admin_configuracion_1775656192686.png" class="shadow-2xl border" alt="Configuración BCV">
+            <div class="section-card">
+                <h3 class="text-2xl font-black uppercase mb-4">1. Página de Inicio (Home)</h3>
+                <p class="text-slate-500 mb-8 font-medium italic">Acceso principal con diseño de alto impacto.</p>
+                <div class="photo-frame">
+                    <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/home_page_1775654869998.png" alt="Página de Inicio">
                 </div>
+            </div>
 
-                <!-- Configuración de Contenido Hero -->
-                <div class="section-card">
-                    <h3 class="text-2xl font-black uppercase mb-4 text-slate-900">2. Personalización de Contenido (Hero)</h3>
-                    <p class="text-slate-500 mb-8 font-medium italic">Permite modificar los títulos, subtítulos y llamados a la acción de la página principal para campañas temporales.</p>
-                    <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/admin_config_sections_1775656441228.png" class="shadow-2xl border" alt="Configuración Hero">
+            <div class="section-card">
+                <h3 class="text-2xl font-black uppercase mb-4">2. Catálogo Técnico e Inteligente</h3>
+                <p class="text-slate-500 mb-8 font-medium italic">Tienda con sistema de filtrado avanzado y caché de velocidad.</p>
+                <div class="photo-frame">
+                    <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/catalog_page_1775654888110.png" alt="Catálogo Público">
                 </div>
+            </div>
 
-                <!-- Contactos y Canales -->
-                <div class="section-card">
-                    <h3 class="text-2xl font-black uppercase mb-4 text-slate-900">3. Canales de Contacto y Apariencia</h3>
-                    <p class="text-slate-500 mb-8 font-medium italic">Gestión del número oficial de WhatsApp para cierres de venta y selección de la paleta de colores corporativa.</p>
-                    <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/admin_config_contacts_palette_1775656494804.png" class="shadow-2xl border" alt="Canales Contacto">
+            <div class="page-break"></div>
+
+            <!-- Carrito -->
+            <div class="section-card">
+                <h3 class="text-2xl font-black uppercase mb-4">3. Carrito de Compras</h3>
+                <p class="text-slate-500 mb-8 font-medium italic">Revisión de productos seleccionados, ajuste de cantidades y cálculo de subtotales.</p>
+                <div class="photo-frame">
+                    <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/shopping_cart_page_1775661788358.png" alt="Carrito de Compras">
+                </div>
+            </div>
+
+            <div class="section-card border-l-8 border-l-orange-500">
+                <h3 class="text-2xl font-black uppercase mb-4">4. Reservas (Dashboard 3 Columnas)</h3>
+                <p class="text-slate-500 mb-8 font-medium italic">Proceso de cierre optimizado en una sola pantalla.</p>
+                <div class="photo-frame">
+                    <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/dashboard_reservas_premium_1775660613549.png" alt="Dashboard Reservas">
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- Verificación y WhatsApp -->
+            <div class="section-card">
+                <h3 class="text-2xl font-black uppercase mb-4">5. Verificación y WhatsApp</h3>
+                <p class="text-slate-500 mb-8 font-medium italic">Proceso final de validación. Tras confirmar, el sistema permite enviar los detalles por WhatsApp.</p>
+                <div class="photo-frame">
+                    <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/whatsapp_modal_1775655002336.png" alt="Verificación WhatsApp">
+                </div>
+            </div>
+
+            <!-- Soluciones -->
+            <div class="section-card">
+                <h3 class="text-2xl font-black uppercase mb-4">6. Soluciones Industriales</h3>
+                <p class="text-slate-500 mb-8 font-medium italic">Sección informativa donde se detallan los servicios especializados y asesorías técnicas.</p>
+                <div class="photo-frame">
+                    <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/soluciones_page_1775661107129.png" alt="Página Soluciones">
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- Nosotros -->
+            <div class="section-card">
+                <h3 class="text-2xl font-black uppercase mb-4">7. Sobre Nosotros</h3>
+                <p class="text-slate-500 mb-8 font-medium italic">Información corporativa, misión y visión para generar confianza técnica.</p>
+                <div class="photo-frame">
+                    <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/nosotros_page_1775661099589.png" alt="Página Nosotros">
+                </div>
+            </div>
+
+            <!-- Perfil y Historial -->
+            <div class="section-card border-l-8 border-l-slate-400">
+                <h3 class="text-2xl font-black uppercase mb-4">8. Perfil del Cliente</h3>
+                <p class="text-slate-500 mb-8 font-medium italic">Área personal donde el usuario puede gestionar sus datos y configuraciones.</p>
+                <div class="photo-frame">
+                    <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/perfil_page_1775661121843.png" alt="Perfil Usuario">
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <div class="section-card">
+                <h3 class="text-2xl font-black uppercase mb-4">9. Historial de Reservas (Mis Pedidos)</h3>
+                <p class="text-slate-500 mb-8 font-medium italic">Seguimiento de todas las solicitudes enviadas por el cliente.</p>
+                <div class="photo-frame">
+                    <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/perfil_historial_page_1775661134950.png" alt="Historial Pedidos">
                 </div>
             </div>
         </section>
 
-        <!-- FOOTER FINAL -->
-        <footer class="text-center py-20 bg-slate-100 rounded-[3rem] border border-slate-200">
-            <div class="w-20 h-2 bg-orange-500 mx-auto mb-8 rounded-full"></div>
-            <p class="text-slate-900 font-black uppercase text-xl tracking-tighter mb-2">Dobell Industrial</p>
-            <p class="text-slate-400 font-bold uppercase tracking-[0.4em] text-[10px]">Manual Operativo Final &bull; 2026</p>
+        <div class="page-break"></div>
+
+        <!-- PARTE 02: CENTRO DE OPERACIONES (ADMIN) -->
+        <section class="mb-24">
+            <div class="flex items-center gap-4 mb-12 border-b-2 border-slate-900 pb-4">
+                <span class="text-4xl font-black text-slate-900 italic">02</span>
+                <h2 class="text-4xl font-black uppercase tracking-tight">Centro de Operaciones (Admin)</h2>
+            </div>
+
+            <!-- Dashboard de Primero -->
+            <div class="section-card border-l-8 border-l-orange-500">
+                <h3 class="text-2xl font-black uppercase mb-4">1. Dashboard Principal (Métricas)</h3>
+                <p class="text-slate-500 mb-8 font-medium italic">Vista consolidada de ventas totales, número de productos y actividad reciente del sistema.</p>
+                <div class="photo-frame">
+                    <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/dashboard_admin_1775660837292.png" alt="Admin Dashboard">
+                </div>
+            </div>
+
+            <!-- Gestión de Pedidos -->
+            <div class="section-card border-l-8 border-l-slate-900">
+                <h3 class="text-2xl font-black uppercase mb-4">2. Gestión de Pedidos y Ventas</h3>
+                <p class="text-slate-500 mb-8 font-medium italic">Panel centralizado donde se reciben todas las intenciones de compra del sitio público.</p>
+                <div class="photo-frame">
+                    <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/admin_ordenes_1775656162518.png" alt="Gestión de Órdenes">
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- Gestión de Productos -->
+            <div class="section-card">
+                <h3 class="text-2xl font-black uppercase mb-4">3. Gestión de Inventario (Productos)</h3>
+                <p class="text-slate-500 mb-8 font-medium italic">Control total sobre el catálogo: edición de precios, imágenes y categorías técnicas.</p>
+                <div class="photo-frame">
+                    <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/admin_productos_1775660850176.png" alt="Admin Productos">
+                </div>
+            </div>
+
+            <!-- Gestión de Usuarios -->
+            <div class="section-card">
+                <h3 class="text-2xl font-black uppercase mb-4">4. Control de Acceso (Usuarios)</h3>
+                <p class="text-slate-500 mb-8 font-medium italic">Administración de usuarios autorizados para operar el panel administrativo.</p>
+                <div class="photo-frame">
+                    <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/admin_usuarios_1775660862361.png" alt="Admin Usuarios">
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- Configuración Maestra -->
+            <div class="section-card">
+                <h3 class="text-2xl font-black uppercase mb-4">5. Configuración y Tasa BCV</h3>
+                <p class="text-slate-500 mb-8 font-medium italic">Ajustes globales del sitio, incluyendo el monitor de la tasa de cambio oficial.</p>
+                <div class="photo-frame">
+                    <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/admin_configuracion_1775656192686.png" alt="Configuración BCV" style="max-height: 350px !important; width: auto !important; margin: 0 auto; display: block;">
+                </div>
+            </div>
+        </section>
+
+        <!-- FOOTER FINAL PERSISTENTE -->
+        <footer class="text-center py-10 admin-gradient rounded-[3rem] text-white relative">
+            <div class="w-12 h-1 bg-orange-500 mx-auto mb-6 rounded-full"></div>
+            <p class="text-white font-black uppercase text-sm tracking-tighter mb-1">Dobell Industrial</p>
+            <p class="text-slate-400 font-bold uppercase tracking-[0.4em] text-[8px]">Manual Operativo Maestro &bull; 2026</p>
+            <div class="mt-4 text-[10px] text-orange-500 font-black italic opacity-50">#ControlTotal #SeguridadExtrema</div>
         </footer>
 
-    </div>
+        <!-- Simulación de pie de página para cada hoja al imprimir -->
+        <div class="no-print hidden print-footer">
+            Dobell Industrial &bull; Manual de Operaciones 2026
+        </div>
 
+    </div>
 </body>
 </html>
