@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Maestro Dobell Industrial - Edición Completa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; scroll-behavior: smooth; }
+        .admin-gradient { background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); }
+        .section-card { @apply bg-white p-10 rounded-[2.5rem] shadow-sm border border-slate-200 mb-16; }
+        @media print {
+            .no-print { display: none; }
+            body { background: white; }
+            .page-break { page-break-before: always; }
+            img { max-height: 400px; object-fit: contain; width: 100%; border-radius: 1.5rem; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+    <div class="max-w-5xl mx-auto py-12 px-8">
+        
+        <!-- Portada Brillante -->
+        <header class="text-center py-24 admin-gradient rounded-[3.5rem] text-white shadow-2xl relative overflow-hidden mb-20">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-orange-500 via-yellow-500 to-orange-500 text-slate-100"></div>
+            <h1 class="text-7xl font-black uppercase tracking-tighter mb-4">Manual <span class="text-orange-500">Total</span></h1>
+            <p class="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Gestión Integral Dobell Industrial v1.2</p>
+            <div class="mt-12 flex justify-center gap-4 flex-wrap">
+                <span class="bg-white/10 px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border border-white/5">Catálogo</span>
+                <span class="bg-white/10 px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border border-white/5">Órdenes</span>
+                <span class="bg-white/10 px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border border-white/5">Perfiles</span>
+                <span class="bg-white/10 px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border border-white/5">Configuración</span>
+            </div>
+        </header>
+
+        <!-- SECCIÓN ADMIN CORE -->
+        <section class="mb-24">
+            <div class="flex items-center gap-4 mb-12 border-b-2 border-orange-500 pb-4">
+                <span class="text-4xl font-black text-orange-500 italic">01</span>
+                <h2 class="text-4xl font-black uppercase tracking-tight">Centro de Operaciones (Admin)</h2>
+            </div>
+
+            <!-- Dashboard Home -->
+            <div class="section-card">
+                <h3 class="text-2xl font-black uppercase mb-4 text-slate-900">1. Dashboard (Home)</h3>
+                <p class="text-slate-500 mb-8 font-medium italic">La pantalla principal muestra las métricas de inventario, las reservas más recientes y un historial cronológico de operaciones.</p>
+                <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/admin_dashboard_1775656145317.png" class="shadow-2xl border" alt="Dashboard Home">
+            </div>
+
+            <!-- Historial de Órdenes -->
+            <div class="section-card">
+                <h3 class="text-2xl font-black uppercase mb-4 text-slate-900">2. Historial de Órdenes</h3>
+                <p class="text-slate-500 mb-8 font-medium italic">Registro histórico de todas las reservas. Permite filtrar y revisar los detalles de contacto de los clientes que han solicitado presupuestos.</p>
+                <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/admin_ordenes_1775656162518.png" class="shadow-2xl border" alt="Historial Órdenes">
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- Perfil de Usuario -->
+            <div class="section-card border-l-8 border-l-orange-500">
+                <h3 class="text-2xl font-black uppercase mb-4 text-slate-900">3. Perfil de Administrador</h3>
+                <p class="text-slate-500 mb-8 font-medium italic">Gestión de la identidad del administrador actual. Permite visualizar el rol asignado y los parámetros de acceso al sistema.</p>
+                <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/admin_perfil_config_1775656407181.png" class="shadow-2xl border" alt="Perfil Usuario">
+            </div>
+
+            <!-- Gestión de Usuarios -->
+            <div class="section-card">
+                <h3 class="text-2xl font-black uppercase mb-4 text-slate-900">4. Gestión de Usuarios del Sistema</h3>
+                <p class="text-slate-500 mb-8 font-medium italic">Control de la lista de personas autorizadas para gestionar el inventario y las ventas.</p>
+                <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/admin_usuarios_1775656174364.png" class="shadow-2xl border" alt="Lista Usuarios">
+            </div>
+        </section>
+
+        <div class="page-break"></div>
+
+        <!-- SECCIÓN CONFIGURACIÓN MASTER -->
+        <section class="mb-24">
+            <div class="flex items-center gap-4 mb-12 border-b-2 border-slate-900 pb-4">
+                <span class="text-4xl font-black text-slate-900 italic">02</span>
+                <h2 class="text-4xl font-black uppercase tracking-tight">Configuración Maestra del Sitio</h2>
+            </div>
+
+            <div class="space-y-16">
+                <!-- Monitor BCV -->
+                <div class="section-card">
+                    <h3 class="text-2xl font-black uppercase mb-4 text-slate-900 underline decoration-orange-500 decoration-4 underline-offset-8">1. Monitor de Tasas (BCV)</h3>
+                    <p class="text-slate-500 mb-8 font-medium italic">Control centralizado de la tasa de cambio. Este valor actualiza automáticamente todos los precios en Bolívares en el catálogo público.</p>
+                    <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/admin_configuracion_1775656192686.png" class="shadow-2xl border" alt="Configuración BCV">
+                </div>
+
+                <!-- Configuración de Contenido Hero -->
+                <div class="section-card">
+                    <h3 class="text-2xl font-black uppercase mb-4 text-slate-900">2. Personalización de Contenido (Hero)</h3>
+                    <p class="text-slate-500 mb-8 font-medium italic">Permite modificar los títulos, subtítulos y llamados a la acción de la página principal para campañas temporales.</p>
+                    <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/admin_config_sections_1775656441228.png" class="shadow-2xl border" alt="Configuración Hero">
+                </div>
+
+                <!-- Contactos y Canales -->
+                <div class="section-card">
+                    <h3 class="text-2xl font-black uppercase mb-4 text-slate-900">3. Canales de Contacto y Apariencia</h3>
+                    <p class="text-slate-500 mb-8 font-medium italic">Gestión del número oficial de WhatsApp para cierres de venta y selección de la paleta de colores corporativa.</p>
+                    <img src="file:///C:/Users/EDUARDO/.gemini/antigravity/brain/e62c0f6b-8ab2-4dd1-a2f6-70d8abcb639e/admin_config_contacts_palette_1775656494804.png" class="shadow-2xl border" alt="Canales Contacto">
+                </div>
+            </div>
+        </section>
+
+        <!-- FOOTER FINAL -->
+        <footer class="text-center py-20 bg-slate-100 rounded-[3rem] border border-slate-200">
+            <div class="w-20 h-2 bg-orange-500 mx-auto mb-8 rounded-full"></div>
+            <p class="text-slate-900 font-black uppercase text-xl tracking-tighter mb-2">Dobell Industrial</p>
+            <p class="text-slate-400 font-bold uppercase tracking-[0.4em] text-[10px]">Manual Operativo Final &bull; 2026</p>
+        </footer>
+
+    </div>
+
+</body>
+</html>

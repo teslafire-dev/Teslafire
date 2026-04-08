@@ -7,6 +7,9 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "@/contexts/TranslationContext";
 import { motion, AnimatePresence } from "framer-motion";
 
+// Global cache to persist across component re-renders during the session
+const productsCache: Record<string, any[]> = {};
+
 export default function Productos() {
   const { t, lang } = useTranslation();
   const [products, setProducts] = useState<any[]>([]);
@@ -20,11 +23,29 @@ export default function Productos() {
   const minPrice = searchParams.get("min_precio");
   const maxPrice = searchParams.get("max_precio");
 
+  // Generate a unique key for the current combination of filters
+  const cacheKey = JSON.stringify({
+    cat: currentCategory,
+    brand: currentBrand,
+    min: minPrice,
+    max: maxPrice,
+    sort: sortBy,
+    lang: lang // Include language in case names change
+  });
+
   useEffect(() => {
     fetchProducts();
-  }, [currentCategory, currentBrand, minPrice, maxPrice, sortBy]);
+  }, [cacheKey]);
 
   const fetchProducts = async () => {
+    // 1. Check if we have this exact search in cache
+    if (productsCache[cacheKey]) {
+      console.log("🚀 Usando caché para:", cacheKey);
+      setProducts(productsCache[cacheKey]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       let query = supabase
@@ -59,6 +80,10 @@ export default function Productos() {
       const { data, error } = await query;
       if (error) throw error;
       setProducts(data || []);
+      // Store in cache for future instant reuse
+      if (data && data.length > 0) {
+        productsCache[cacheKey] = data;
+      }
     } catch (err) {
       console.error("Error fetching products:", err);
     } finally {
@@ -147,47 +172,69 @@ export default function Productos() {
               </div>
             </div>
 
-            {/* Product Grid */}
-            {loading ? (
-              <div className="flex flex-col items-center justify-center py-40 gap-6 text-slate-400">
-                <Loader2 className="w-16 h-16 animate-spin" />
-                <span className="text-[10px] font-black uppercase tracking-[.4em] animate-pulse">Sincronizando Inventario</span>
-              </div>
-            ) : products.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                {products.map((product, i) => (
-                  <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.1 }}
-                    transition={{ delay: (i % 8) * 0.05 }}
-                    key={product.id}
+            {/* Product Section Wrapper with fixed min-height to prevent layout jumps */}
+            <div className="min-h-[800px] relative">
+              <AnimatePresence mode="wait">
+                {loading ? (
+                  <motion.div 
+                    key="loading"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex flex-col items-center justify-center py-40 gap-6 text-slate-400"
                   >
-                    <ProductCard 
-                      id={product.id}
-                      name={(lang === 'EN' && product.nombre_en) ? product.nombre_en : product.nombre}
-                      sku={product.sku}
-                      category={(lang === 'EN' && product.categorias?.nombre_en) ? product.categorias?.nombre_en : (product.categorias?.nombre || 'General')}
-                      price={product.precio}
-                      moneda={product.moneda}
-                      image={(product.imagenes_urls && product.imagenes_urls[0]) || '/placeholder-product.png'}
-                      isNew={product.is_new}
-                      isOffer={product.is_offer}
-                    />
+                    <Loader2 className="w-16 h-16 animate-spin text-accent" />
+                    <span className="text-[10px] font-black uppercase tracking-[.4em] animate-pulse italic">Sincronizando Inventario Técnico...</span>
                   </motion.div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-40 gap-8 bg-white rounded-[4rem] border border-slate-100 border-dashed">
-                <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center">
-                  <Package className="w-12 h-12 text-slate-200" />
-                </div>
-                <div className="text-center">
-                   <h3 className="text-2xl font-black text-primary-950 uppercase tracking-tighter mb-2">{t('catalog.no_products')}</h3>
-                   <p className="text-slate-500 font-medium tracking-wide">{t('catalog.no_products_desc')}</p>
-                </div>
-              </div>
-            )}
+                ) : products.length > 0 ? (
+                  <motion.div 
+                    key="grid"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6"
+                  >
+                    {products.map((product, i) => (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, amount: 0.1 }}
+                        transition={{ delay: (i % 8) * 0.05 }}
+                        key={product.id}
+                      >
+                        <ProductCard 
+                          id={product.id}
+                          name={(lang === 'EN' && product.nombre_en) ? product.nombre_en : product.nombre}
+                          sku={product.sku}
+                          category={(lang === 'EN' && product.categorias?.nombre_en) ? product.categorias?.nombre_en : (product.categorias?.nombre || 'General')}
+                          price={product.precio}
+                          moneda={product.moneda}
+                          image={(product.imagenes_urls && product.imagenes_urls[0]) || '/placeholder-product.png'}
+                          isNew={product.is_new}
+                          isOffer={product.is_offer}
+                        />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                ) : (
+                  <motion.div 
+                    key="empty"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex flex-col items-center justify-center py-40 gap-8 bg-white rounded-[4rem] border border-slate-100 border-dashed"
+                  >
+                    <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center">
+                      <Package className="w-12 h-12 text-slate-200" />
+                    </div>
+                    <div className="text-center">
+                      <h3 className="text-2xl font-black text-primary-950 uppercase tracking-tighter mb-2">{t('catalog.no_products')}</h3>
+                      <p className="text-slate-500 font-medium tracking-wide">{t('catalog.no_products_desc')}</p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             {/* End of results */}
             {!loading && products.length > 0 && (

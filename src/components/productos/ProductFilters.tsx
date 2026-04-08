@@ -55,9 +55,21 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
     } else {
       params.delete(key);
     }
-    navigate(`${pathname}?${params.toString()}`);
+    navigate(`${pathname}?${params.toString()}`, { replace: true });
     if (onFilterChange) onFilterChange();
   }
+
+  const [localMaxPrice, setLocalMaxPrice] = useState(maxPrice || "1000");
+
+  // Debounce effect for price
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localMaxPrice !== maxPrice) {
+        handleFilterChange("max_precio", localMaxPrice === "1000" ? null : localMaxPrice);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [localMaxPrice]);
 
   return (
     <aside className="bg-white rounded-[3.5rem] border border-slate-100 shadow-sm p-10 flex flex-col gap-10 sticky top-28">
@@ -67,7 +79,10 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
         </h2>
         {(currentCategory || currentBrand || minPrice || maxPrice) && (
           <button 
-            onClick={() => navigate(pathname)}
+            onClick={() => {
+              setLocalMaxPrice("1000");
+              navigate(pathname, { replace: true });
+            }}
             className="text-[10px] font-black text-accent uppercase tracking-widest hover:text-primary-950 transition-smooth"
           >
             {t('catalog.clear')}
@@ -153,8 +168,8 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
                          <span className="text-xs font-bold text-slate-400">$</span>
                          <input 
                           type="number" 
-                          value={maxPrice || ""} 
-                          onChange={(e) => handleFilterChange("max_precio", e.target.value || null)}
+                          value={localMaxPrice} 
+                          onChange={(e) => setLocalMaxPrice(e.target.value)}
                           placeholder="1000"
                           className="w-full bg-transparent text-sm font-black text-primary-950 outline-none"
                          />
@@ -167,8 +182,8 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
                   min="0" 
                   max="1000" 
                   step="10"
-                  value={maxPrice || "1000"}
-                  onChange={(e) => handleFilterChange("max_precio", e.target.value)}
+                  value={localMaxPrice}
+                  onChange={(e) => setLocalMaxPrice(e.target.value)}
                   className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-accent transition-smooth"
                 />
                 
@@ -179,7 +194,7 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
                    </div>
                    <div className="flex flex-col items-end gap-1">
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('catalog.max_price')}</span>
-                      <span className="text-sm font-black text-accent font-outfit">${maxPrice || "1000"}</span>
+                      <span className="text-sm font-black text-accent font-outfit">${localMaxPrice}</span>
                    </div>
                 </div>
                 <p className="text-[9px] font-medium text-slate-400 italic">

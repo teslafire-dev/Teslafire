@@ -54,53 +54,69 @@ export default function Carrito() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
             {/* Items List */}
             <div className="lg:col-span-2 flex flex-col gap-8">
-              {items.map((item, i) => (
-                <motion.div 
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.1 }}
-                  transition={{ delay: i * 0.1 }}
-                  key={item.id} 
-                  className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 flex flex-col sm:flex-row gap-6 md:gap-8 items-center group transition-smooth hover:shadow-2xl hover:shadow-primary-950/10"
-                >
-                  <div className="w-40 h-40 md:w-32 md:h-32 bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 shrink-0">
-                    <img src={item.image} alt={item.name} className="w-full h-full object-contain p-4 group-hover:scale-110 transition-smooth" />
-                  </div>
-                  <div className="flex-1 flex flex-col gap-2">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('cart.sku_label')}: {item.sku}</span>
-                    <h3 className="text-xl font-bold text-primary-950 group-hover:text-accent transition-smooth">{item.name}</h3>
-                    <div className="flex flex-col gap-1">
-                      <p className="text-primary-950 font-black text-2xl font-outfit tracking-tighter">
-                        {item.price ? `${(item.moneda === 'EUR' || item.moneda === 'EUR_ONLY') ? '€' : '$'}${item.price.toFixed(2)}` : t('cart.price_quote')}
-                      </p>
-                      {item.price && (item.moneda !== 'NONE' && item.moneda !== 'USD_ONLY' && item.moneda !== 'EUR_ONLY') && (
-                        <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">
-                          Bs. {(((item.moneda === 'EUR' || item.moneda === 'EUR_ONLY') ? eurRate : usdRate) * item.price).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </span>
-                      )}
+              <div className="flex flex-col gap-8">
+                {items.map((item, i) => (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.1 }}
+                    transition={{ delay: i * 0.1 }}
+                    key={item.id} 
+                    className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-100 flex flex-col sm:flex-row gap-6 md:gap-8 items-center group transition-smooth hover:shadow-2xl hover:shadow-primary-950/10"
+                  >
+                    <div className="w-40 h-40 md:w-32 md:h-32 bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 shrink-0">
+                      <img src={item.image} alt={item.name} className="w-full h-full object-contain p-4 group-hover:scale-110 transition-smooth" />
                     </div>
-                  </div>
-                  <div className="flex items-center gap-6">
-                    <div className="flex items-center bg-slate-100 rounded-xl overflow-hidden h-12 shadow-inner border border-slate-200">
-                      <button 
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="w-12 h-full hover:bg-slate-200 transition-smooth font-black text-primary-950 text-xl"
-                      >-</button>
-                      <span className="w-10 text-center font-black text-primary-950 text-lg">{item.quantity}</span>
-                      <button 
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="w-12 h-full hover:bg-slate-200 transition-smooth font-black text-primary-950 text-xl"
-                      >+</button>
+                    <div className="flex-1 flex flex-col gap-2">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('cart.sku_label')}: {item.sku}</span>
+                      <h3 className="text-xl font-bold text-primary-950 group-hover:text-accent transition-smooth">{item.name}</h3>
+                      <div className="flex flex-col gap-1">
+                        <p className="text-primary-950 font-black text-2xl font-outfit tracking-tighter">
+                          {item.price ? `${(item.moneda === 'EUR' || item.moneda === 'EUR_ONLY') ? '€' : '$'}${item.price.toFixed(2)}` : t('cart.price_quote')}
+                        </p>
+                        {item.price && (item.moneda !== 'NONE' && item.moneda !== 'USD_ONLY' && item.moneda !== 'EUR_ONLY') && (
+                          <span className="text-slate-400 text-xs font-bold uppercase tracking-widest">
+                            Bs. {(((item.moneda === 'EUR' || item.moneda === 'EUR_ONLY') ? eurRate : usdRate) * item.price).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <button 
-                      onClick={() => removeItem(item.id)}
-                      className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-smooth active:scale-90"
-                    >
-                      <Trash2 className="w-6 h-6" />
-                    </button>
-                  </div>
-                </motion.div>
-              ))}
+                    <div className="flex items-center gap-6">
+                      <div className="flex items-center bg-slate-100 rounded-xl overflow-hidden h-12 shadow-inner border border-slate-200">
+                        <button 
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          className="w-12 h-full hover:bg-slate-200 transition-smooth font-black text-primary-950 text-xl"
+                        >-</button>
+                        <span className="w-10 text-center font-black text-primary-950 text-lg">{item.quantity}</span>
+                        <button 
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          className="w-12 h-full hover:bg-slate-200 transition-smooth font-black text-primary-950 text-xl"
+                        >+</button>
+                      </div>
+                      <button 
+                        onClick={() => removeItem(item.id)}
+                        className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-smooth active:scale-90"
+                      >
+                        <Trash2 className="w-6 h-6" />
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Assistance Box (Moved here) */}
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm flex flex-col gap-6 group hover:border-accent/30 transition-smooth mt-4"
+              >
+                  <h4 className="text-xl font-black font-outfit text-primary-950 uppercase tracking-tighter leading-none">{t('cart.help_title')}</h4>
+                  <p className="text-slate-500 font-medium tracking-wide text-sm">{t('cart.help_desc')}</p>
+                  <button className="flex items-center gap-3 text-accent font-black uppercase text-[10px] tracking-widest group-hover:gap-5 transition-smooth">
+                    {t('cart.chat_expert')} <ArrowRight className="w-4 h-4" />
+                  </button>
+              </motion.div>
             </div>
 
             {/* Summary Box */}
@@ -135,20 +151,6 @@ export default function Carrito() {
                   </Link>
                 </div>
               </div>
-
-              {/* Assistance Box (Now after summary on mobile) */}
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm flex flex-col gap-6 group hover:border-accent/30 transition-smooth"
-              >
-                  <h4 className="text-xl font-black font-outfit text-primary-950 uppercase tracking-tighter leading-none">{t('cart.help_title')}</h4>
-                  <p className="text-slate-500 font-medium tracking-wide text-sm">{t('cart.help_desc')}</p>
-                  <button className="flex items-center gap-3 text-accent font-black uppercase text-[10px] tracking-widest group-hover:gap-5 transition-smooth">
-                    {t('cart.chat_expert')} <ArrowRight className="w-4 h-4" />
-                  </button>
-              </motion.div>
             </div>
           </div>
         </div>

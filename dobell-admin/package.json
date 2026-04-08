@@ -1,0 +1,9 @@
+{
+  "name": "dobell-admin-manager",
+  "version": "1.0.0",
+  "main": "main.js",
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "pg": "^8.11.3"
+  }
+}
