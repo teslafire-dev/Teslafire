@@ -87,22 +87,56 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editProduct }
       toast.error("Máximo 6 fotos por producto");
       return;
     }
-    if (!['image/jpeg', 'image/png', 'image/jpg', 'image/webp'].includes(file.type)) {
-      toast.error("Solo JPG/PNG/WEBP");
-      return;
-    }
 
     setUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-      // Usar el SKU como carpeta para mantener el Storage ordenado
+      // 1. Convertir a WebP para optimizar peso y tamaño
+      const optimizedBlob = await new Promise<Blob>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+          const img = new Image();
+          img.src = event.target?.result as string;
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Forzar cuadrado de 800x800
+            const size = 800;
+            canvas.width = size;
+            canvas.height = size;
+
+            if (ctx) {
+              // Limpiar fondo (transparente por defecto en WebP)
+              ctx.clearRect(0, 0, size, size);
+              
+              // Calcular proporciones para no deformar (Contain logic)
+              const scale = Math.min(size / img.width, size / img.height);
+              const x = (size / 2) - (img.width / 2) * scale;
+              const y = (size / 2) - (img.height / 2) * scale;
+              
+              ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+              
+              canvas.toBlob((blob) => {
+                if (blob) resolve(blob);
+                else reject(new Error("Error al convertir imagen"));
+              }, 'image/webp', 0.85); // Subimos un pelín la calidad
+            }
+          };
+        };
+        reader.onerror = reject;
+      });
+
+      // 2. Subir el archivo optimizado
+      const fileName = `${Math.random().toString(36).substring(2)}.webp`;
       const folder = formData.sku.trim() || 'sin-sku';
       const filePath = `${folder}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('products')
-        .upload(filePath, file);
+        .upload(filePath, optimizedBlob, {
+          contentType: 'image/webp'
+        });
 
       if (uploadError) throw uploadError;
 
@@ -114,11 +148,12 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editProduct }
       setFormData(prev => ({ 
         ...prev, 
         imagenes_urls: newImages,
-        imagen_url: prev.imagen_url || publicUrl // Set as main if none exists
+        imagen_url: prev.imagen_url || publicUrl 
       }));
-      toast.success("Foto añadida a la galería");
+      toast.success("Foto optimizada y subida (WebP)");
     } catch (err: any) {
-      toast.error("Error al subir");
+      console.error(err);
+      toast.error("Error al optimizar imagen");
     } finally {
       setUploading(false);
     }
