@@ -32,7 +32,7 @@ interface ConfigItem {
 
 const categories = [
   { id: 'contacto', name: 'Canales de Contacto', icon: Search, keys: ['email_contacto', 'telefono_whatsapp', 'direccion'] },
-  { id: 'brand', name: 'Identidad Visual (Multimedia)', icon: ImageIcon, keys: ['site_logo', 'site_favicon'] },
+  { id: 'brand', name: 'Identidad Visual (Multimedia)', icon: ImageIcon, keys: ['site_logo', 'site_logo_dark', 'site_favicon'] },
   { id: 'identidad', name: 'Identidad Visual (Paleta)', icon: Palette, keys: ['color_primario', 'color_acento', 'color_header', 'color_footer', 'color_body_bg', 'color_botones_bg'] },
   { id: 'hero', name: 'Contenido del Hero', icon: Type, keys: ['hero_h1', 'hero_p', 'hero_imagen_url'] },
   { id: 'general', name: 'Ajustes Generales', icon: Settings, keys: ['mostrar_resegnas', 'whatsapp_notificaciones'] },
@@ -140,9 +140,10 @@ export default function Configuracion() {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             
-            // Medidas según el asset
-            const targetWidth = clave === 'site_logo' ? 500 : 64;
-            const targetHeight = clave === 'site_logo' ? 150 : 64;
+            // Medidas según el asset (Logo o Favicon)
+            const isLogo = clave === 'site_logo' || clave === 'site_logo_dark';
+            const targetWidth = isLogo ? 500 : 64;
+            const targetHeight = isLogo ? 150 : 64;
 
             canvas.width = targetWidth;
             canvas.height = targetHeight;
@@ -151,7 +152,7 @@ export default function Configuracion() {
               ctx.clearRect(0, 0, targetWidth, targetHeight);
               
               // Lógica de "Cover/Contain" para no deformar
-              const scale = clave === 'site_logo' 
+              const scale = isLogo 
                 ? Math.min(targetWidth / img.width, targetHeight / img.height) // Logo: No deformar
                 : Math.max(targetWidth / img.width, targetHeight / img.height); // Favicon: Llenar
               

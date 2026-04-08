@@ -38,12 +38,12 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
               transition={{ type: "spring", damping: 20, stiffness: 300 }}
-              className="w-full max-w-lg bg-white rounded-[2.5rem] md:rounded-[3.5rem] shadow-2xl overflow-hidden relative border border-white/20 text-left"
+              className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-[2.5rem] md:rounded-[3.5rem] shadow-2xl overflow-hidden relative border border-white/20 dark:border-slate-800 text-left"
             >
               {/* Close Button */}
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 p-2 hover:bg-slate-100 rounded-lg transition-smooth text-slate-400 hover:text-primary-950 z-10"
+                className="absolute top-4 right-4 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-smooth text-slate-400 hover:text-primary-950 dark:hover:text-white z-10"
               >
                 <X className="w-4 h-4" />
               </button>

@@ -21,9 +21,21 @@ export default function Header() {
   const { user, isAdmin, role, nombre_completo } = useAuth();
   const navigate = useNavigate();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isMiniCartOpen, setIsMiniCartOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const cartItems = useCartStore((state) => state.items);
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+
+  // AUTO-OPEN ON ADD
+  const prevTotalRef = useRef(totalItems);
+  useEffect(() => {
+    if (totalItems > prevTotalRef.current) {
+      setIsMiniCartOpen(true);
+      const timer = setTimeout(() => setIsMiniCartOpen(false), 3000);
+      return () => clearTimeout(timer);
+    }
+    prevTotalRef.current = totalItems;
+  }, [totalItems]);
   
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -115,7 +127,7 @@ export default function Header() {
     const controlNavbar = () => {
       const currentScrollY = window.scrollY;
       setIsScrolled(currentScrollY > 20);
-      setIsVisible(true); // Header always visible as requested
+      setIsVisible(true); 
     };
     window.addEventListener("scroll", controlNavbar);
     return () => window.removeEventListener("scroll", controlNavbar);
@@ -142,15 +154,25 @@ export default function Header() {
         : 'bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl py-4'
     } border-b border-slate-100 dark:border-slate-800`}>
       <div className="container mx-auto px-4 h-20 flex items-center justify-between">
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-3 group">
-          <div className="w-12 h-12 bg-primary-950 dark:bg-accent rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-smooth">
-            <span className="text-white font-black text-2xl font-outfit">D</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-primary-950 dark:text-white font-black leading-none text-2xl font-outfit uppercase tracking-tighter">Dobell</span>
-            <span className="text-accent dark:text-accent-light text-[10px] font-black uppercase tracking-[0.3em] mt-0.5">Industrial</span>
-          </div>
+        {/* Logo dinámico (Claro/Oscuro) */}
+        <Link to="/" className="flex items-center group h-full">
+          {config.site_logo || config.site_logo_dark ? (
+            <img 
+              src={isDarkMode ? (config.site_logo_dark || config.site_logo) : (config.site_logo || config.site_logo_dark)} 
+              alt="Logo Dobell" 
+              className="h-12 w-auto object-contain transition-smooth group-hover:scale-105"
+            />
+          ) : (
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-primary-950 dark:bg-accent rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-smooth">
+                <span className="text-white font-black text-2xl font-outfit">D</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-primary-950 dark:text-white font-black leading-none text-2xl font-outfit uppercase tracking-tighter">Dobell</span>
+                <span className="text-accent dark:text-accent-light text-[10px] font-black uppercase tracking-[0.3em] mt-0.5">Industrial</span>
+              </div>
+            </div>
+          )}
         </Link>
 
         {/* Desktop Navigation */}
@@ -255,35 +277,117 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-4">
-          <motion.div
-            key={totalItems}
-            initial={totalItems > 0 ? { scale: 1.2 } : {}}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 500, damping: 15 }}
+          <div 
+            className="relative"
+            onMouseEnter={() => setIsMiniCartOpen(true)}
+            onMouseLeave={() => setIsMiniCartOpen(false)}
           >
-            <Link 
-              to="/carrito" 
-              className={`relative flex items-center justify-center p-3 rounded-2xl transition-smooth shadow-inner border border-transparent ${
-                totalItems > 0 
-                  ? 'bg-accent text-white shadow-accent/20 border-accent/20' 
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-              }`}
+            <motion.div
+              key={totalItems}
+              initial={totalItems > 0 ? { scale: 1.2 } : {}}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 500, damping: 15 }}
             >
-              <ShoppingCart className="w-6 h-6" />
-              <AnimatePresence>
-                {totalItems > 0 && (
-                  <motion.span 
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
-                    className="absolute -top-1 -right-1 bg-destructive text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-800 shadow-md"
-                  >
-                    {totalItems}
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </Link>
-          </motion.div>
+              <Link 
+                to="/carrito" 
+                className={`relative flex items-center justify-center p-3 rounded-2xl transition-smooth shadow-inner border border-transparent ${
+                  totalItems > 0 
+                    ? 'bg-accent text-white shadow-accent/20 border-accent/20' 
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                }`}
+              >
+                <ShoppingCart className="w-6 h-6" />
+                <AnimatePresence>
+                  {totalItems > 0 && (
+                    <motion.span 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                      className="absolute -top-1 -right-1 bg-destructive text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-800 shadow-md"
+                    >
+                      {totalItems}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </Link>
+            </motion.div>
+
+            {/* Mini-Carrito Responsive */}
+            <AnimatePresence>
+              {(isMiniCartOpen && totalItems > 0) && (
+                <motion.div
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className={`fixed lg:absolute top-full lg:top-full left-0 lg:left-auto right-0 lg:mt-4 w-full lg:w-80 bg-white dark:bg-slate-900 shadow-2xl lg:rounded-[2.5rem] border-b lg:border border-slate-100 dark:border-slate-800 overflow-hidden z-[100]`}
+                >
+                  {/* Vista Mobile (Sub-Header deslizable) */}
+                  <div className="lg:hidden flex items-center p-4 bg-slate-50 dark:bg-slate-800/50 gap-4">
+                    <div className="flex-1 flex gap-3 overflow-x-auto no-scrollbar scroll-smooth py-1">
+                      {cartItems.map((item) => (
+                        <div key={item.id} className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 flex-shrink-0 border border-slate-100 dark:border-slate-700 overflow-hidden shadow-sm">
+                          <img src={item.image} className="w-full h-full object-contain" />
+                          {item.quantity > 1 && (
+                            <div className="absolute top-0 right-0 bg-accent text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-white">
+                              {item.quantity}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <Link 
+                      to="/carrito" 
+                      onClick={() => setIsMiniCartOpen(false)}
+                      className="bg-primary-950 text-white px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-primary-950/20 active:scale-95 whitespace-nowrap"
+                    >
+                      Ver Carrito
+                    </Link>
+                  </div>
+
+                  {/* Vista Desktop (Dropdown) */}
+                  <div className="hidden lg:block p-6">
+                    <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-50 dark:border-slate-800 pb-4 mb-4">
+                      Mi Cotización ({totalItems})
+                    </p>
+                    
+                    <div className="flex flex-col gap-4 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+                       {cartItems.slice(0, 3).map((item) => (
+                         <div key={item.id} className="flex gap-4 items-center">
+                            <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-800 flex-shrink-0 overflow-hidden border border-slate-100 dark:border-slate-700">
+                               <img src={item.image || '/placeholder-product.png'} className="w-full h-full object-contain" />
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                               <span className="text-[11px] font-black text-primary-950 dark:text-white uppercase truncate tracking-tight leading-tight">
+                                 {item.name}
+                               </span>
+                               <span className="text-[9px] font-bold text-accent dark:text-accent-light uppercase tracking-widest mt-1">
+                                 {item.quantity} x {(item.price || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                               </span>
+                            </div>
+                         </div>
+                       ))}
+                       {cartItems.length > 3 && (
+                         <p className="text-center text-[9px] font-black text-slate-400 uppercase tracking-widest pt-2">
+                           y {cartItems.length - 3} productos más...
+                         </p>
+                       )}
+                    </div>
+
+                    <div className="mt-6 pt-6 border-t border-slate-50 dark:border-slate-800">
+                       <Link 
+                        to="/carrito" 
+                        onClick={() => setIsMiniCartOpen(false)}
+                        className="w-full block bg-primary-950 dark:bg-accent text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-center hover:opacity-90 transition-smooth shadow-xl active:scale-95"
+                       >
+                         Ver Carrito
+                       </Link>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
           {user ? (
             <div className="flex items-center gap-3 relative" ref={userMenuRef}>
               <div className="hidden lg:flex flex-col items-end mr-2">
