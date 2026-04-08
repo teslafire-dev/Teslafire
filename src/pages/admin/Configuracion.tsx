@@ -129,13 +129,55 @@ export default function Configuracion() {
     if (!file) return;
     setUploadingAsset(clave);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${clave}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+      // 1. Convertir y Redimensionar según el tipo de asset
+      const optimizedBlob = await new Promise<Blob>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+          const img = new Image();
+          img.src = event.target?.result as string;
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Medidas según el asset
+            const targetWidth = clave === 'site_logo' ? 500 : 64;
+            const targetHeight = clave === 'site_logo' ? 150 : 64;
+
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+
+            if (ctx) {
+              ctx.clearRect(0, 0, targetWidth, targetHeight);
+              
+              // Lógica de "Cover/Contain" para no deformar
+              const scale = clave === 'site_logo' 
+                ? Math.min(targetWidth / img.width, targetHeight / img.height) // Logo: No deformar
+                : Math.max(targetWidth / img.width, targetHeight / img.height); // Favicon: Llenar
+              
+              const x = (targetWidth / 2) - (img.width / 2) * scale;
+              const y = (targetHeight / 2) - (img.height / 2) * scale;
+              
+              ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+              
+              canvas.toBlob((blob) => {
+                if (blob) resolve(blob);
+                else reject(new Error("Error al convertir"));
+              }, 'image/webp', 0.9);
+            }
+          };
+        };
+        reader.onerror = reject;
+      });
+
+      const fileName = `${clave}_${Math.random().toString(36).substring(2)}.webp`;
       const filePath = `brand/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('assets')
-        .upload(filePath, file);
+        .upload(filePath, optimizedBlob, {
+          contentType: 'image/webp'
+        });
 
       if (uploadError) throw uploadError;
 
@@ -145,9 +187,10 @@ export default function Configuracion() {
 
       await handleSave(clave, publicUrl);
       handleChange(clave, publicUrl);
-      toast.success("Imagen de marca actualizada");
+      toast.success(`${clave === 'site_logo' ? 'Logo' : 'Favicon'} optimizado y actualizado`);
     } catch (err: any) {
-      toast.error("Error al subir imagen");
+      console.error(err);
+      toast.error("Error al procesar la imagen de marca");
     } finally {
       setUploadingAsset(null);
     }
