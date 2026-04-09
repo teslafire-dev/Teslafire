@@ -1,4 +1,4 @@
-import { Link, useNavigate, NavLink } from "react-router-dom";
+import { Link, useNavigate, NavLink, useLocation } from "react-router-dom";
 import { Search, ShoppingCart, User, Menu, X, LogOut, Sun, Moon, Languages } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase/client";
@@ -23,20 +23,25 @@ export default function Header() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMiniCartOpen, setIsMiniCartOpen] = useState(false);
   const [onlineCount, setOnlineCount] = useState(1);
+  const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
+  const [isLiveDropdownOpen, setIsLiveDropdownOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const liveRef = useRef<HTMLDivElement>(null);
   const { items: cartItems, removeItem, updateQuantity } = useCartStore();
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+
+  const { pathname } = useLocation();
 
   // AUTO-OPEN ON ADD
   const prevTotalRef = useRef(totalItems);
   useEffect(() => {
-    if (totalItems > prevTotalRef.current) {
+    if (totalItems > prevTotalRef.current && pathname !== '/carrito') {
       setIsMiniCartOpen(true);
       const timer = setTimeout(() => setIsMiniCartOpen(false), 3000);
       return () => clearTimeout(timer);
     }
     prevTotalRef.current = totalItems;
-  }, [totalItems]);
+  }, [totalItems, pathname]);
   
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -119,10 +124,13 @@ export default function Header() {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setIsUserMenuOpen(false);
       }
+      if (liveRef.current && !liveRef.current.contains(event.target as Node)) {
+        setIsLiveDropdownOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [userMenuRef]);
+  }, [userMenuRef, liveRef]);
 
   useEffect(() => {
     const controlNavbar = () => {
@@ -150,36 +158,84 @@ export default function Header() {
 
   // Presence Tracking
   useEffect(() => {
-    const channel = supabase.channel('online-users', {
-      config: {
-        presence: {
-          key: user?.id || Math.random().toString(36).substring(7),
-        },
-      },
-    });
+    let visitorId = localStorage.getItem('dobell_visitor_id');
+    if (!visitorId) {
+      visitorId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+      localStorage.setItem('dobell_visitor_id', visitorId);
+    }
 
-    channel
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        const totalCount = Object.keys(state).length;
-        setOnlineCount(totalCount > 0 ? totalCount : 1);
-        
-        // Update Peak if necessary (admin or first user can do this)
-        if (totalCount > 1) {
-          checkAndUpdatePeak(totalCount);
+    let userIp = '0.0.0.0';
+    
+    const fetchIp = async () => {
+      const services = [
+        'https://api.ipify.org?format=json',
+        'https://api64.ipify.org?format=json',
+        'https://ipapi.co/json/'
+      ];
+      
+      for (const service of services) {
+        try {
+          const res = await fetch(service, { timeout: 2000 } as any);
+          const data = await res.json();
+          const foundIp = data.ip || data.query;
+          if (foundIp && foundIp !== '0.0.0.0') {
+            userIp = foundIp;
+            break;
+          }
+        } catch (e) {
+          continue;
         }
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await channel.track({
-            online_at: new Date().toISOString(),
-          });
-        }
+      }
+    };
+
+    const setupPresence = async () => {
+      await fetchIp();
+      
+      const channel = supabase.channel('online-users', {
+        config: {
+          presence: {
+            key: user?.id || visitorId!,
+          },
+        },
       });
 
-    return () => {
-      channel.unsubscribe();
+      channel
+        .on('presence', { event: 'sync' }, () => {
+          const state = channel.presenceState();
+          const allPresences = Object.values(state).flat() as any[];
+          
+          // De-duplicate by IP address to count unique machines/locations
+          const uniqueUsersMap = new Map();
+          allPresences.forEach(curr => {
+            const identity = curr.ip && curr.ip !== '0.0.0.0' ? curr.ip : (curr.visitor_id || curr.email);
+            if (!uniqueUsersMap.has(identity)) {
+              uniqueUsersMap.set(identity, curr);
+            }
+          });
+
+          const uniqueUsers = Array.from(uniqueUsersMap.values());
+          setOnlineUsers(uniqueUsers);
+          setOnlineCount(uniqueUsers.length || 1);
+          
+          if (uniqueUsers.length > 1) {
+            checkAndUpdatePeak(uniqueUsers.length);
+          }
+        })
+        .subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+            await channel.track({
+              online_at: new Date().toISOString(),
+              email: user?.email || 'Visitante',
+              ip: userIp,
+              visitor_id: visitorId
+            });
+          }
+        });
+
+      return () => channel.unsubscribe();
     };
+
+    setupPresence();
   }, [user]);
 
   const checkAndUpdatePeak = async (current: number) => {
@@ -314,14 +370,52 @@ export default function Header() {
           <div className="flex items-center gap-1.5 p-1 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
             {/* Live Count (Admin only) */}
             {isAdmin && (
-              <div className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm mr-1">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
-                </span>
-                <span className="text-[9px] font-black text-primary-950 dark:text-white uppercase tracking-widest">
-                  {onlineCount} <span className="text-slate-400 dark:text-slate-500 ml-0.5">Live</span>
-                </span>
+              <div className="relative" ref={liveRef}>
+                <button 
+                  onClick={() => setIsLiveDropdownOpen(!isLiveDropdownOpen)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl border shadow-sm mr-1 transition-smooth active:scale-95 ${
+                    isLiveDropdownOpen ? 'bg-primary-950 text-white border-primary-950' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-700'
+                  }`}
+                >
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                  </span>
+                  <span className="text-[9px] font-black uppercase tracking-widest flex items-center gap-1">
+                    {onlineCount} <span className={isLiveDropdownOpen ? 'text-accent' : 'text-slate-400 dark:text-slate-500'}>Live</span>
+                  </span>
+                </button>
+
+                {/* Live Users Dropdown */}
+                <AnimatePresence>
+                  {isLiveDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                      className="absolute top-full left-0 mt-3 w-72 bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl border border-slate-50 dark:border-slate-800 p-2 z-[100] overflow-hidden"
+                    >
+                      <div className="px-4 py-3 border-b border-slate-50 dark:border-slate-800 mb-2">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Tráfico en Tiempo Real</p>
+                      </div>
+                      <div className="flex flex-col gap-1 max-h-64 overflow-y-auto pr-1">
+                        {onlineUsers.map((u, i) => (
+                          <div key={i} className="flex flex-col p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-smooth border border-transparent hover:border-slate-100">
+                             <div className="flex items-center justify-between">
+                               <span className="text-[10px] font-black text-primary-950 dark:text-white uppercase truncate max-w-[150px]">
+                                 {u.email && u.email !== 'Visitante' ? u.email : 'Visitante Anónimo'}
+                               </span>
+                               <span className="text-[8px] font-bold text-green-500 uppercase tracking-widest">Activo</span>
+                             </div>
+                             <span className="text-[9px] font-bold text-slate-400 mt-1 font-mono tracking-tighter bg-slate-100 dark:bg-slate-950 px-2 py-0.5 rounded w-fit">
+                               {!u.ip || u.ip === '0.0.0.0' ? 'IP Protegida/VPN' : u.ip}
+                             </span>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             )}
             
@@ -380,9 +474,8 @@ export default function Header() {
               </Link>
             </motion.div>
 
-            {/* Mini-Carrito Responsive */}
             <AnimatePresence>
-              {(isMiniCartOpen && totalItems > 0) && (
+              {(isMiniCartOpen && totalItems > 0 && pathname !== '/carrito') && (
                 <motion.div
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}

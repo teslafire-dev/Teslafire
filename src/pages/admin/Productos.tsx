@@ -298,7 +298,7 @@ export default function AdminProductos() {
                     Stock {sortConfig.key === 'stock' && (sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
                   </div>
                 </th>
-                <th className="px-5 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right w-[5%]">Opciones</th>
+                <th className="px-5 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center w-[150px]">Opciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -359,15 +359,15 @@ export default function AdminProductos() {
                        </div>
                     </div>
                   </td>
-                  <td className="px-5 py-3 text-right">
-                    <div className="flex items-center justify-end gap-3">
-                       <Link to={`/productos/${prod.slug || prod.id}`} target="_blank" className="p-3 text-slate-300 hover:text-accent transition-smooth bg-slate-50 rounded-xl active:scale-90 border border-transparent hover:border-slate-200">
+                  <td className="px-5 py-3">
+                    <div className="flex items-center justify-center gap-2">
+                       <Link to={`/productos/${prod.slug || prod.id}`} target="_blank" className="p-2.5 text-slate-400 hover:text-accent transition-smooth bg-slate-50 rounded-xl active:scale-90 border border-transparent hover:border-slate-200" title="Ver Producto">
                           <Eye className="w-5 h-5" />
                        </Link>
-                       <button onClick={() => { setEditProduct(prod); setIsModalOpen(true); }} className="p-3 text-slate-300 hover:text-blue-600 transition-smooth bg-slate-50 rounded-xl active:scale-90 border border-transparent hover:border-slate-200">
+                       <button onClick={() => { setEditProduct(prod); setIsModalOpen(true); }} className="p-2.5 text-slate-400 hover:text-blue-600 transition-smooth bg-slate-50 rounded-xl active:scale-90 border border-transparent hover:border-slate-200" title="Editar SKU">
                           <Edit3 className="w-5 h-5" />
                        </button>
-                       <button onClick={() => handleDelete(prod.id)} className="p-3 text-slate-300 hover:text-red-500 transition-smooth bg-slate-50 rounded-xl active:scale-90 border border-transparent hover:border-slate-200">
+                       <button onClick={() => handleDelete(prod.id)} className="p-2.5 text-slate-400 hover:text-red-500 transition-smooth bg-slate-50 rounded-xl active:scale-90 border border-transparent hover:border-slate-200" title="Eliminar SKU">
                           <Trash2 className="w-5 h-5" />
                        </button>
                     </div>

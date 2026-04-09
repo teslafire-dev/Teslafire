@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase/client";
 import { 
   ShieldCheck, 
@@ -27,18 +28,37 @@ import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function AdminUsuarios() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = (searchParams.get('tab') || 'users') as 'users' | 'activity' | 'security';
+  const selectedIp = searchParams.get('ip');
+
+  const setActiveTab = (tab: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('tab', tab);
+    newParams.delete('ip'); // Clear IP selection when switching tabs
+    setSearchParams(newParams);
+  };
+
+  const setSelectedIp = (ip: string | null) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (ip) {
+      newParams.set('ip', ip);
+    } else {
+      newParams.delete('ip');
+    }
+    setSearchParams(newParams);
+  };
+
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const { canManageUsers } = useAuth();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'users' | 'activity' | 'security'>('users');
   const [activity, setActivity] = useState<any[]>([]);
   const [blockedIps, setBlockedIps] = useState<any[]>([]);
   const [newIpToBlock, setNewIpToBlock] = useState("");
   const [blockReason, setBlockReason] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [selectedIp, setSelectedIp] = useState<string | null>(null);
 
   const [createForm, setCreateForm] = useState({
     email: "",
@@ -218,6 +238,45 @@ export default function AdminUsuarios() {
     } else {
       toast.success("IP Desbloqueada");
       fetchBlockedIps();
+    }
+  };
+
+  const handleDeleteActivity = async (ip?: string, id?: string) => {
+    let confirmMsg = "¿Estás seguro de eliminar este registro?";
+    if (ip) confirmMsg = `¿Estás seguro de eliminar todo el historial de la IP ${ip}?`;
+    if (!ip && !id) confirmMsg = "¿Estás seguro de resetear TODO el historial de auditoría? Esta acción no se puede deshacer.";
+    
+    if (!window.confirm(confirmMsg)) return;
+
+    setLoading(true);
+    try {
+      let query = supabase.from('actividad_usuarios').delete();
+      
+      if (id) {
+        query = query.eq('id', id);
+      } else if (ip) {
+        query = query.eq('ip', ip);
+      } else {
+        // Para borrar todo de forma segura en Postgres
+        query = query.filter('id', 'neq', '00000000-0000-0000-0000-000000000000');
+      }
+
+      const { error, count } = await query;
+      
+      if (error) {
+        console.error("Supabase Error:", error);
+        throw error;
+      }
+
+      toast.success(id ? "Registro eliminado" : (ip ? `Historial de IP ${ip} eliminado` : "Historial reseteado por lote"));
+      
+      if (ip === selectedIp) setSelectedIp(null);
+      fetchActivity();
+    } catch (err: any) {
+      console.error("Error detallado:", err);
+      toast.error("Error: " + (err.message || "Permisos insuficientes"));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -403,14 +462,32 @@ export default function AdminUsuarios() {
                 {selectedIp ? "Mostrando cada paso detallado del usuario" : "AGRUPADO POR DIRECCIÓN IP UNICA"}
               </p>
             </div>
-            {selectedIp && (
-              <button 
-                onClick={() => setSelectedIp(null)}
-                className="bg-primary-950 text-white px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-accent transition-smooth shadow-xl flex items-center gap-2"
-              >
-                Volver al Listado
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              {selectedIp ? (
+                <>
+                  <button 
+                    onClick={() => handleDeleteActivity(selectedIp)}
+                    className="p-3 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-xl transition-smooth shadow-sm"
+                    title="Eliminar este historial"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                  <button 
+                    onClick={() => setSelectedIp(null)}
+                    className="bg-primary-950 text-white px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-accent transition-smooth shadow-xl flex items-center gap-2"
+                  >
+                    Volver al Listado
+                  </button>
+                </>
+              ) : (
+                <button 
+                  onClick={() => handleDeleteActivity()}
+                  className="bg-red-600 text-white px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-red-700 transition-smooth shadow-xl flex items-center gap-2 active:scale-95"
+                >
+                  <Trash2 className="w-4 h-4" /> Resetear Logs (Lote)
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="overflow-x-auto min-h-[400px]">
@@ -426,11 +503,12 @@ export default function AdminUsuarios() {
                     <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Acción / Ruta</th>
                     <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Dispositivo</th>
                     <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Fecha / Hora</th>
+                    <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center w-[80px]"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                   {((groupedActivity as any)[selectedIp]?.history || []).map((act: any) => (
-                    <tr key={act.id} className="hover:bg-slate-50 transition-smooth">
+                    <tr key={act.id} className="hover:bg-slate-50 transition-smooth group/line">
                       <td className="px-10 py-6">
                         <div className="flex items-center gap-3">
                           <div className="w-2 h-2 rounded-full bg-accent"></div>
@@ -448,6 +526,15 @@ export default function AdminUsuarios() {
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest tabular-nums">
                           {new Date(act.created_at).toLocaleString()}
                         </span>
+                      </td>
+                      <td className="px-10 py-6 text-center">
+                        <button 
+                          onClick={() => handleDeleteActivity(undefined, act.id)}
+                          className="p-2 text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-smooth opacity-50 hover:opacity-100"
+                          title="Eliminar este evento"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -492,12 +579,21 @@ export default function AdminUsuarios() {
                         </div>
                       </td>
                       <td className="px-10 py-8 text-right">
-                        <button 
-                          onClick={() => setSelectedIp(group.ip)}
-                          className="px-6 py-3 bg-white border border-slate-200 rounded-xl text-[9px] font-black text-slate-500 uppercase tracking-widest hover:bg-accent hover:border-accent hover:text-white transition-smooth group-hover/row:scale-105"
-                        >
-                          Ver Historial
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                           <button 
+                             onClick={() => setSelectedIp(group.ip)}
+                             className="px-6 py-3 bg-white border border-slate-200 rounded-xl text-[9px] font-black text-slate-500 uppercase tracking-widest hover:bg-accent hover:border-accent hover:text-white transition-smooth group-hover/row:scale-105"
+                           >
+                             Ver Historial
+                           </button>
+                           <button 
+                             onClick={() => handleDeleteActivity(group.ip)}
+                             className="p-3 bg-slate-50 text-slate-500 hover:bg-red-50 hover:text-red-600 rounded-xl transition-smooth"
+                             title="Borrar IP"
+                           >
+                             <Trash2 className="w-4 h-4" />
+                           </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
