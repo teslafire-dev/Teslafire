@@ -162,66 +162,6 @@ export default function SEO() {
     setSaving(null);
   };
 
-  const generateSitemap = async () => {
-    setSitemapLoading(true);
-    try {
-      const siteUrl = config["seo_site_url"] || window.location.origin;
-
-      // Fetch all public pages
-      const [{ data: productos }, { data: categorias }] = await Promise.all([
-        supabase.from("productos").select("slug, updated_at").eq("estado", "activo"),
-        supabase.from("categorias").select("slug, updated_at"),
-      ]);
-
-      const staticPages: { url: string; priority: string; changefreq: string; lastmod?: string }[] = [
-        { url: "/", priority: "1.0", changefreq: "weekly" },
-        { url: "/productos", priority: "0.9", changefreq: "daily" },
-        { url: "/nosotros", priority: "0.7", changefreq: "monthly" },
-        { url: "/soluciones", priority: "0.7", changefreq: "monthly" },
-      ];
-
-      const productPages = (productos || []).map((p) => ({
-        url: `/productos/${p.slug}`,
-        priority: "0.8",
-        changefreq: "weekly",
-        lastmod: p.updated_at?.split("T")[0] || new Date().toISOString().split("T")[0],
-      }));
-
-      const allPages = [...staticPages, ...productPages];
-
-      const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${allPages
-  .map(
-    (page) => `  <url>
-    <loc>${siteUrl}${page.url}</loc>
-    <changefreq>${page.changefreq}</changefreq>
-    <priority>${page.priority}</priority>
-    ${page.lastmod ? `<lastmod>${page.lastmod}</lastmod>` : ""}
-  </url>`
-  )
-  .join("\n")}
-</urlset>`;
-
-      setSitemapXml(xml);
-      setShowSitemap(true);
-      toast.success(`Sitemap generado: ${allPages.length} URLs`);
-    } catch (err) {
-      toast.error("Error al generar sitemap");
-    } finally {
-      setSitemapLoading(false);
-    }
-  };
-
-  const downloadSitemap = () => {
-    if (!sitemapXml) return;
-    const blob = new Blob([sitemapXml], { type: "application/xml" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "sitemap.xml";
-    a.click();
-  };
-
   const charCount = (key: string, max: number) => {
     const len = (config[key] || "").length;
     const pct = Math.min((len / max) * 100, 100);
@@ -422,73 +362,7 @@ ${allPages
         })}
       </div>
 
-      {/* Sitemap Generator */}
-      <div className="bg-primary-950 p-10 rounded-[3rem] text-white flex flex-col gap-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-accent/10 rounded-full -mr-24 -mt-24 blur-3xl" />
-        <div className="flex items-center gap-4 relative z-10">
-          <div className="p-3 bg-accent/20 text-accent rounded-xl">
-            <Map className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-black uppercase tracking-tighter">Generador de Sitemap.xml</h2>
-            <p className="text-slate-400 text-xs font-medium mt-1">
-              Mapa del sitio para Google Search Console. Incluye todos los productos activos.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-4 relative z-10">
-          <button
-            onClick={generateSitemap}
-            disabled={sitemapLoading}
-            className="bg-accent text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-orange-500 transition-smooth shadow-xl flex items-center gap-3"
-          >
-            {sitemapLoading ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Code2 className="w-4 h-4" />}
-            Generar Sitemap
-          </button>
-          {sitemapXml && (
-            <>
-              <button
-                onClick={() => setShowSitemap(!showSitemap)}
-                className="bg-slate-800 text-slate-300 px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-700 transition-smooth flex items-center gap-3"
-              >
-                <Eye className="w-4 h-4" /> {showSitemap ? "Ocultar" : "Ver XML"}
-              </button>
-              <button
-                onClick={downloadSitemap}
-                className="bg-slate-800 text-slate-300 px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-700 transition-smooth flex items-center gap-3"
-              >
-                <Save className="w-4 h-4" /> Descargar
-              </button>
-            </>
-          )}
-        </div>
-
-        <AnimatePresence>
-          {showSitemap && sitemapXml && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="relative z-10 overflow-hidden"
-            >
-              <pre className="bg-slate-950 text-green-400 text-[10px] font-mono p-6 rounded-2xl overflow-x-auto max-h-64 overflow-y-auto leading-relaxed">
-                {sitemapXml}
-              </pre>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <div className="bg-slate-900/60 rounded-2xl p-6 relative z-10">
-          <p className="text-[10px] font-black text-accent uppercase tracking-widest mb-2">📋 Próximos pasos para Google</p>
-          <ol className="text-[11px] text-slate-400 font-medium space-y-1 leading-relaxed list-decimal list-inside">
-            <li>Genera el sitemap y descárgalo como <code className="text-accent">sitemap.xml</code></li>
-            <li>Súbelo a la raíz de tu hosting en GoDaddy (junto al <code className="text-accent">index.html</code>)</li>
-            <li>Entra a <a href="https://search.google.com/search-console" target="_blank" rel="noopener noreferrer" className="text-accent underline hover:text-white">Google Search Console</a> y envíalo</li>
-            <li>Verifica tu dominio con el meta-tag de verificación (campo de arriba)</li>
-          </ol>
-        </div>
-      </div>
+      {/* robots.txt Preview */}
 
       {/* robots.txt Preview */}
       <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm flex flex-col gap-6">
