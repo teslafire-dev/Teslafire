@@ -116,7 +116,8 @@ const categories = [
     'en_nosotros_form_whatsapp_hint',
     'en_nosotros_form_sending'
   ]},
-  { id: 'social', name: 'Redes Sociales', icon: LinkIcon, keys: ['social_facebook', 'social_instagram'] }
+  { id: 'social', name: 'Redes Sociales', icon: LinkIcon, keys: ['social_facebook', 'social_instagram'] },
+  { id: 'marketing', name: 'Email Marketing & SMTP', icon: Mail, keys: ['smtp_provider', 'smtp_api_key', 'smtp_from_email', 'smtp_from_name'] }
 ];
 
 export default function Configuracion() {
@@ -124,7 +125,7 @@ export default function Configuracion() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingAsset, setUploadingAsset] = useState<string | null>(null);
-  const [expandedCats, setExpandedCats] = useState<string[]>(['contacto', 'brand', 'identidad', 'general']);
+  const [expandedCats, setExpandedCats] = useState<string[]>(['contacto', 'brand', 'identidad', 'general', 'marketing']);
   
   const handleAssetUpload = async (file: File, clave: string) => {
     if (!file) return;
@@ -290,7 +291,13 @@ export default function Configuracion() {
     if (clave.startsWith('en_')) {
       return clave.replace('en_', '').replace(/_/g, '.').toUpperCase();
     }
-    return clave.replace(/_/g, ' ').toUpperCase();
+    const labels: Record<string, string> = {
+      'smtp_provider': 'Proveedor de Correo (Ej: resend)',
+      'smtp_api_key': 'API Key Secreta',
+      'smtp_from_email': 'Email Remitente (Validado)',
+      'smtp_from_name': 'Nombre que verá el cliente'
+    };
+    return labels[clave] || clave.replace(/_/g, ' ').toUpperCase();
   };
 
   const toggleCat = (id: string) => {

@@ -40,7 +40,9 @@ export default function AdminDashboard() {
     lowStock: 0,
     visitorPeak: 0,
     visitorsToday: 0,
-    recentOrders: [] as any[]
+    recentOrders: [] as any[],
+    weeklyTrends: [] as {name: string, total: number}[],
+    categoryShare: [] as {name: string, count: number}[]
   });
   const [abandonedCarts, setAbandonedCarts] = useState<any[]>([]);
   const [abandonedLoading, setAbandonedLoading] = useState(false);
@@ -92,7 +94,9 @@ export default function AdminDashboard() {
         lowStock: lowStockCount || 0,
         visitorPeak: parseInt(peakData?.valor || '1'),
         visitorsToday: todayVisitors?.total_visitantes || 0,
-        recentOrders: recent || []
+        recentOrders: recent || [],
+        weeklyTrends: calculateWeeklyTrends(recent || []),
+        categoryShare: calculateCategoryShare(recent || [])
       });
     } catch (error) {
       console.error("Error fetching dashboard stats:", error);
@@ -147,6 +151,33 @@ export default function AdminDashboard() {
     } finally {
       setIsExporting(false);
     }
+  };
+
+  const calculateWeeklyTrends = (orders: any[]) => {
+    const days = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'];
+    const now = new Date();
+    const result = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const dayName = days[d.getDay()];
+      const count = orders.filter(o => new Date(o.created_at).toDateString() === d.toDateString()).length;
+      result.push({ name: dayName, total: count });
+    }
+    return result;
+  };
+
+  const calculateCategoryShare = (orders: any[]) => {
+    const counts: Record<string, number> = {};
+    orders.forEach(o => {
+      if (Array.isArray(o.items)) {
+        o.items.forEach((item: any) => {
+          const cat = item.categoria || 'Otro';
+          counts[cat] = (counts[cat] || 0) + 1;
+        });
+      }
+    });
+    return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a,b) => b.count - a.count).slice(0, 5);
   };
 
   const kpis = [
@@ -230,6 +261,107 @@ export default function AdminDashboard() {
             </div>
           </motion.div>
         ))}
+      </div>
+
+      {/* Visual Intelligence Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+         {/* Order Trends (Line Chart) */}
+         <div className="bg-white p-10 rounded-[4rem] border border-slate-100 shadow-sm flex flex-col gap-8">
+            <div className="flex justify-between items-center">
+               <div className="flex flex-col gap-1">
+                  <h3 className="text-xl font-black font-outfit text-primary-950 uppercase tracking-tighter leading-none">Flujo Semanal</h3>
+                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Tendencia de Reservas (7 días)</span>
+               </div>
+               <div className="p-3 bg-blue-50 text-blue-500 rounded-2xl">
+                  <TrendingDown className="w-5 h-5 rotate-180" />
+               </div>
+            </div>
+            <div className="h-64 relative mt-4">
+               {stats.weeklyTrends.length > 0 && (
+                 <svg viewBox="0 0 700 300" className="w-full h-full">
+                    {/* Line Path */}
+                    <path 
+                      d={`M ${stats.weeklyTrends.map((t, i) => `${(i * 110) + 20},${250 - (Math.min(t.total, 4) * 50)}`).join(' L ')}`}
+                      fill="none" 
+                      stroke="#F97316" 
+                      strokeWidth="6" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    />
+                    {/* Data Points */}
+                    {stats.weeklyTrends.map((t, i) => (
+                      <g key={i}>
+                        <circle 
+                          cx={(i * 110) + 20} 
+                          cy={250 - (Math.min(t.total, 4) * 50)} 
+                          r="8" 
+                          fill="#F97316" 
+                          stroke="white" 
+                          strokeWidth="3"
+                        />
+                        <text 
+                          x={(i * 110) + 20} 
+                          y="290" 
+                          className="text-[20px] font-black fill-slate-400 text-center" 
+                          textAnchor="middle"
+                        >
+                          {t.name}
+                        </text>
+                        {t.total > 0 && (
+                           <text 
+                             x={(i * 110) + 20} 
+                             y={250 - (Math.min(t.total, 4) * 50) - 20} 
+                             className="text-[18px] font-black fill-primary-950" 
+                             textAnchor="middle"
+                           >
+                             {t.total}
+                           </text>
+                        )}
+                      </g>
+                    ))}
+                 </svg>
+               )}
+            </div>
+         </div>
+
+         {/* Category Popularity (Bar Chart) */}
+         <div className="bg-white p-10 rounded-[4rem] border border-slate-100 shadow-sm flex flex-col gap-8">
+            <div className="flex justify-between items-center">
+               <div className="flex flex-col gap-1">
+                  <h3 className="text-xl font-black font-outfit text-primary-950 uppercase tracking-tighter leading-none">Interés por Categoría</h3>
+                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Top 5 Categorías más cotizadas</span>
+               </div>
+               <div className="p-3 bg-purple-50 text-purple-500 rounded-2xl">
+                  <Zap className="w-5 h-5" />
+               </div>
+            </div>
+            <div className="flex flex-col gap-6 mt-4">
+               {stats.categoryShare.length > 0 ? stats.categoryShare.map((cat, i) => {
+                 const max = Math.max(...stats.categoryShare.map(c => c.count));
+                 const percentage = (cat.count / max) * 100;
+                 return (
+                   <div key={i} className="flex flex-col gap-2">
+                      <div className="flex justify-between items-end px-2">
+                         <span className="text-xs font-black text-primary-950 uppercase tracking-tight">{cat.name}</span>
+                         <span className="text-sm font-black text-accent font-outfit">{cat.count} Reservas</span>
+                      </div>
+                      <div className="h-4 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100 shadow-inner">
+                         <motion.div 
+                           initial={{ width: 0 }}
+                           animate={{ width: `${percentage}%` }}
+                           className={`h-full ${i === 0 ? 'bg-primary-950' : 'bg-slate-300'} rounded-full`}
+                         />
+                      </div>
+                   </div>
+                 );
+               }) : (
+                 <div className="flex flex-col items-center justify-center py-10 gap-2">
+                    <Package className="w-8 h-8 text-slate-100" />
+                    <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Esperando primeras cotizaciones...</span>
+                 </div>
+               )}
+            </div>
+         </div>
       </div>
 
       {/* Abandoned Carts Widget */}

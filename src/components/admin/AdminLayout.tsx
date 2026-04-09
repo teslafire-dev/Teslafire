@@ -81,6 +81,7 @@ export default function AdminLayout() {
     { name: "Categorías", icon: Tags, href: "/admin/categorias", permission: canManageProducts },
     { name: "Productos", icon: Package, href: "/admin/productos", permission: canManageProducts },
     { name: "Usuarios", icon: Users, href: "/admin/usuarios", permission: canManageUsers },
+    { name: "CRM Estratégico", icon: Zap, href: "/admin/crm", permission: canManageUsers },
     { name: "SEO", icon: Globe, href: "/admin/seo", permission: canManageSettings },
     { name: "Configuración", icon: Settings, href: "/admin/configuracion", permission: canManageSettings },
   ];

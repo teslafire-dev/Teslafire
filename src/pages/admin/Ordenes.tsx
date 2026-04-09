@@ -18,6 +18,7 @@ interface Order {
   created_at: string;
   productos: any[];
   mensaje?: string;
+  notas_admin?: string;
 }
 
 export default function AdminOrdenes() {
@@ -27,10 +28,18 @@ export default function AdminOrdenes() {
   const [search, setSearch] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isSavingNote, setIsSavingNote] = useState(false);
+  const [adminNote, setAdminNote] = useState("");
 
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  useEffect(() => {
+    if (selectedOrder) {
+      setAdminNote(selectedOrder.notas_admin || "");
+    }
+  }, [selectedOrder]);
 
   async function fetchOrders() {
     setLoading(true);
@@ -68,6 +77,26 @@ export default function AdminOrdenes() {
       toast.error("Error al actualizar estado");
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const saveAdminNotes = async () => {
+    if (!selectedOrder) return;
+    setIsSavingNote(true);
+    try {
+      const { error } = await supabase
+        .from('ordenes')
+        .update({ notas_admin: adminNote })
+        .eq('id', selectedOrder.id);
+
+      if (error) throw error;
+      toast.success("Nota administrativa guardada");
+      setOrders(prev => prev.map(o => o.id === selectedOrder.id ? { ...o, notas_admin: adminNote } : o));
+      setSelectedOrder(prev => prev ? { ...prev, notas_admin: adminNote } : null);
+    } catch (error) {
+      toast.error("Error al guardar nota (verifique la base de datos)");
+    } finally {
+      setIsSavingNote(false);
     }
   };
 
@@ -318,12 +347,31 @@ export default function AdminOrdenes() {
 
                         {selectedOrder.mensaje && (
                            <div className="flex flex-col gap-4">
-                              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Notas Especiales</h4>
+                              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Notas del Cliente</h4>
                               <div className="p-6 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900 rounded-3xl text-sm font-medium text-slate-600 dark:text-slate-400 leading-relaxed italic">
                                  "{selectedOrder.mensaje}"
                               </div>
                            </div>
                         )}
+
+                        <div className="flex flex-col gap-4 mt-8">
+                           <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 text-accent font-outfit">Seguimiento Administrativo</h4>
+                           <div className="flex flex-col gap-3">
+                              <textarea 
+                                value={adminNote}
+                                onChange={(e) => setAdminNote(e.target.value)}
+                                placeholder="Ej: Pago confirmado por WhatsApp..."
+                                className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-[2rem] p-6 text-sm font-medium outline-none focus:ring-2 focus:ring-accent min-h-[140px] resize-none transition-smooth"
+                              />
+                              <button 
+                                onClick={saveAdminNotes}
+                                disabled={isSavingNote}
+                                className="w-full bg-primary-950 text-white h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-accent transition-smooth active:scale-95 disabled:opacity-50 shadow-xl shadow-primary-950/20"
+                              >
+                                {isSavingNote ? 'Sincronizando...' : 'Guardar Bitácora de Gestión'}
+                              </button>
+                           </div>
+                        </div>
                      </div>
 
                      {/* Products List Column */}

@@ -15,6 +15,7 @@ import AdminUsuarios from './pages/admin/Usuarios';
 import AdminCategorias from './pages/admin/Categorias';
 import AdminConfiguracion from './pages/admin/Configuracion';
 import AdminSEO from './pages/admin/SEO';
+import AdminCRM from './pages/admin/CRM';
 import AdminLayout from './components/admin/AdminLayout';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
@@ -84,6 +85,7 @@ function AppContent() {
               <Route path="/admin/productos" element={<AdminProductos />} />
               <Route path="/admin/ordenes" element={<AdminOrdenes />} />
               <Route path="/admin/usuarios" element={<AdminUsuarios />} />
+              <Route path="/admin/crm" element={<AdminCRM />} />
               <Route path="/admin/configuracion" element={<AdminConfiguracion />} />
               <Route path="/admin/seo" element={<AdminSEO />} />
             </Route>

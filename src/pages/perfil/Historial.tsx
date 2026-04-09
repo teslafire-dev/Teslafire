@@ -138,13 +138,10 @@ export default function Historial() {
                    <div className="flex flex-row md:flex-col items-center gap-3">
                       <Link 
                         to={`/gracias/${order.localizador}`}
-                        className="flex-1 md:w-full h-12 bg-slate-50 hover:bg-primary-950 hover:text-white text-primary-950 rounded-2xl flex items-center justify-center gap-2 px-6 text-[10px] font-black uppercase tracking-widest transition-all group/btn"
+                        className="flex-1 md:w-full h-14 bg-slate-900 text-white rounded-[1.5rem] flex items-center justify-center gap-3 px-8 text-[11px] font-black uppercase tracking-[0.1em] transition-all hover:bg-accent active:scale-95 shadow-xl shadow-slate-900/10"
                       >
-                         <FileText className="w-4 h-4" /> Ver Ficha
+                         <FileText className="w-5 h-5" /> Ver Ficha Técnica
                       </Link>
-                      <button className="w-12 h-12 bg-white border-2 border-slate-50 flex items-center justify-center rounded-2xl text-slate-300 group-hover:border-accent group-hover:text-accent transition-all">
-                         <ChevronRight className="w-5 h-5" />
-                      </button>
                    </div>
                 </div>
 
