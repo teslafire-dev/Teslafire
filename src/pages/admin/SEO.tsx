@@ -136,10 +136,11 @@ export default function SEO() {
     }
   };
 
-  const handleSave = async (key: string) => {
+  const handleSave = async (key: string, overrideValue?: string) => {
     setSaving(key);
+    const valueToSave = overrideValue !== undefined ? overrideValue : (config[key] || "");
     const { error } = await supabase.from("configuracion").upsert(
-      { clave: key, valor: config[key] || "", updated_at: new Date().toISOString() },
+      { clave: key, valor: valueToSave, updated_at: new Date().toISOString() },
       { onConflict: "clave" }
     );
     if (error) toast.error(`Error al guardar: ${key}`);
