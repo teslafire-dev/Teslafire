@@ -11,9 +11,18 @@ export function useSecurity() {
   useEffect(() => {
     const trackActivity = async () => {
       try {
-        // 1. Obtener IP (opcional, ipify es confiable)
+        // 1. Obtener IP
         const ipRes = await fetch('https://api.ipify.org?format=json');
         const { ip } = await ipRes.json();
+
+        // Evitar duplicados recientes (30 segundos) en la misma página
+        const lastLogKey = `sec_log_${ip}_${location.pathname}`;
+        const lastLogTime = sessionStorage.getItem(lastLogKey);
+        const now = Date.now();
+        
+        if (lastLogTime && (now - parseInt(lastLogTime)) < 30000) {
+          return; // Demasiado pronto para la misma ruta
+        }
 
         // 2. Verificar si está bloqueado
         const { data: blocked } = await supabase
@@ -30,7 +39,7 @@ export function useSecurity() {
         // 3. Capturar Metadata
         const ua = navigator.userAgent;
         let navegador = "Otro";
-        if (ua.includes("Chrome")) navegador = "Chrome";
+        if (ua.includes("Chrome") && !ua.includes("Edge")) navegador = "Chrome";
         else if (ua.includes("Firefox")) navegador = "Firefox";
         else if (ua.includes("Safari") && !ua.includes("Chrome")) navegador = "Safari";
         else if (ua.includes("Edge")) navegador = "Edge";
@@ -53,6 +62,9 @@ export function useSecurity() {
           dispositivo: /Mobi|Android/i.test(ua) ? 'Mobile' : 'Desktop',
           pagina_visitada: location.pathname
         });
+
+        // Registrar timestamp para evitar duplicados inmediatos
+        sessionStorage.setItem(lastLogKey, now.toString());
 
       } catch (error) {
         console.error("Security Hook error:", error);

@@ -15,7 +15,9 @@ import {
   AlertCircle,
   Package,
   DownloadCloud,
-  Tags
+  Tags,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Link } from "react-router-dom";
@@ -33,6 +35,7 @@ export default function AdminProductos() {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<any | null>(null);
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: 'created_at', direction: 'desc' });
   const { canManageProducts, loading: authLoading } = useAuth();
   const { syncFromExcel, isSyncing, progress } = useSyncProducts();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -40,6 +43,13 @@ export default function AdminProductos() {
   useEffect(() => {
     if (canManageProducts) fetchProducts();
   }, [canManageProducts]);
+
+  const handleSort = (key: string) => {
+    setSortConfig(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
 
   const fetchProducts = async () => {
     setLoadingProducts(true);
@@ -143,6 +153,31 @@ export default function AdminProductos() {
     toast.success("Catálogo exportado con éxito");
   };
 
+  const getSortedProducts = () => {
+    let filtered = dbProducts.filter(p => 
+      p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      p.sku.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (sortConfig.key) {
+      filtered.sort((a, b) => {
+        let valA, valB;
+        if (sortConfig.key === 'categoria') {
+          valA = a.producto_categorias?.[0]?.categorias?.nombre || '';
+          valB = b.producto_categorias?.[0]?.categorias?.nombre || '';
+        } else {
+          valA = a[sortConfig.key];
+          valB = b[sortConfig.key];
+        }
+
+        if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return filtered;
+  };
+
   if (authLoading) return null;
 
   if (!canManageProducts) return (
@@ -201,11 +236,11 @@ export default function AdminProductos() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Buscar por SKU, nombre técnico o fabricante..." 
-            className="w-full bg-slate-50 border border-slate-50 rounded-2xl py-5 pl-16 pr-6 text-lg font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-accent transition-smooth outline-none shadow-inner"
+            className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-5 pl-16 pr-6 text-lg font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-accent transition-smooth outline-none shadow-inner"
           />
         </div>
         <div className="flex items-center gap-3 w-full md:w-auto">
-           <button className="flex-1 md:flex-none bg-slate-50 border border-slate-50 text-slate-500 font-extrabold uppercase text-[12px] tracking-wider px-8 py-5 rounded-2xl hover:bg-white hover:border-accent transition-smooth flex items-center gap-2 justify-center">
+           <button className="flex-1 md:flex-none bg-slate-50 border border-slate-100 text-slate-500 font-extrabold uppercase text-[12px] tracking-wider px-8 py-5 rounded-2xl hover:bg-white hover:border-accent transition-smooth flex items-center gap-2 justify-center">
               <Filter className="w-5 h-5" /> Filtros
            </button>
             <button 
@@ -223,11 +258,46 @@ export default function AdminProductos() {
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-5 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest w-[35%]">Producto</th>
-                <th className="px-5 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest w-[15%] text-center">SKU Técnico</th>
-                <th className="px-5 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest w-[25%]">Categorías</th>
-                <th className="px-5 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center w-[10%]">Precio (USD)</th>
-                <th className="px-5 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest w-[10%] text-center">Stock</th>
+                <th 
+                  onClick={() => handleSort('nombre')}
+                  className="px-5 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest w-[35%] cursor-pointer hover:text-accent transition-smooth"
+                >
+                  <div className="flex items-center gap-2">
+                    Producto {sortConfig.key === 'nombre' && (sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                  </div>
+                </th>
+                <th 
+                  onClick={() => handleSort('sku')}
+                  className="px-5 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest w-[15%] text-center cursor-pointer hover:text-accent transition-smooth"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    SKU Técnico {sortConfig.key === 'sku' && (sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                  </div>
+                </th>
+                <th 
+                  onClick={() => handleSort('categoria')}
+                  className="px-5 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest w-[25%] cursor-pointer hover:text-accent transition-smooth"
+                >
+                  <div className="flex items-center gap-2">
+                    Categorías {sortConfig.key === 'categoria' && (sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                  </div>
+                </th>
+                <th 
+                  onClick={() => handleSort('precio')}
+                  className="px-5 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center w-[10%] cursor-pointer hover:text-accent transition-smooth"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    Precio (USD) {sortConfig.key === 'precio' && (sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                  </div>
+                </th>
+                <th 
+                  onClick={() => handleSort('stock')}
+                  className="px-5 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest w-[10%] text-center cursor-pointer hover:text-accent transition-smooth"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    Stock {sortConfig.key === 'stock' && (sortConfig.direction === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                  </div>
+                </th>
                 <th className="px-5 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right w-[5%]">Opciones</th>
               </tr>
             </thead>
@@ -239,22 +309,14 @@ export default function AdminProductos() {
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cargando Inventario...</span>
                   </td>
                 </tr>
-              ) : dbProducts.filter(p => 
-                  p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                  p.sku.toLowerCase().includes(searchTerm.toLowerCase())
-                ).length === 0 ? (
+              ) : getSortedProducts().length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-10 py-32 text-center">
                     <Package className="w-12 h-12 text-slate-200 mx-auto mb-4" />
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No se encontraron productos</span>
                   </td>
                 </tr>
-              ) : dbProducts
-                .filter(p => 
-                  p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                  p.sku.toLowerCase().includes(searchTerm.toLowerCase())
-                )
-                .map((prod, i) => (
+              ) : getSortedProducts().map((prod, i) => (
                 <tr key={`${prod.id}-${i}`} className="hover:bg-slate-50/80 transition-smooth group active:bg-slate-100 border-b border-slate-50 last:border-0">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-5">

@@ -320,57 +320,10 @@ export default function Configuracion() {
       </div>
 
       <div className="flex flex-col gap-16">
-        {/* PROFILE */}
-        <section className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm">
-           <div className="flex items-center gap-4 mb-10">
-              <div className="p-3 bg-accent text-white rounded-xl shadow-xl shadow-accent/20">
-                <Palette className="w-5 h-5" />
-              </div>
-              <h2 className="text-2xl font-black text-primary-950 uppercase tracking-tighter">Perfil de Usuario</h2>
-           </div>
-           <form onSubmit={handleProfileSave} className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="flex flex-col gap-2.5">
-                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Nombre Completo</label>
-                 <input type="text" value={profileForm.nombre_completo} onChange={(e) => setProfileForm({...profileForm, nombre_completo: e.target.value})} className="w-full bg-slate-50 border border-slate-50 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-2 focus:ring-accent outline-none" />
-              </div>
-              <div className="flex flex-col gap-2.5">
-                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Teléfono Directo</label>
-                 <input type="text" value={profileForm.telefono} onChange={(e) => setProfileForm({...profileForm, telefono: e.target.value})} className="w-full bg-slate-50 border border-slate-50 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-2 focus:ring-accent outline-none" />
-              </div>
-              <div className="md:col-span-2 flex justify-end">
-                 <button disabled={saving} className="bg-primary-950 text-white px-10 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-accent transition-smooth shadow-xl flex items-center gap-3">
-                   {saving ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Actualizar Datos
-                 </button>
-              </div>
-           </form>
-        </section>
-
         {/* DYNAMIC CONFIG */}
         {canManageSettings && (
           <div className="flex flex-col gap-8">
             
-            {/* Tasa BCV Widget en vivo */}
-            <div className="bg-primary-950 p-8 rounded-[3rem] shadow-xl text-white flex flex-col md:flex-row md:items-center justify-between gap-6 overflow-hidden relative">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-accent/20 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-              <div className="flex flex-col gap-2 relative z-10">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent flex items-center gap-2">
-                  <RefreshCcw className={`w-3 h-3 ${currencyLoading ? 'animate-spin' : ''}`} /> Monitor de Cambio BCV
-                </span>
-                <h3 className="text-2xl font-black uppercase tracking-tighter loading-none">Tasa Activa del Sistema</h3>
-                <p className="text-xs text-slate-400 font-medium tracking-wide">Incluye el valor BCV oficial más tus ajustes fijos ("markup").</p>
-              </div>
-              <div className="flex gap-4 relative z-10">
-                <div className="bg-slate-900 border border-slate-800 px-6 py-4 rounded-2xl flex flex-col items-center">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">1 USD =</span>
-                  <span className="text-2xl font-black font-outfit text-white tracking-tighter overflow-hidden text-clip whitespace-nowrap">Bs. {usdRate.toLocaleString('es-VE', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
-                </div>
-                <div className="bg-slate-900 border border-slate-800 px-6 py-4 rounded-2xl flex flex-col items-center">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">1 EUR =</span>
-                  <span className="text-2xl font-black font-outfit text-white tracking-tighter overflow-hidden text-clip whitespace-nowrap">Bs. {eurRate.toLocaleString('es-VE', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
-                </div>
-              </div>
-            </div>
-
             <div className="relative mb-4">
               <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <input 
@@ -496,6 +449,28 @@ export default function Configuracion() {
                                     <span className="text-[10px] text-slate-500 font-medium leading-relaxed">
                                       Edita este número para establecer el monto final (ya incluye el BCV). La diferencia se guardará como un cargo oculto adicional (+ {(parseFloat(item.valor || '0')).toFixed(2)} Bs.).
                                     </span>
+                                  </div>
+                                ) : item.clave === 'mostrar_resegnas' || item.clave === 'whatsapp_notificaciones' ? (
+                                  <div className="flex items-center gap-4 py-4 px-2">
+                                    <button 
+                                      onClick={() => {
+                                        const newValue = item.valor === 'true' ? 'false' : 'true';
+                                        handleChange(item.clave, newValue);
+                                        handleSave(item.clave, newValue);
+                                      }}
+                                      className={`w-14 h-7 rounded-full transition-all relative flex items-center px-1 shrink-0 ${item.valor === 'true' ? 'bg-accent shadow-lg shadow-accent/20' : 'bg-slate-200'}`}
+                                    >
+                                      <motion.div 
+                                        animate={{ x: item.valor === 'true' ? 28 : 0 }}
+                                        className="w-5 h-5 bg-white rounded-full shadow-md"
+                                      />
+                                    </button>
+                                    <div className="flex flex-col">
+                                      <span className="text-[10px] font-black uppercase tracking-widest text-primary-950">
+                                        {item.valor === 'true' ? 'Activado' : 'Desactivado'}
+                                      </span>
+                                      <span className="text-[9px] text-slate-400 font-medium uppercase tracking-tight">Cambio automático al pulsar</span>
+                                    </div>
                                   </div>
                                 ) : (
                                   <textarea 

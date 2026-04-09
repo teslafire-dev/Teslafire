@@ -402,15 +402,11 @@ export default function AdminOrdenes() {
                         <XCircle className="w-4 h-4" /> Cancelar Orden
                      </button>
                   </div>
-                  <button 
-                    className="h-14 px-8 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 hover:bg-black active:scale-95"
-                    onClick={() => {
-                        toast("Función de impresión todavía en desarrollo", {
-                            icon: '🖨️',
-                        });
-                    }}
+                   <button 
+                    className="h-14 px-8 bg-primary-950 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 hover:bg-accent transition-smooth shadow-xl shadow-primary-950/20 active:scale-95"
+                    onClick={() => handlePrintOrder(selectedOrder)}
                   >
-                    <DownloadIcon className="w-4 h-4" /> Imprimir Comprobante
+                    <DownloadIcon className="w-4 h-4" /> Descargar Comprobante (PDF)
                   </button>
                </div>
             </motion.div>
@@ -428,6 +424,107 @@ export default function AdminOrdenes() {
       `}</style>
     </div>
   );
+
+  function handlePrintOrder(order: Order) {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const productsHtml = order.productos.map(p => `
+      <tr style="border-bottom: 1px solid #eee;">
+        <td style="padding: 12px 0; font-size: 11px;">
+          <div style="font-weight: 900; text-transform: uppercase;">${p.nombre}</div>
+          <div style="color: #666; font-size: 9px;">SKU: ${p.sku || 'N/A'}</div>
+        </td>
+        <td style="padding: 12px 0; text-align: center; font-weight: 900;">x${p.cantidad}</td>
+        <td style="padding: 12px 0; text-align: right; font-weight: 900;">$${Number(p.precio || 0).toFixed(2)}</td>
+      </tr>
+    `).join('');
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Orden_${order.localizador}</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+            body { font-family: 'Inter', sans-serif; padding: 40px; color: #020617; line-height: 1.5; }
+            .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 4px solid #020617; padding-bottom: 20px; }
+            .logo { font-size: 24px; font-weight: 900; letter-spacing: -1px; text-transform: uppercase; }
+            .order-title { font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; letter-spacing: 2px; }
+            .order-id { font-size: 32px; font-weight: 900; letter-spacing: -2px; }
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
+            .info-box h4 { margin: 0 0 10px 0; font-size: 10px; text-transform: uppercase; color: #64748b; letter-spacing: 1px; }
+            .info-box p { margin: 2px 0; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th { text-align: left; font-size: 10px; text-transform: uppercase; color: #64748b; padding-bottom: 10px; border-bottom: 2px solid #020617; }
+            .total-section { margin-top: 40px; display: flex; justify-content: flex-end; }
+            .total-box { background: #020617; color: white; padding: 20px 40px; border-radius: 12px; text-align: right; }
+            .total-box span { font-size: 10px; text-transform: uppercase; opacity: 0.6; display: block; }
+            .total-box strong { font-size: 24px; font-weight: 900; }
+            @media print { .no-print { display: none; } }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <div class="logo">DOBELL <span style="color: #f97316;">TÉCNICA</span></div>
+              <p style="font-size: 10px; color: #64748b; font-weight: 700;">SOLUCIONES INDUSTRIALES DE ALTO IMPACTO</p>
+            </div>
+            <div style="text-align: right;">
+              <div class="order-title">Comprobante de Cotización</div>
+              <div class="order-id">#${order.localizador}</div>
+            </div>
+          </div>
+
+          <div class="info-grid">
+            <div class="info-box">
+              <h4>Información del Cliente</h4>
+              <p>${order.cliente_nombre}</p>
+              <p>ID: ${order.cliente_cedula}</p>
+              <p>TEL: ${order.cliente_telefono}</p>
+              <p>EMAIL: ${order.cliente_email}</p>
+            </div>
+            <div class="info-box" style="text-align: right;">
+              <h4>Detalles de Gestión</h4>
+              <p>FECHA: ${new Date(order.created_at).toLocaleString()}</p>
+              <p>ESTADO: ${order.estado.toUpperCase()}</p>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="text-align: left;">Descripción del Equipo</th>
+                <th style="text-align: center;">Cantidad</th>
+                <th style="text-align: right;">Precio Unit.</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${productsHtml}
+            </tbody>
+          </table>
+
+          <div class="total-section">
+            <div class="total-box">
+              <span>Monto Total Neto</span>
+              <strong>$${Number(order.total || 0).toFixed(2)} USD</strong>
+            </div>
+          </div>
+
+          <div style="margin-top: 80px; text-align: center; border-top: 1px dashed #cbd5e1; padding-top: 20px;">
+            <p style="font-size: 10px; color: #64748b; font-weight: 600;">Este documento es un comprobante técnico de reserva. No representa una factura fiscal hasta su procesamiento administrativo final.</p>
+          </div>
+
+          <script>
+            window.onload = () => {
+              window.print();
+              setTimeout(() => { window.close(); }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  }
 }
 
 function DownloadIcon(props: any) {

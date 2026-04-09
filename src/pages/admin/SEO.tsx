@@ -365,43 +365,6 @@ export default function SEO() {
 
       {/* robots.txt Preview */}
 
-      {/* robots.txt Preview */}
-      <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm flex flex-col gap-6">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-slate-100 text-slate-600 rounded-xl">
-            <Bot className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-black text-primary-950 uppercase tracking-tighter">robots.txt Recomendado</h2>
-            <p className="text-slate-500 text-xs font-medium mt-1">
-              Copia este contenido y crea un archivo <code className="text-accent font-black">robots.txt</code> en la raíz de tu hosting.
-            </p>
-          </div>
-        </div>
-        <div className="relative">
-          <pre className="bg-slate-950 text-green-400 text-[11px] font-mono p-6 rounded-2xl leading-relaxed">
-{`User-agent: *
-Allow: /
-Disallow: /admin/
-Disallow: /admin/*
-
-Sitemap: ${config["seo_site_url"] || "https://tudominio.com"}/sitemap.xml`}
-          </pre>
-          <button
-            onClick={() => {
-              navigator.clipboard.writeText(`User-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /admin/*\n\nSitemap: ${config["seo_site_url"] || "https://tudominio.com"}/sitemap.xml`);
-              toast.success("robots.txt copiado al portapapeles");
-            }}
-            className="absolute top-4 right-4 bg-slate-800 text-slate-300 text-[10px] font-black uppercase px-4 py-2 rounded-xl hover:bg-accent hover:text-white transition-smooth"
-          >
-            Copiar
-          </button>
-        </div>
-        <p className="text-[10px] text-slate-400 font-medium">
-          ⚠️ Esto le indica a Google que puede indexar toda la web pública, pero <strong>bloquea el panel de administración</strong> para que no aparezca en búsquedas.
-        </p>
-      </div>
-
       {/* Analytics Block */}
       <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm flex flex-col gap-8">
         <div className="flex items-center justify-between mb-2">

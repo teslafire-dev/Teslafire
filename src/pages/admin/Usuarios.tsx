@@ -16,10 +16,15 @@ import {
   ShieldAlert,
   Ban,
   Globe,
-  Trash2
+  Trash2,
+  UserPlus,
+  Mail,
+  Lock,
+  X
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import toast from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function AdminUsuarios() {
   const [users, setUsers] = useState<any[]>([]);
@@ -32,6 +37,14 @@ export default function AdminUsuarios() {
   const [blockedIps, setBlockedIps] = useState<any[]>([]);
   const [newIpToBlock, setNewIpToBlock] = useState("");
   const [blockReason, setBlockReason] = useState("");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedIp, setSelectedIp] = useState<string | null>(null);
+
+  const [createForm, setCreateForm] = useState({
+    email: "",
+    password: "",
+    rol: "invitado"
+  });
 
   useEffect(() => {
     if (canManageUsers) {
@@ -41,6 +54,30 @@ export default function AdminUsuarios() {
     }
   }, [canManageUsers, activeTab]);
 
+  const groupedActivity = activity.reduce((acc: any, act: any) => {
+    if (!acc[act.ip]) {
+      acc[act.ip] = {
+        ip: act.ip,
+        email: act.email,
+        navegador: act.navegador,
+        os: act.sistema_operativo,
+        totalActions: 0,
+        lastSeen: act.created_at,
+        history: []
+      };
+    }
+    acc[act.ip].history.push(act);
+    acc[act.ip].totalActions++;
+    if (new Date(act.created_at) > new Date(acc[act.ip].lastSeen)) {
+      acc[act.ip].lastSeen = act.created_at;
+    }
+    return acc;
+  }, {});
+
+  const groupedList = Object.values(groupedActivity).sort((a: any, b: any) => 
+    new Date(b.lastSeen).getTime() - new Date(a.lastSeen).getTime()
+  );
+
   const fetchUsers = async (search: string = "") => {
     setLoading(true);
     try {
@@ -49,7 +86,7 @@ export default function AdminUsuarios() {
       if (search.trim() !== "") {
         query = query.ilike("email", `%${search.trim()}%`);
       } else {
-        query = query.in("rol", ["admin", "editor"]);
+        query = query.in("rol", ["admin", "editor", "invitado"]);
       }
 
       const { data, error } = await query.order("created_at", { ascending: false }).limit(50);
@@ -62,6 +99,35 @@ export default function AdminUsuarios() {
     } catch (err) {
       console.error("Usuarios: Error en fetchUsers:", err);
       toast.error("Error de comunicación");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: createForm.email,
+        password: createForm.password,
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        await supabase
+          .from('perfiles')
+          .update({ rol: createForm.rol })
+          .eq('id', data.user.id);
+        
+        toast.success("Usuario registrado exitosamente");
+        setIsCreateModalOpen(false);
+        setCreateForm({ email: "", password: "", rol: "invitado" });
+        fetchUsers();
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Error al crear usuario");
     } finally {
       setLoading(false);
     }
@@ -167,21 +233,25 @@ export default function AdminUsuarios() {
 
   return (
     <div className="flex flex-col gap-12">
-      {/* Page Header */}
-      <div className="flex justify-between items-end">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div className="flex flex-col gap-2">
           <h1 className="text-4xl font-black font-outfit text-primary-950 uppercase tracking-tighter">Equipo Administrativo</h1>
           <p className="text-slate-500 font-medium tracking-wide">Gestión de privilegios y auditoría de acceso al panel industrial.</p>
         </div>
+        <button 
+          onClick={() => setIsCreateModalOpen(true)}
+          className="bg-primary-950 text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-accent transition-smooth shadow-2xl shadow-primary-950/20 flex items-center gap-2 active:scale-95"
+        >
+          <UserPlus className="w-4 h-4 text-accent" /> Nuevo Miembro
+        </button>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-4 p-1 bg-slate-100/50 dark:bg-slate-900 w-fit rounded-2xl border border-slate-100 dark:border-slate-800">
         <button 
           onClick={() => setActiveTab('users')}
           className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-smooth ${activeTab === 'users' ? 'bg-primary-950 text-white shadow-xl' : 'text-slate-400 hover:text-primary-950'}`}
         >
-          <Users className="w-4 h-4" /> Equipo
+          <Users className="w-4 h-4" /> Equipo ({users.length})
         </button>
         <button 
           onClick={() => setActiveTab('activity')}
@@ -197,9 +267,8 @@ export default function AdminUsuarios() {
         </button>
       </div>
 
-      {/* Main Content Area */}
       {activeTab === 'users' ? (
-        <div className="bg-white rounded-[4rem] border border-slate-50 shadow-sm overflow-hidden mb-20">
+        <div className="bg-white rounded-[4rem] border border-slate-50 shadow-sm overflow-hidden mb-20 animate-in fade-in duration-500">
           <div className="p-10 border-b border-slate-50 flex justify-between items-center bg-slate-50/20">
              <form onSubmit={handleSearch} className="relative w-full md:w-[450px] group">
                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-accent transition-smooth" />
@@ -207,7 +276,7 @@ export default function AdminUsuarios() {
                   type="text" 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Buscar por Email para asignar rol..."
+                  placeholder="Buscar por Email..."
                   className="w-full bg-white border border-slate-100 rounded-2xl py-4 pl-16 pr-14 text-sm font-medium outline-none focus:ring-2 focus:ring-accent transition-smooth shadow-sm"
                 />
                 <button 
@@ -246,9 +315,9 @@ export default function AdminUsuarios() {
                       </div>
                     </td>
                     <td className="px-10 py-8 text-center text-slate-600">
-                      <span className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm ${
+                      <span className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm ${
                         user.rol === 'admin' ? 'bg-primary-950 text-white' :
-                        user.rol === 'editor' ? 'bg-blue-100 text-blue-600' : 'bg-orange-100 text-orange-600'
+                        user.rol === 'editor' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'
                       }`}>
                         {user.rol}
                       </span>
@@ -324,61 +393,121 @@ export default function AdminUsuarios() {
           </div>
         </div>
       ) : activeTab === 'activity' ? (
-        <div className="bg-white rounded-[4rem] border border-slate-100 shadow-sm overflow-hidden mb-20">
-           <div className="p-10 border-b border-slate-50 bg-slate-50/20">
-              <h2 className="text-xl font-black text-primary-950 uppercase">Historial de Auditoría</h2>
-              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Registrando IP, Navegador y Comportamiento</p>
-           </div>
-           <div className="overflow-x-auto">
-            <table className="w-full text-left">
-               <thead>
+        <div className="bg-white rounded-[4rem] border border-slate-100 shadow-sm overflow-hidden mb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="p-10 border-b border-slate-50 bg-slate-50/20 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+              <h2 className="text-xl font-black text-primary-950 uppercase">
+                {selectedIp ? `Historial de IP: ${selectedIp}` : "Historial de Auditoría"}
+              </h2>
+              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">
+                {selectedIp ? "Mostrando cada paso detallado del usuario" : "AGRUPADO POR DIRECCIÓN IP UNICA"}
+              </p>
+            </div>
+            {selectedIp && (
+              <button 
+                onClick={() => setSelectedIp(null)}
+                className="bg-primary-950 text-white px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-accent transition-smooth shadow-xl flex items-center gap-2"
+              >
+                Volver al Listado
+              </button>
+            )}
+          </div>
+
+          <div className="overflow-x-auto min-h-[400px]">
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-32 gap-4">
+                <Loader2 className="w-12 h-12 text-accent animate-spin" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Escaneando logs...</span>
+              </div>
+            ) : selectedIp ? (
+              <table className="w-full text-left">
+                <thead>
                   <tr className="bg-slate-50/50 border-b border-slate-100">
-                    <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Usuario / IP</th>
-                    <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Navegador & OS</th>
-                    <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Ubicación (Ruta)</th>
+                    <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Acción / Ruta</th>
+                    <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Dispositivo</th>
                     <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Fecha / Hora</th>
                   </tr>
-               </thead>
-               <tbody className="divide-y divide-slate-50">
-                  {loading ? (
-                    <tr><td colSpan={4} className="px-10 py-32 text-center"><Loader2 className="w-12 h-12 text-accent animate-spin mx-auto" /></td></tr>
-                  ) : activity.map((act) => (
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {((groupedActivity as any)[selectedIp]?.history || []).map((act: any) => (
                     <tr key={act.id} className="hover:bg-slate-50 transition-smooth">
-                       <td className="px-10 py-6">
-                          <div className="flex flex-col">
-                             <span className="text-xs font-black text-primary-950">{act.email}</span>
-                             <span className="text-[10px] font-black text-accent mt-1 flex items-center gap-2 uppercase tracking-widest">
-                               <Globe className="w-3 h-3" /> {act.ip}
-                             </span>
-                          </div>
-                       </td>
-                       <td className="px-10 py-6">
-                          <div className="flex items-center gap-4">
-                             <div className="flex flex-col gap-1">
-                                <span className="text-[10px] font-black text-slate-500 flex items-center gap-2 uppercase tracking-tight">
-                                   <Monitor className="w-3 h-3" /> {act.navegador}
-                                </span>
-                                <span className="text-[10px] font-black text-slate-400 flex items-center gap-2 uppercase tracking-tight">
-                                   <Smartphone className="w-3 h-3" /> {act.sistema_operativo}
-                                </span>
-                             </div>
-                          </div>
-                       </td>
-                       <td className="px-10 py-6">
+                      <td className="px-10 py-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-2 h-2 rounded-full bg-accent"></div>
                           <span className="text-[10px] font-black text-white bg-primary-950 px-3 py-1 rounded-lg uppercase tracking-widest">
-                             {act.pagina_visitada}
+                            {act.pagina_visitada}
                           </span>
-                       </td>
-                       <td className="px-10 py-6 text-right">
-                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                             {new Date(act.created_at).toLocaleString()}
-                          </span>
-                       </td>
+                        </div>
+                      </td>
+                      <td className="px-10 py-6">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-tight">
+                          {act.navegador} / {act.sistema_operativo}
+                        </span>
+                      </td>
+                      <td className="px-10 py-6 text-right">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest tabular-nums">
+                          {new Date(act.created_at).toLocaleString()}
+                        </span>
+                      </td>
                     </tr>
                   ))}
-               </tbody>
-            </table>
-           </div>
+                </tbody>
+              </table>
+            ) : (
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-slate-50/50 border-b border-slate-100">
+                    <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Dirección IP / Identidad</th>
+                    <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Interacciones</th>
+                    <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Última Actividad</th>
+                    <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Auditoría</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {groupedList.map((group: any) => (
+                    <tr key={group.ip} className="hover:bg-slate-50 transition-smooth group/row">
+                      <td className="px-10 py-8">
+                        <div className="flex flex-col">
+                          <span className="text-sm font-black text-primary-950 flex items-center gap-2">
+                            <Globe className="w-4 h-4 text-accent" /> {group.ip}
+                          </span>
+                          <span className="text-[10px] font-black text-slate-400 mt-1 uppercase tracking-widest">
+                            {group.email || 'Usuario Invitado'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-10 py-8 text-center">
+                        <span className="bg-slate-100 text-slate-600 px-4 py-2 rounded-xl text-[10px] font-black">
+                          {group.totalActions} eventos
+                        </span>
+                      </td>
+                      <td className="px-10 py-8">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-black text-slate-500 uppercase flex items-center gap-2">
+                            <Monitor className="w-3 h-3" /> {group.navegador}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-medium">
+                            {new Date(group.lastSeen).toLocaleString()}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-10 py-8 text-right">
+                        <button 
+                          onClick={() => setSelectedIp(group.ip)}
+                          className="px-6 py-3 bg-white border border-slate-200 rounded-xl text-[9px] font-black text-slate-500 uppercase tracking-widest hover:bg-accent hover:border-accent hover:text-white transition-smooth group-hover/row:scale-105"
+                        >
+                          Ver Historial
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {groupedList.length === 0 && !loading && (
+                    <tr><td colSpan={4} className="px-10 py-20 text-center text-slate-300 uppercase tracking-widest text-[10px] font-black italic">No se han registrado actividades aún</td></tr>
+                  )}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 mb-20">
@@ -462,7 +591,6 @@ export default function AdminUsuarios() {
         </div>
       )}
 
-      {/* Security Banner */}
       <div className="bg-primary-950 text-white p-12 rounded-[4rem] shadow-2xl shadow-primary-950/40 flex items-center gap-10 group relative overflow-hidden">
          <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-smooth duration-1000"></div>
          <div className="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center shrink-0 shadow-inner group-hover:bg-accent/20 transition-smooth">
@@ -473,6 +601,88 @@ export default function AdminUsuarios() {
             <p className="text-slate-400 text-sm font-medium max-w-3xl leading-relaxed">Como Administrador General, usted controla la integridad del catálogo industrial. Asegúrese de otorgar permisos de **Editor** únicamente a personal técnico capacitado para evitar inconsistencias en los SKUs.</p>
          </div>
       </div>
+
+      <AnimatePresence>
+        {isCreateModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+             <motion.div 
+               initial={{ opacity: 0 }} 
+               animate={{ opacity: 1 }} 
+               exit={{ opacity: 0 }}
+               onClick={() => setIsCreateModalOpen(false)}
+               className="absolute inset-0 bg-primary-950/80 backdrop-blur-md"
+             />
+             <motion.div 
+               initial={{ opacity: 0, scale: 0.9, y: 20 }}
+               animate={{ opacity: 1, scale: 1, y: 0 }}
+               exit={{ opacity: 0, scale: 0.9, y: 20 }}
+               className="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl relative z-10 overflow-hidden"
+             >
+                <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
+                   <div className="flex items-center gap-3">
+                      <div className="p-3 bg-primary-950 text-accent rounded-xl">
+                         <UserPlus className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-xl font-black text-primary-950 uppercase tracking-tighter">Nuevo Miembro</h3>
+                   </div>
+                   <button onClick={() => setIsCreateModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-smooth">
+                      <X className="w-5 h-5 text-slate-400" />
+                   </button>
+                </div>
+                
+                <form onSubmit={handleCreateUser} className="p-10 flex flex-col gap-6">
+                   <div className="flex flex-col gap-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Email Corporativo</label>
+                      <div className="relative">
+                         <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                         <input 
+                           type="email" required
+                           value={createForm.email}
+                           onChange={(e) => setCreateForm({...createForm, email: e.target.value})}
+                           className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-12 pr-6 text-sm font-bold outline-none focus:ring-2 focus:ring-accent transition-smooth"
+                           placeholder="ejemplo@dobell.com"
+                         />
+                      </div>
+                   </div>
+                   <div className="flex flex-col gap-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Contraseña Temporal</label>
+                      <div className="relative">
+                         <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                         <input 
+                           type="password" required
+                           value={createForm.password}
+                           onChange={(e) => setCreateForm({...createForm, password: e.target.value})}
+                           className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-12 pr-6 text-sm font-bold outline-none focus:ring-2 focus:ring-accent transition-smooth"
+                           placeholder="••••••••"
+                         />
+                      </div>
+                      <p className="text-[9px] text-slate-400 font-medium px-4">Mínimo 6 caracteres. El usuario podrá cambiarla después.</p>
+                   </div>
+                   <div className="flex flex-col gap-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Rol en la Organización</label>
+                      <select 
+                        value={createForm.rol}
+                        onChange={(e) => setCreateForm({...createForm, rol: e.target.value})}
+                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:ring-2 focus:ring-accent transition-smooth appearance-none cursor-pointer"
+                      >
+                         <option value="invitado">Invitado (Solo Lectura)</option>
+                         <option value="editor">Editor (Operativo)</option>
+                         <option value="admin">Administrador (Total)</option>
+                      </select>
+                   </div>
+                   
+                   <button 
+                     type="submit" 
+                     disabled={loading}
+                     className="w-full bg-primary-950 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-primary-950/20 hover:bg-accent transition-smooth active:scale-95 disabled:opacity-50 mt-4"
+                   >
+                     {loading ? "Creando Cuenta..." : "Registrar Miembro Técnica"}
+                   </button>
+                </form>
+             </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

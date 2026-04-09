@@ -16,7 +16,8 @@ import {
   Phone,
   Globe,
   Zap,
-  MousePointer2
+  MousePointer2,
+  RefreshCcw
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase/client";
@@ -26,10 +27,12 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, isToday } from "date-fns";
 import { es } from "date-fns/locale";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 export default function AdminDashboard() {
   const [isExporting, setIsExporting] = useState(false);
   const [loading, setLoading] = useState(true);
+  const { usdRate, eurRate, loading: currencyLoading } = useCurrency();
   const [stats, setStats] = useState({
     totalProducts: 0,
     ordersToday: 0,
@@ -180,6 +183,28 @@ export default function AdminDashboard() {
           >
             Nuevo Producto
           </Link>
+        </div>
+      </div>
+
+      {/* Tasa BCV Widget en vivo */}
+      <div className="bg-primary-950 p-10 rounded-[4rem] shadow-2xl text-white flex flex-col md:flex-row md:items-center justify-between gap-8 overflow-hidden relative border border-white/5">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-accent/10 rounded-full -mr-32 -mt-32 blur-[100px]"></div>
+        <div className="flex flex-col gap-3 relative z-10">
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-accent flex items-center gap-3">
+            <RefreshCcw className={`w-3.5 h-3.5 ${currencyLoading ? 'animate-spin' : ''}`} /> Monitor de Cambio BCV
+          </span>
+          <h3 className="text-3xl font-black uppercase tracking-tighter leading-none font-outfit">Tasa Activa del Sistema</h3>
+          <p className="text-sm text-slate-400 font-medium tracking-wide">Incluye el valor BCV oficial más tus ajustes fijos ("markup").</p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-6 relative z-10">
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 px-8 py-6 rounded-[2.5rem] flex flex-col items-center min-w-[180px] hover:bg-white/10 transition-smooth">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">1 USD =</span>
+            <span className="text-3xl font-black font-outfit text-white tracking-tighter">Bs. {usdRate.toLocaleString('es-VE', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+          </div>
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 px-8 py-6 rounded-[2.5rem] flex flex-col items-center min-w-[180px] hover:bg-white/10 transition-smooth">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">1 EUR =</span>
+            <span className="text-3xl font-black font-outfit text-white tracking-tighter">Bs. {eurRate.toLocaleString('es-VE', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+          </div>
         </div>
       </div>
 
