@@ -155,14 +155,13 @@ export default function AdminProductos() {
     </div>
   );
   return (
-    <div className="flex flex-col gap-10">
-      {/* Page Header */}
-      <div className="flex justify-between items-end">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-4xl font-black font-outfit text-primary-950 uppercase tracking-tighter">Inventario Técnico</h1>
-          <p className="text-slate-500 font-medium tracking-wide">Gestión centralizada de 2,145 SKUs activos en el catálogo.</p>
+    <div className="flex flex-col gap-4">
+      <div className="flex justify-between items-center bg-white p-8 rounded-[2.5rem] border border-slate-50 shadow-sm">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-5xl font-black font-outfit text-primary-950 uppercase tracking-tighter">Inventario Técnico</h1>
+          <p className="text-lg font-bold text-slate-400 tracking-tight">Gestión centralizada de 2,145 SKUs activos en el catálogo.</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <input 
             type="file" 
             ref={fileInputRef} 
@@ -172,48 +171,48 @@ export default function AdminProductos() {
           />
           <button 
             onClick={handleDownloadTemplate}
-            className="bg-white border border-slate-200 text-slate-600 font-black uppercase text-[10px] tracking-widest px-8 py-3 rounded-2xl hover:border-accent transition-smooth active:scale-95 flex items-center gap-3"
+            className="bg-white border border-slate-200 text-slate-600 font-extrabold uppercase text-[12px] tracking-wider px-6 py-4 rounded-2xl hover:border-accent transition-smooth active:scale-95 flex items-center gap-2"
           >
-            <DownloadCloud className="w-4 h-4 text-accent" /> Descargar Plantilla
+            <DownloadCloud className="w-5 h-5 text-accent" /> Plantilla
           </button>
           <button 
             onClick={handleImportClick}
             disabled={isSyncing}
-            className="bg-accent text-white font-black uppercase text-[10px] tracking-widest px-8 py-3 rounded-2xl hover:bg-orange-600 transition-smooth active:scale-95 flex items-center gap-3 disabled:opacity-50"
+            className="bg-accent text-white font-extrabold uppercase text-[12px] tracking-wider px-6 py-4 rounded-2xl hover:bg-orange-600 transition-smooth active:scale-95 flex items-center gap-2 disabled:opacity-50"
           >
-            {isSyncing ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Upload className="w-4 h-4 text-white" />} 
-            {isSyncing ? 'Sincronizando...' : 'Importar XLS'}
+            {isSyncing ? <Loader2 className="w-5 h-5 animate-spin text-white" /> : <Upload className="w-5 h-5 text-white" />} 
+            {isSyncing ? 'Sincronizando...' : 'Importar'}
           </button>
           <button 
             onClick={() => { setEditProduct(null); setIsModalOpen(true); }}
-            className="bg-primary-950 text-white font-black uppercase text-[10px] tracking-widest px-8 py-3 rounded-2xl hover:bg-black transition-smooth shadow-2xl shadow-primary-950/20 active:scale-95 flex items-center gap-3"
+            className="bg-primary-950 text-white font-extrabold uppercase text-[12px] tracking-wider px-8 py-4 rounded-2xl hover:bg-black transition-smooth shadow-2xl shadow-primary-950/20 active:scale-95 flex items-center gap-2"
           >
-            <Plus className="w-4 h-4 text-accent" /> Nuevo SKU
+            <Plus className="w-5 h-5 text-accent" /> Nuevo SKU
           </button>
         </div>
       </div>
 
       {/* Filters & Search Row */}
-      <div className="bg-white p-6 md:p-10 rounded-[2.5rem] md:rounded-[3rem] border border-slate-50 shadow-sm flex flex-col lg:flex-row justify-between items-center gap-6">
-        <div className="relative w-full lg:max-w-[500px]">
-          <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-accent transition-smooth" />
+      <div className="bg-white p-6 rounded-[2.5rem] border border-slate-50 shadow-sm flex flex-col lg:flex-row justify-between items-center gap-4">
+        <div className="relative w-full lg:max-w-[600px]">
+          <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400 group-focus-within:text-accent transition-smooth" />
           <input 
             type="text" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Buscar por SKU, nombre técnico o fabricante..." 
-            className="w-full bg-slate-50 border border-slate-50 rounded-2xl py-4 pl-16 pr-6 text-sm font-medium focus:ring-2 focus:ring-accent transition-smooth outline-none shadow-inner"
+            className="w-full bg-slate-50 border border-slate-50 rounded-2xl py-5 pl-16 pr-6 text-lg font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-accent transition-smooth outline-none shadow-inner"
           />
         </div>
-        <div className="flex items-center gap-4 w-full md:w-auto">
-           <button className="flex-1 md:flex-none bg-slate-50 border border-slate-50 text-slate-500 font-black uppercase text-[10px] tracking-widest px-10 py-4 rounded-2xl hover:bg-white hover:border-accent transition-smooth flex items-center gap-3 justify-center">
-              <Filter className="w-4 h-4" /> Filtros
+        <div className="flex items-center gap-3 w-full md:w-auto">
+           <button className="flex-1 md:flex-none bg-slate-50 border border-slate-50 text-slate-500 font-extrabold uppercase text-[12px] tracking-wider px-8 py-5 rounded-2xl hover:bg-white hover:border-accent transition-smooth flex items-center gap-2 justify-center">
+              <Filter className="w-5 h-5" /> Filtros
            </button>
             <button 
               onClick={handleExportProducts}
-              className="flex-1 md:flex-none bg-slate-50 border border-slate-50 text-slate-500 font-black uppercase text-[10px] tracking-widest px-10 py-4 rounded-2xl hover:bg-white hover:border-accent transition-smooth flex items-center gap-3 justify-center"
+              className="flex-1 md:flex-none bg-accent/5 border border-accent/10 text-accent font-extrabold uppercase text-[12px] tracking-wider px-8 py-5 rounded-2xl hover:bg-accent hover:text-white transition-smooth flex items-center gap-2 justify-center"
             >
-              <Download className="w-4 h-4" /> Exportar Inventario
+              <Download className="w-5 h-5" /> Exp. Inventario
             </button>
         </div>
       </div>
@@ -224,12 +223,12 @@ export default function AdminProductos() {
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-5 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest w-[35%]">Producto</th>
-                <th className="px-5 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest w-[15%]">SKU</th>
-                <th className="px-5 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest w-[25%]">Categorías</th>
-                <th className="px-5 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center w-[10%]">Precio</th>
-                <th className="px-5 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest w-[10%]">Stock</th>
-                <th className="px-5 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right w-[5%]">Acciones</th>
+                <th className="px-5 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest w-[35%]">Producto</th>
+                <th className="px-5 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest w-[15%] text-center">SKU Técnico</th>
+                <th className="px-5 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest w-[25%]">Categorías</th>
+                <th className="px-5 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center w-[10%]">Precio (USD)</th>
+                <th className="px-5 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest w-[10%] text-center">Stock</th>
+                <th className="px-5 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right w-[5%]">Opciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -257,43 +256,43 @@ export default function AdminProductos() {
                 )
                 .map((prod, i) => (
                 <tr key={`${prod.id}-${i}`} className="hover:bg-slate-50/80 transition-smooth group active:bg-slate-100 border-b border-slate-50 last:border-0">
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-slate-50 rounded-xl overflow-hidden border border-slate-100 p-1 shrink-0">
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-5">
+                        <div className="w-14 h-14 bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 p-1.5 shrink-0 flex items-center justify-center">
                           <img src={(prod.imagenes_urls && prod.imagenes_urls[0]) || prod.imagen_url || '/placeholder-product.png'} alt={prod.nombre} className="w-full h-full object-contain" />
                         </div>
                        <div className="flex flex-col min-w-0">
-                          <span className="text-[13px] font-black text-primary-950 truncate uppercase tracking-tight leading-tight">{prod.nombre}</span>
-                          <span className="text-[8px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{prod.marcas?.nombre || 'S/M'}</span>
+                          <span className="text-[17px] font-black text-primary-950 truncate uppercase tracking-tight leading-[1.1]">{prod.nombre}</span>
+                          <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest mt-1">{prod.marcas?.nombre || 'S/M'}</span>
                        </div>
                     </div>
                   </td>
-                  <td className="px-5 py-3">
-                    <span className="text-[10px] font-black font-outfit text-primary-950 bg-slate-100 px-2 py-0.5 rounded-md uppercase">{prod.sku}</span>
+                  <td className="px-5 py-4 text-center">
+                    <span className="text-[12px] font-black font-outfit text-primary-950 bg-slate-100 px-3 py-1 rounded-lg uppercase border border-slate-200">{prod.sku}</span>
                   </td>
-                  <td className="px-5 py-3">
-                    <div className="flex flex-wrap gap-1">
+                  <td className="px-5 py-4">
+                    <div className="flex flex-wrap gap-1.5">
                       {prod.producto_categorias?.map((pc: any) => (
-                        <span key={pc.categoria_id} className="bg-slate-100 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded-lg uppercase tracking-tight border border-slate-200/50">
+                        <span key={pc.categoria_id} className="bg-primary-950/5 text-primary-950 text-[10px] font-black px-3 py-1 rounded-lg uppercase tracking-tight border border-primary-950/10">
                           {pc.categorias?.nombre}
                         </span>
                       ))}
                       {(!prod.producto_categorias || prod.producto_categorias.length === 0) && (
-                        <span className="text-[8px] font-bold text-slate-300 italic">Sin Categoría</span>
+                        <span className="text-[10px] font-bold text-slate-300 italic uppercase">Sin Categoría</span>
                       )}
                     </div>
                   </td>
-                  <td className="px-5 py-3 text-center">
-                    <span className="text-sm font-black text-primary-950 font-outfit tracking-tighter">
+                  <td className="px-5 py-4 text-center">
+                    <span className="text-xl font-black text-primary-950 font-outfit tracking-tighter">
                       {prod.tipo_precio === 'cotizacion' ? "A Cotizar" : `$${prod.precio.toFixed(2)}`}
                     </span>
                   </td>
-                  <td className="px-5 py-3">
-                    <div className="flex flex-col gap-1">
-                       <span className={`text-[9px] font-black uppercase ${prod.stock > 10 ? 'text-green-600' : 'text-red-600'}`}>
+                  <td className="px-5 py-4">
+                    <div className="flex flex-col items-center gap-1.5">
+                       <span className={`text-[12px] font-black uppercase ${prod.stock > 10 ? 'text-green-600' : 'text-red-600'}`}>
                          {prod.stock} Unid.
                        </span>
-                       <div className="w-20 h-1 bg-slate-100 rounded-full overflow-hidden">
+                       <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden shadow-inner translate-y-2">
                           <div className={`h-full ${prod.stock > 10 ? 'bg-green-500 w-3/4' : 'bg-red-500 w-1/4'}`}></div>
                        </div>
                     </div>

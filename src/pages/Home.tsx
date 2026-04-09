@@ -42,16 +42,10 @@ export default function Home() {
 
       const catRes = await supabase
           .from('categorias')
-          .select('*, productos(count)');
+          .select('*, count:producto_categorias(count)');
       
       if (!prodRes.error && prodRes.data) {
-        console.log("✅ Home: Destacados con relaciones listos:", prodRes.data.length);
         setFeaturedProducts(prodRes.data);
-      } else {
-        console.error("❌ Home Error (Relaciones):", prodRes.error);
-        // Fallback simple
-        const fallback = await supabase.from('productos').select('*').limit(8).order('created_at', { ascending: false });
-        if (fallback.data) setFeaturedProducts(fallback.data);
       }
 
       if (!catRes.error && catRes.data) {
@@ -198,7 +192,7 @@ export default function Home() {
               <img src={cat.imagen_url || "https://images.unsplash.com/photo-1542282088-fe8426682b8f?w=800&q=80"} alt={cat.nombre} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-smooth duration-700" />
               <div className="absolute inset-0 bg-gradient-to-t from-primary-950/90 via-primary-950/20 to-transparent"></div>
               <div className="absolute bottom-10 left-10 right-10">
-                <span className="text-accent text-[10px] font-black uppercase tracking-[0.3em] mb-3 block">{cat.productos?.[0]?.count || 0} {t('nosotros.stats.products')}</span>
+                <span className="text-accent text-[10px] font-black uppercase tracking-[0.3em] mb-3 block">{cat.count?.[0]?.count || 0} {t('nosotros.stats.products')}</span>
                 <h3 className="text-3xl font-black text-white leading-none uppercase tracking-tighter font-outfit">{cat.nombre}</h3>
               </div>
             </Link>

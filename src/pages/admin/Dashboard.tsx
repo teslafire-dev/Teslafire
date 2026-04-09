@@ -13,7 +13,10 @@ import {
   ShoppingCart,
   TrendingDown,
   Mail,
-  Phone
+  Phone,
+  Globe,
+  Zap,
+  MousePointer2
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase/client";
@@ -32,6 +35,8 @@ export default function AdminDashboard() {
     ordersToday: 0,
     activeCustomers: 0,
     lowStock: 0,
+    visitorPeak: 0,
+    visitorsToday: 0,
     recentOrders: [] as any[]
   });
   const [abandonedCarts, setAbandonedCarts] = useState<any[]>([]);
@@ -73,11 +78,17 @@ export default function AdminDashboard() {
         .order('created_at', { ascending: false })
         .limit(5);
 
+      // 6. Visitor Stats
+      const { data: peakData } = await supabase.from('configuracion').select('valor').eq('clave', 'max_concurrent_visitors').single();
+      const { data: todayVisitors } = await supabase.from('visitantes_por_dia').select('total_visitantes').eq('fecha', new Date().toISOString().split('T')[0]).single();
+
       setStats({
         totalProducts: productsCount || 0,
         ordersToday: ordersTodayCount || 0,
         activeCustomers: activeCustomersCount || 0,
         lowStock: lowStockCount || 0,
+        visitorPeak: parseInt(peakData?.valor || '1'),
+        visitorsToday: todayVisitors?.total_visitantes || 0,
         recentOrders: recent || []
       });
     } catch (error) {
@@ -139,7 +150,9 @@ export default function AdminDashboard() {
     { label: "Total Productos", value: stats.totalProducts.toLocaleString(), icon: Package, color: "bg-blue-100 text-blue-600" },
     { label: "Reservas Hoy", value: stats.ordersToday.toLocaleString(), icon: ShoppingBag, color: "bg-green-100 text-green-600" },
     { label: "Clientes Únicos", value: stats.activeCustomers.toLocaleString(), icon: Users, color: "bg-purple-100 text-purple-600" },
-    { label: "Alertas Stock", value: stats.lowStock.toLocaleString(), icon: AlertCircle, color: "bg-red-100 text-red-600" }
+    { label: "Alertas Stock", value: stats.lowStock.toLocaleString(), icon: AlertCircle, color: "bg-red-100 text-red-600" },
+    { label: "Visitas Hoy", value: stats.visitorsToday.toLocaleString(), icon: Globe, color: "bg-orange-100 text-accent" },
+    { label: "Record Online", value: stats.visitorPeak.toLocaleString(), icon: Zap, color: "bg-yellow-100 text-yellow-600" }
   ];
 
   return (

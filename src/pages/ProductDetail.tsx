@@ -144,6 +144,21 @@ export default function ProductDetail() {
     });
   };
 
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: product?.nombre,
+        text: product?.descripcion || `Mira este producto: ${product?.nombre}`,
+        url: window.location.href,
+      })
+      .then(() => toast.success("Enlace compartido"))
+      .catch((error) => console.log('Error sharing', error));
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success("Enlace copiado al portapapeles ✓");
+    }
+  };
+
   // Construir la galería: Foto principal + Fotos adicionales
   const gallery = [];
   if (product.imagen_url) gallery.push(product.imagen_url);
@@ -200,7 +215,10 @@ export default function ProductDetail() {
           <div className="flex flex-col gap-6">
             <div className="relative aspect-square max-h-[500px] rounded-[3rem] overflow-hidden bg-slate-50 border border-slate-100 group shadow-inner">
               <img src={selectedImage} alt={product.nombre} className="w-full h-full object-contain p-8 transition-smooth group-hover:scale-105" />
-              <button className="absolute top-6 right-6 p-4 bg-white/80 backdrop-blur-md rounded-2xl text-slate-600 hover:text-accent transition-smooth shadow-xl">
+              <button 
+                onClick={handleShare}
+                className="absolute top-6 right-6 p-4 bg-white/80 backdrop-blur-md rounded-2xl text-slate-600 hover:text-accent transition-smooth shadow-xl active:scale-90"
+              >
                 <Share2 className="w-5 h-5" />
               </button>
             </div>

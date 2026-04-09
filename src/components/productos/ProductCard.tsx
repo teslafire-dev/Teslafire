@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Eye, Plus, Star } from "lucide-react";
+import { Eye, Plus, Star, Check } from "lucide-react";
 import { useCartStore } from "@/lib/store/cartStore";
 import toast from "react-hot-toast";
 import { useTranslation } from "@/contexts/TranslationContext";
@@ -30,7 +30,8 @@ export default function ProductCard({
   isNew, 
   isOffer 
 }: ProductCardProps) {
-  const addItem = useCartStore((state) => state.addItem);
+  const { addItem, items: cartItems } = useCartStore();
+  const isInCart = cartItems.some(item => item.id === id);
   const { t } = useTranslation();
   const { usdRate, eurRate } = useCurrency();
 
@@ -49,10 +50,19 @@ export default function ProductCard({
   return (
     <Link 
       to={`/productos/${slug}`}
-      className="group bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 overflow-hidden hover:shadow-xl hover:shadow-primary-950/5 transition-smooth flex flex-col h-full relative"
+      className={`group bg-white dark:bg-slate-900 rounded-[2.5rem] border overflow-hidden hover:shadow-xl hover:shadow-primary-950/5 transition-smooth flex flex-col h-full relative ${
+        isInCart 
+          ? 'border-accent shadow-lg shadow-accent/10 ring-1 ring-accent/20 bg-accent/[0.02]' 
+          : 'border-slate-100 dark:border-slate-800'
+      }`}
     >
       {/* Badges */}
       <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
+        {isInCart && (
+          <span className="bg-primary-950 text-white text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest shadow-lg shadow-primary-950/20 animate-in zoom-in duration-300 flex items-center gap-1.5 border border-white/20">
+            <Check className="w-2.5 h-2.5 text-accent" /> En Carrito
+          </span>
+        )}
         {isNew && (
           <span className="bg-accent text-white text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest shadow-lg shadow-accent/20 animate-in zoom-in duration-500">
             Nuevo
@@ -116,7 +126,11 @@ export default function ProductCard({
           </div>
           <button 
             onClick={handleAddToCart}
-            className="p-3 bg-primary-950 text-white rounded-xl hover:bg-accent transition-smooth shadow-lg shadow-primary-950/10 active:scale-90"
+            className={`p-3 rounded-xl transition-smooth shadow-lg active:scale-90 ${
+              isInCart 
+                ? 'bg-accent text-white shadow-accent/20' 
+                : 'bg-primary-950 text-white shadow-primary-950/10 hover:bg-accent'
+            }`}
           >
             <Plus className="w-5 h-5" />
           </button>

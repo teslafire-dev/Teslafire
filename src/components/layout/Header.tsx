@@ -22,8 +22,9 @@ export default function Header() {
   const navigate = useNavigate();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMiniCartOpen, setIsMiniCartOpen] = useState(false);
+  const [onlineCount, setOnlineCount] = useState(1);
   const userMenuRef = useRef<HTMLDivElement>(null);
-  const cartItems = useCartStore((state) => state.items);
+  const { items: cartItems, removeItem, updateQuantity } = useCartStore();
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   // AUTO-OPEN ON ADD
@@ -147,6 +148,60 @@ export default function Header() {
     fetchConfig();
   }, []);
 
+  // Presence Tracking
+  useEffect(() => {
+    const channel = supabase.channel('online-users', {
+      config: {
+        presence: {
+          key: user?.id || Math.random().toString(36).substring(7),
+        },
+      },
+    });
+
+    channel
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        const totalCount = Object.keys(state).length;
+        setOnlineCount(totalCount > 0 ? totalCount : 1);
+        
+        // Update Peak if necessary (admin or first user can do this)
+        if (totalCount > 1) {
+          checkAndUpdatePeak(totalCount);
+        }
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.track({
+            online_at: new Date().toISOString(),
+          });
+        }
+      });
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [user]);
+
+  const checkAndUpdatePeak = async (current: number) => {
+    try {
+      const { data } = await supabase
+        .from('configuracion')
+        .select('valor')
+        .eq('clave', 'max_concurrent_visitors')
+        .single();
+      
+      const peak = parseInt(data?.valor || '0');
+      if (current > peak) {
+        await supabase
+          .from('configuracion')
+          .update({ valor: current.toString() })
+          .eq('clave', 'max_concurrent_visitors');
+      }
+    } catch (e) {
+      // Ignore errors in background tracking
+    }
+  };
+
   return (
     <header className={`fixed top-0 z-50 w-full transition-all duration-500 ease-in-out ${
       isScrolled 
@@ -257,6 +312,19 @@ export default function Header() {
           </div>
           
           <div className="flex items-center gap-1.5 p-1 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
+            {/* Live Count (Admin only) */}
+            {isAdmin && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm mr-1">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                </span>
+                <span className="text-[9px] font-black text-primary-950 dark:text-white uppercase tracking-widest">
+                  {onlineCount} <span className="text-slate-400 dark:text-slate-500 ml-0.5">Live</span>
+                </span>
+              </div>
+            )}
+            
             <button 
               onClick={toggleDarkMode}
               className="p-2.5 rounded-xl transition-smooth hover:bg-white dark:hover:bg-slate-700 hover:text-primary-950 dark:hover:text-white text-slate-400 active:scale-90"
@@ -349,28 +417,47 @@ export default function Header() {
                     <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-50 dark:border-slate-800 pb-4 mb-4">
                       Mi Cotización ({totalItems})
                     </p>
-                    
-                    <div className="flex flex-col gap-4 max-h-60 overflow-y-auto custom-scrollbar pr-2">
-                       {cartItems.slice(0, 3).map((item) => (
-                         <div key={item.id} className="flex gap-4 items-center">
-                            <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-800 flex-shrink-0 overflow-hidden border border-slate-100 dark:border-slate-700">
+                               <div className="flex flex-col gap-4 max-h-80 overflow-y-auto custom-scrollbar pr-2 -mx-2 px-2 pb-2">
+                       {cartItems.map((item) => (
+                         <div key={item.id} className="flex gap-4 items-center group/item p-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-2xl transition-smooth">
+                            <div className="w-14 h-14 rounded-xl bg-slate-50 dark:bg-slate-800 flex-shrink-0 overflow-hidden border border-slate-100 dark:border-slate-700 p-1">
                                <img src={item.image || '/placeholder-product.png'} className="w-full h-full object-contain" />
                             </div>
-                            <div className="flex flex-col min-w-0">
-                               <span className="text-[11px] font-black text-primary-950 dark:text-white uppercase truncate tracking-tight leading-tight">
-                                 {item.name}
-                               </span>
-                               <span className="text-[9px] font-bold text-accent dark:text-accent-light uppercase tracking-widest mt-1">
-                                 {item.quantity} x {(item.price || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
-                               </span>
+                            <div className="flex flex-col min-w-0 flex-1">
+                               <div className="flex justify-between items-start gap-2">
+                                 <span className="text-[11px] font-black text-primary-950 dark:text-white uppercase truncate tracking-tight leading-tight">
+                                   {item.name}
+                                 </span>
+                                 <button 
+                                   onClick={() => removeItem(item.id)}
+                                   className="text-slate-300 hover:text-destructive transition-smooth p-1"
+                                 >
+                                   <X className="w-3 h-3" />
+                                 </button>
+                               </div>
+                               <div className="flex items-center justify-between mt-2">
+                                 <div className="flex items-center gap-2 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-lg p-1">
+                                    <button 
+                                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                      className="w-5 h-5 flex items-center justify-center text-xs font-black text-slate-400 hover:text-accent transition-smooth"
+                                    >
+                                      -
+                                    </button>
+                                    <span className="text-[10px] font-black text-primary-950 dark:text-white w-4 text-center">{item.quantity}</span>
+                                    <button 
+                                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                      className="w-5 h-5 flex items-center justify-center text-xs font-black text-slate-400 hover:text-accent transition-smooth"
+                                    >
+                                      +
+                                    </button>
+                                 </div>
+                                 <span className="text-[10px] font-black text-accent dark:text-accent-light uppercase tracking-widest">
+                                   {(Number(item.price) || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                                 </span>
+                               </div>
                             </div>
                          </div>
                        ))}
-                       {cartItems.length > 3 && (
-                         <p className="text-center text-[9px] font-black text-slate-400 uppercase tracking-widest pt-2">
-                           y {cartItems.length - 3} productos más...
-                         </p>
-                       )}
                     </div>
 
                     <div className="mt-6 pt-6 border-t border-slate-50 dark:border-slate-800">
