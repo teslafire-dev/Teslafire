@@ -126,11 +126,11 @@ export default function Carrito() {
                 <h3 className="text-3xl font-black font-outfit uppercase tracking-tighter relative z-10">{t('cart.summary_title')}</h3>
                 <div className="flex flex-col gap-6 relative z-10">
                   <div className="flex justify-between items-center text-slate-400 font-black uppercase text-[10px] tracking-widest pb-6 border-b border-white/10">
-                    <span>Total USD (Ref)</span>
+                    <span>{t('cart.total_usd_ref')}</span>
                     <span className="text-white">${totalUsdStr}</span>
                   </div>
                   <div className="flex flex-col gap-2 pt-2">
-                    <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Total en Bolívares</span>
+                    <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">{t('cart.total_bs')}</span>
                     <span className="text-4xl md:text-5xl font-black font-outfit text-accent tracking-tighter shrink-0 block overflow-hidden text-clip whitespace-nowrap">
                       Bs. {totalBs.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>

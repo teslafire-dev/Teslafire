@@ -13,7 +13,8 @@ import {
   ShoppingBag,
   Tags,
   Image as ImageIcon,
-  Globe
+  Globe,
+  Zap
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase/client";
