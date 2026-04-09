@@ -33,7 +33,8 @@ interface ConfigItem {
 const categories = [
   { id: 'contacto', name: 'Canales de Contacto', icon: Search, keys: ['email_contacto', 'telefono_whatsapp', 'direccion'] },
   { id: 'brand', name: 'Identidad Visual (Multimedia)', icon: ImageIcon, keys: ['site_logo', 'site_logo_dark', 'site_favicon'] },
-  { id: 'identidad', name: 'Identidad Visual (Paleta)', icon: Palette, keys: ['color_primario', 'color_acento', 'color_header', 'color_footer', 'color_body_bg', 'color_botones_bg'] },
+  { id: 'identidad', name: 'Identidad Visual (Paleta Clara)', icon: Palette, keys: ['color_primario', 'color_acento', 'color_header', 'color_footer', 'color_body_bg', 'color_botones_bg'] },
+  { id: 'identidad_dark', name: 'Identidad Visual (Paleta Oscura)', icon: Palette, keys: ['color_primario_dark', 'color_acento_dark', 'color_header_dark', 'color_footer_dark', 'color_body_bg_dark', 'color_botones_bg_dark'] },
   { id: 'hero', name: 'Contenido del Hero', icon: Type, keys: ['hero_h1', 'hero_p', 'hero_imagen_url'] },
   { id: 'general', name: 'Ajustes Generales', icon: Settings, keys: ['mostrar_resegnas', 'whatsapp_notificaciones'] },
   { id: 'moneda', name: 'Tasas y Monedas BCV (Markup Suma Fija)', icon: Settings, keys: ['markup_bcv_usd', 'markup_bcv_eur'] },
@@ -188,7 +189,7 @@ export default function Configuracion() {
 
       await handleSave(clave, publicUrl);
       handleChange(clave, publicUrl);
-      toast.success(`${clave === 'site_logo' ? 'Logo' : 'Favicon'} optimizado y actualizado`);
+      toast.success(`${clave.includes('logo') ? 'Logo' : 'Favicon'} optimizado y actualizado`);
     } catch (err: any) {
       console.error(err);
       toast.error("Error al procesar la imagen de marca");
@@ -423,19 +424,21 @@ export default function Configuracion() {
                                     <Save className="w-4 h-4" />
                                   </button>
                                 </div>
-                                {item.clave === 'site_logo' || item.clave === 'site_favicon' ? (
+                                {item.clave === 'site_logo' || item.clave === 'site_logo_dark' || item.clave === 'site_favicon' ? (
                                   <div className="flex flex-col gap-4">
-                                     <div className="relative group aspect-video bg-slate-50 rounded-2xl border-2 border-dashed border-slate-100 flex flex-col items-center justify-center overflow-hidden transition-smooth hover:border-accent">
+                                     <div className={`relative group aspect-video rounded-2xl border-2 border-dashed flex flex-col items-center justify-center overflow-hidden transition-smooth hover:border-accent ${item.clave === 'site_logo_dark' ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
                                         {item.valor ? (
                                           <img src={item.valor} className="w-full h-full object-contain p-4" />
                                         ) : (
                                           <div className="flex flex-col items-center gap-2">
-                                             <ImageIcon className="w-6 h-6 text-slate-300 group-hover:text-accent transition-smooth" />
+                                             <ImageIcon className={`w-6 h-6 transition-smooth group-hover:text-accent ${item.clave === 'site_logo_dark' ? 'text-slate-600' : 'text-slate-300'}`} />
                                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Subir Imagen</span>
                                           </div>
                                         )}
-                                        <div className="absolute inset-0 bg-white/60 opacity-0 group-hover:opacity-100 transition-smooth flex items-center justify-center cursor-pointer">
-                                           <span className="text-[10px] font-black uppercase text-accent">Cambiar Imagen</span>
+                                        <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-smooth flex items-center justify-center cursor-pointer ${item.clave === 'site_logo_dark' ? 'bg-black/60 backdrop-blur-sm' : 'bg-white/60 backdrop-blur-sm'}`}>
+                                           <span className={`text-[10px] font-black uppercase px-4 py-2 rounded-xl shadow-lg ${item.clave === 'site_logo_dark' ? 'bg-slate-800 text-white' : 'bg-white text-accent'}`}>
+                                             Cambiar Imagen
+                                           </span>
                                            <input 
                                               type="file" 
                                               accept="image/*" 
@@ -444,7 +447,7 @@ export default function Configuracion() {
                                            />
                                         </div>
                                         {uploadingAsset === item.clave && (
-                                          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center">
+                                          <div className={`absolute inset-0 backdrop-blur-sm flex items-center justify-center ${item.clave === 'site_logo_dark' ? 'bg-slate-900/80' : 'bg-white/80'}`}>
                                             <RefreshCcw className="w-6 h-6 text-accent animate-spin" />
                                           </div>
                                         )}
@@ -452,7 +455,7 @@ export default function Configuracion() {
                                      <div className="flex flex-col gap-1 px-1">
                                         <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Medida Recomendada:</span>
                                         <span className="text-[10px] font-black text-primary-950 uppercase tracking-widest">
-                                           {item.clave === 'site_logo' ? '500px x 150px (Horizontal)' : '64px x 64px (Cuadrado)'}
+                                           {item.clave === 'site_logo' || item.clave === 'site_logo_dark' ? '500px x 150px (Horizontal)' : '64px x 64px (Cuadrado)'}
                                         </span>
                                      </div>
                                   </div>
