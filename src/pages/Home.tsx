@@ -42,17 +42,21 @@ export default function Home() {
 
       const catRes = await supabase
           .from('categorias')
-          .select('*, count:producto_categorias(count)');
+          .select('*');
       
-      if (!prodRes.error && prodRes.data) {
+      if (prodRes.error) {
+        console.error("❌ Home: Error cargando productos:", prodRes.error);
+      } else if (prodRes.data) {
         setFeaturedProducts(prodRes.data);
       }
 
-      if (!catRes.error && catRes.data) {
+      if (catRes.error) {
+        console.error("❌ Home: Error cargando categorías:", catRes.error);
+      } else if (catRes.data) {
         setDbCategories(catRes.data);
       }
     } catch (err) {
-      console.error(err);
+      console.error("❌ Home Catch:", err);
     } finally {
       setLoadingFeatured(false);
     }
