@@ -8,8 +8,9 @@ import {
   ShieldCheck, 
   Truck, 
   Clock, 
-  Headphones 
-} from "lucide-react";
+  Headphones,
+  ChevronDown,
+  Mouse} from "lucide-react";
 import ProductCard from "@/components/productos/ProductCard";
 import { useTranslation } from '@/contexts/TranslationContext';
 
@@ -65,7 +66,7 @@ export default function Home() {
   return (
     <div className="flex flex-col gap-24 overflow-hidden dark:bg-slate-950 transition-colors duration-500">
       {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex flex-col bg-primary-950 overflow-hidden">
+      <section className="relative min-h-screen flex flex-col bg-primary-950 overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
             src={t('home.hero.imagen_url')} 
@@ -148,7 +149,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Stats Section */}
+        {/* Stats Section now as a separate footer element inside or after */}
         <div className="relative z-10 py-20 bg-primary-950/80 backdrop-blur-md border-t border-white/5">
           <div className="container mx-auto px-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 bg-white/5 border border-white/10 p-10 md:p-14 rounded-[4rem] shadow-2xl overflow-hidden group/stats">
