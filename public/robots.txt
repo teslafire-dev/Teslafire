@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /admin/*
+
+# Cambia esto por tu dominio real cuando lo tengas
+Sitemap: https://jonasweb.vercel.app/sitemap.xml

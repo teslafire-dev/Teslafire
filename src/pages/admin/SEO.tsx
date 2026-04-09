@@ -16,6 +16,8 @@ import {
   Bot,
   BarChart2,
   Tag,
+  ImagePlus,
+  X,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -45,9 +47,8 @@ export default function SEO() {
   const [config, setConfig] = useState<SeoConfig>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
-  const [sitemapLoading, setSitemapLoading] = useState(false);
-  const [sitemapXml, setSitemapXml] = useState<string | null>(null);
   const [showSitemap, setShowSitemap] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     fetchSeoConfig();
@@ -66,6 +67,73 @@ export default function SEO() {
       setConfig(map);
     }
     setLoading(false);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    const toastId = toast.loading("Subiendo imagen OG...");
+
+    try {
+      // 1. Optimizar imagen
+      const optimizedBlob = await new Promise<Blob>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+          const img = new Image();
+          img.src = event.target?.result as string;
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const CTX = canvas.getContext('2d');
+            
+            // Tamaño standard OG: 1200x630
+            canvas.width = 1200;
+            canvas.height = 630;
+
+            if (CTX) {
+              // Dibujar con cover
+              const scale = Math.max(canvas.width / img.width, canvas.height / img.height);
+              const x = (canvas.width / 2) - (img.width / 2) * scale;
+              const y = (canvas.height / 2) - (img.height / 2) * scale;
+              CTX.fillStyle = '#FFFFFF';
+              CTX.fillRect(0, 0, canvas.width, canvas.height);
+              CTX.drawImage(img, x, y, img.width * scale, img.height * scale);
+              
+              canvas.toBlob((blob) => {
+                if (blob) resolve(blob);
+                else reject(new Error("Error al convertir"));
+              }, 'image/webp', 0.85);
+            }
+          };
+        };
+      });
+
+      // 2. Subir a Supabase Storage
+      const fileName = `seo_og_${Date.now()}.webp`;
+      const filePath = `seo/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('assets')
+        .upload(filePath, optimizedBlob, { contentType: 'image/webp' });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('assets')
+        .getPublicUrl(filePath);
+
+      // 3. Guardar URL en config
+      await handleSave("seo_og_image", publicUrl);
+      setConfig(prev => ({ ...prev, seo_og_image: publicUrl }));
+      toast.success("Imagen OG actualizada ✓", { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error("Error al subir imagen", { id: toastId });
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleSave = async (key: string) => {
@@ -228,6 +296,72 @@ ${allPages
         </div>
 
         {SEO_KEYS.map(({ key, label, placeholder, hint }) => {
+          // Renderizado especial para OG Image
+          if (key === "seo_og_image") {
+            const ogUrl = config[key];
+            return (
+              <div key={key} className="flex flex-col gap-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">
+                  {label}
+                </label>
+                
+                <div className="flex flex-col md:flex-row gap-6 items-start lg:items-center bg-slate-50 border border-slate-100 rounded-2xl p-6">
+                  {/* Previsualizador */}
+                  <div className="relative w-full md:w-56 aspect-[1200/630] bg-slate-200 rounded-xl overflow-hidden border border-slate-200 shrink-0 shadow-inner group">
+                    {ogUrl ? (
+                      <>
+                        <img src={ogUrl} className="w-full h-full object-cover" alt="OG Preview" />
+                        <button 
+                          onClick={() => { handleSave(key, ""); setConfig(p => ({ ...p, [key]: "" })); }}
+                          className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-smooth"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-400">
+                        <Share2 className="w-8 h-8 opacity-20" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-4 flex-1">
+                    <div className="flex flex-col gap-1">
+                       <p className="text-xs font-bold text-primary-950 uppercase tracking-tight">Imagen para Redes Sociales</p>
+                       <p className="text-[10px] text-slate-400 font-medium leading-relaxed">{hint}</p>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <label 
+                        className={`cursor-pointer px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 transition-smooth shadow-sm ${
+                          uploadingImage ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-primary-950 text-white hover:bg-accent'
+                        }`}
+                      >
+                        <ImagePlus className="w-4 h-4" />
+                        {uploadingImage ? "Subiendo..." : "Cambiar Imagen"}
+                        <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={uploadingImage} />
+                      </label>
+                      <button 
+                        onClick={() => handleSave(key)}
+                        className="px-6 py-3 bg-white border border-slate-200 text-slate-400 rounded-xl font-black text-[10px] uppercase tracking-widest hover:border-accent hover:text-accent transition-smooth"
+                      >
+                        <Save className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <input
+                      type="text"
+                      value={config[key] || ""}
+                      onChange={(e) => setConfig((p) => ({ ...p, [key]: e.target.value }))}
+                      placeholder="https://..."
+                      className="w-full bg-white border border-slate-100 rounded-xl px-4 py-3 text-[10px] font-mono text-slate-500 focus:ring-2 focus:ring-accent outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
           const isDescription = key === "seo_site_description";
           const isTitle = key === "seo_site_title";
           const maxLen = isTitle ? 60 : isDescription ? 155 : 0;
