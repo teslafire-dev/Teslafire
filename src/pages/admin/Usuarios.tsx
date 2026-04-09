@@ -29,7 +29,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export default function AdminUsuarios() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = (searchParams.get('tab') || 'users') as 'users' | 'activity' | 'security';
+  const activeTab = (searchParams.get('tab') || 'all') as 'all' | 'team' | 'activity' | 'security';
   const selectedIp = searchParams.get('ip');
 
   const setActiveTab = (tab: string) => {
@@ -68,7 +68,7 @@ export default function AdminUsuarios() {
 
   useEffect(() => {
     if (canManageUsers) {
-      if (activeTab === 'users') fetchUsers();
+      if (activeTab === 'all' || activeTab === 'team') fetchUsers();
       if (activeTab === 'activity') fetchActivity();
       if (activeTab === 'security') fetchBlockedIps();
     }
@@ -106,10 +106,12 @@ export default function AdminUsuarios() {
       if (search.trim() !== "") {
         query = query.ilike("email", `%${search.trim()}%`);
       } else {
-        query = query.in("rol", ["admin", "editor", "invitado"]);
+        if (activeTab === 'team') {
+          query = query.in("rol", ["admin", "editor"]);
+        }
       }
 
-      const { data, error } = await query.order("created_at", { ascending: false }).limit(50);
+      const { data, error } = await query.order("created_at", { ascending: false }).limit(200);
       
       if (error) {
         toast.error("Error al cargar usuarios");
@@ -307,10 +309,16 @@ export default function AdminUsuarios() {
 
       <div className="flex gap-4 p-1 bg-slate-100/50 dark:bg-slate-900 w-fit rounded-2xl border border-slate-100 dark:border-slate-800">
         <button 
-          onClick={() => setActiveTab('users')}
-          className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-smooth ${activeTab === 'users' ? 'bg-primary-950 text-white shadow-xl' : 'text-slate-400 hover:text-primary-950'}`}
+          onClick={() => setActiveTab('all')}
+          className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-smooth ${activeTab === 'all' ? 'bg-primary-950 text-white shadow-xl' : 'text-slate-400 hover:text-primary-950'}`}
         >
-          <Users className="w-4 h-4" /> Equipo ({users.length})
+          <Users className="w-4 h-4" /> Todos ({activeTab === 'all' ? users.length : '...'})
+        </button>
+        <button 
+          onClick={() => setActiveTab('team')}
+          className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-smooth ${activeTab === 'team' ? 'bg-blue-600 text-white shadow-xl' : 'text-slate-400 hover:text-blue-600'}`}
+        >
+          <ShieldCheck className="w-4 h-4" /> Equipo ({activeTab === 'team' ? users.length : '...'})
         </button>
         <button 
           onClick={() => setActiveTab('activity')}
@@ -326,7 +334,7 @@ export default function AdminUsuarios() {
         </button>
       </div>
 
-      {activeTab === 'users' ? (
+      {(activeTab === 'all' || activeTab === 'team') ? (
         <div className="bg-white rounded-[4rem] border border-slate-50 shadow-sm overflow-hidden mb-20 animate-in fade-in duration-500">
           <div className="p-10 border-b border-slate-50 flex justify-between items-center bg-slate-50/20">
              <form onSubmit={handleSearch} className="relative w-full md:w-[450px] group">
