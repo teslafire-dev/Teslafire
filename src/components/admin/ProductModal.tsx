@@ -30,6 +30,8 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editProduct }
     stock: "",
     descripcion: "",
     descripcion_en: "",
+    seo_title: "",
+    seo_description: "",
     imagen_url: "",
     imagenes_urls: [] as string[]
   });
@@ -54,6 +56,8 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editProduct }
           stock: editProduct.stock || "",
           descripcion: editProduct.descripcion || "",
           descripcion_en: editProduct.descripcion_en || "",
+          seo_title: editProduct.seo_title || "",
+          seo_description: editProduct.seo_description || "",
           imagen_url: editProduct.imagen_url || "",
           imagenes_urls: editProduct.imagenes_urls || (editProduct.imagen_url ? [editProduct.imagen_url] : [])
         });
@@ -73,6 +77,8 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editProduct }
           stock: "", 
           descripcion: "", 
           descripcion_en: "", 
+          seo_title: "",
+          seo_description: "",
           imagen_url: "",
           imagenes_urls: []
         });
@@ -241,6 +247,8 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editProduct }
         stock: parseInt(formData.stock) || 0,
         descripcion: formData.descripcion,
         descripcion_en: formData.descripcion_en,
+        seo_title: formData.seo_title,
+        seo_description: formData.seo_description,
         imagen_url: formData.imagen_url || formData.imagenes_urls[0] || "",
         imagenes_urls: formData.imagenes_urls,
         updated_at: new Date().toISOString()
@@ -439,6 +447,67 @@ export default function ProductModal({ isOpen, onClose, onSuccess, editProduct }
             <div className="flex flex-col gap-2">
               <label className="text-[10px] font-black text-accent uppercase tracking-widest pl-2">Technical Info (English)</label>
               <textarea value={formData.descripcion_en} onChange={e => setFormData({...formData, descripcion_en: e.target.value})} className="bg-accent/5 border border-accent/10 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-accent outline-none min-h-[120px] resize-none" placeholder="Detailed features in English..." />
+            </div>
+
+            {/* SEO Section */}
+            <div className="bg-slate-50 border border-slate-100 rounded-[2rem] p-6 flex flex-col gap-5">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-primary-950/10 rounded-xl flex items-center justify-center">
+                  <span className="text-[10px] font-black text-primary-950">SEO</span>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-primary-950 uppercase tracking-widest">SEO de Producto (Google)</p>
+                  <p className="text-[9px] text-slate-400 font-medium">Si se deja vacío, se usará el nombre y descripción del producto.</p>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between px-1">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">SEO Title (Google)</label>
+                  <span className={`text-[9px] font-black tabular-nums ${(formData.seo_title || "").length > 60 ? 'text-red-500' : 'text-slate-400'}`}>
+                    {(formData.seo_title || "").length}/60
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  value={formData.seo_title}
+                  onChange={e => setFormData({...formData, seo_title: e.target.value})}
+                  className="bg-white border border-slate-200 rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-accent outline-none"
+                  placeholder={formData.nombre || "Título optimizado para Google..."}
+                />
+                <div className="h-1 rounded-full bg-slate-200 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      (formData.seo_title || "").length > 60 ? 'bg-red-500' :
+                      (formData.seo_title || "").length > 48 ? 'bg-yellow-400' : 'bg-green-500'
+                    }`}
+                    style={{ width: `${Math.min(((formData.seo_title || "").length / 60) * 100, 100)}%` }}
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between px-1">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Meta Description</label>
+                  <span className={`text-[9px] font-black tabular-nums ${(formData.seo_description || "").length > 155 ? 'text-red-500' : 'text-slate-400'}`}>
+                    {(formData.seo_description || "").length}/155
+                  </span>
+                </div>
+                <textarea
+                  rows={3}
+                  value={formData.seo_description}
+                  onChange={e => setFormData({...formData, seo_description: e.target.value})}
+                  className="bg-white border border-slate-200 rounded-2xl p-4 text-sm font-medium focus:ring-2 focus:ring-accent outline-none resize-none"
+                  placeholder={formData.descripcion?.substring(0, 155) || "Descripción para resultados de Google (máx. 155 caracteres)..."}
+                />
+                <div className="h-1 rounded-full bg-slate-200 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      (formData.seo_description || "").length > 155 ? 'bg-red-500' :
+                      (formData.seo_description || "").length > 120 ? 'bg-yellow-400' : 'bg-green-500'
+                    }`}
+                    style={{ width: `${Math.min(((formData.seo_description || "").length / 155) * 100, 100)}%` }}
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import ProductCard from "@/components/productos/ProductCard";
 import { useTranslation } from "@/contexts/TranslationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import SEOHead from "@/components/seo/SEOHead";
 
 export default function ProductDetail() {
   const { t, lang } = useTranslation();
@@ -153,7 +154,34 @@ export default function ProductDetail() {
   }
   const images = gallery.length > 0 ? gallery : [selectedImage || "/placeholder-product.png"];
 
+  const siteUrl = typeof window !== 'undefined' ? window.location.origin : '';
+  const productCategory = product.producto_categorias?.[0]?.categorias?.nombre || '';
+
   return (
+    <>
+    <SEOHead
+      type="product"
+      title={product.seo_title || product.nombre}
+      description={product.seo_description || product.descripcion || `${product.nombre} - Equipo de seguridad industrial`}
+      image={product.imagen_url}
+      url={`${siteUrl}/productos/${product.slug}`}
+      product={{
+        name: product.nombre,
+        description: product.seo_description || product.descripcion || '',
+        image: product.imagen_url,
+        sku: product.sku,
+        price: product.precio,
+        currency: product.moneda === 'EUR' ? 'EUR' : 'USD',
+        brand: product.marcas?.nombre,
+        slug: product.slug,
+      }}
+      breadcrumbs={[
+        { name: 'Inicio', url: siteUrl },
+        { name: 'Productos', url: `${siteUrl}/productos` },
+        ...(productCategory ? [{ name: productCategory, url: `${siteUrl}/productos?categoria=${productCategory}` }] : []),
+        { name: product.nombre, url: `${siteUrl}/productos/${product.slug}` },
+      ]}
+    />
     <div className="bg-white min-h-screen py-8 pb-32">
       <div className="container mx-auto px-6">
         {/* Breadcrumbs */}
@@ -292,7 +320,60 @@ export default function ProductDetail() {
           </div>
         </div>
       </div>
+
+      {/* Related Products Section */}
+      {suggestions.length > 0 && (
+        <div className="border-t border-slate-100 mt-16 pt-16">
+          <div className="container mx-auto px-6">
+            <div className="flex items-center gap-4 mb-10">
+              <div className="p-3 bg-accent/10 text-accent rounded-2xl">
+                <TrendingUp className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black text-accent uppercase tracking-widest block mb-1">Venta Cruzada</span>
+                <h2 className="text-3xl font-black text-primary-950 uppercase tracking-tighter leading-none">
+                  {lang === 'EN' ? 'You May Also Need' : 'Quizás También Necesites'}
+                </h2>
+              </div>
+            </div>
+
+            {suggestionsLoading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-accent" />
+              </div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, staggerChildren: 0.1 }}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+              >
+                {suggestions.map((s: any, i: number) => (
+                  <motion.div
+                    key={s.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                  >
+                    <ProductCard 
+                      id={s.id}
+                      name={s.nombre}
+                      sku={s.sku}
+                      slug={s.slug}
+                      category={s.producto_categorias?.[0]?.categorias?.nombre || ''}
+                      price={s.precio}
+                      moneda={s.moneda}
+                      image={s.imagen_url}
+                    />
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
+    </>
   );
 }
 

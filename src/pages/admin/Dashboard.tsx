@@ -9,7 +9,11 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Loader2,
-  Calendar
+  Calendar,
+  ShoppingCart,
+  TrendingDown,
+  Mail,
+  Phone
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase/client";
@@ -30,9 +34,12 @@ export default function AdminDashboard() {
     lowStock: 0,
     recentOrders: [] as any[]
   });
+  const [abandonedCarts, setAbandonedCarts] = useState<any[]>([]);
+  const [abandonedLoading, setAbandonedLoading] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
+    fetchAbandonedCarts();
   }, []);
 
   const fetchDashboardData = async () => {
@@ -77,6 +84,26 @@ export default function AdminDashboard() {
       console.error("Error fetching dashboard stats:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAbandonedCarts = async () => {
+    setAbandonedLoading(true);
+    try {
+      // Ordenes pendientes de hace más de 1 hora = carrito abandonado potencial
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const { data } = await supabase
+        .from('ordenes')
+        .select('id, cliente_nombre, cliente_email, cliente_telefono, total, created_at, items')
+        .eq('estado', 'pendiente')
+        .lt('created_at', oneHourAgo)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      setAbandonedCarts(data || []);
+    } catch (err) {
+      console.error("Error fetching abandoned carts:", err);
+    } finally {
+      setAbandonedLoading(false);
     }
   };
 
@@ -166,6 +193,105 @@ export default function AdminDashboard() {
           </motion.div>
         ))}
       </div>
+
+      {/* Abandoned Carts Widget */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="bg-white rounded-[3rem] border border-amber-100 shadow-sm overflow-hidden"
+      >
+        <div className="p-8 border-b border-amber-50 bg-amber-50/30 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-amber-100 text-amber-600 rounded-2xl">
+              <TrendingDown className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-xl font-black font-outfit text-primary-950 uppercase tracking-tighter">Carritos Abandonados</h3>
+              <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                Clientes que iniciaron cotización y no completaron (más de 1h pendiente)
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {abandonedCarts.length > 0 && (
+              <span className="bg-amber-500 text-white text-[10px] font-black px-4 py-2 rounded-xl uppercase tracking-widest">
+                {abandonedCarts.length} sin cerrar
+              </span>
+            )}
+            <button
+              onClick={fetchAbandonedCarts}
+              className="p-3 bg-white border border-slate-100 rounded-xl hover:border-accent text-slate-400 hover:text-accent transition-smooth"
+            >
+              <ArrowUpRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {abandonedLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
+          </div>
+        ) : abandonedCarts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-3 text-slate-300">
+            <ShoppingCart className="w-10 h-10" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+              Sin carritos abandonados. ¡Excelente!
+            </span>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-50">
+            {abandonedCarts.map((order) => {
+              const itemsCount = Array.isArray(order.items) ? order.items.length : 0;
+              const whatsappMsg = encodeURIComponent(`Hola ${order.cliente_nombre}, vi que iniciaste una cotización con nosotros por $${Number(order.total).toFixed(2)}. ¿Podemos ayudarte a completarla?`);
+              const phone = (order.cliente_telefono || '').replace(/\D/g, '');
+              return (
+                <div key={order.id} className="flex items-center gap-6 px-8 py-5 hover:bg-amber-50/30 transition-smooth group">
+                  <div className="w-10 h-10 bg-amber-50 rounded-2xl flex items-center justify-center shrink-0">
+                    <ShoppingCart className="w-4 h-4 text-amber-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-black text-primary-950 uppercase tracking-tight truncate">{order.cliente_nombre}</p>
+                    <div className="flex items-center gap-4 mt-1">
+                      <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest">
+                        {itemsCount} item{itemsCount !== 1 ? 's' : ''}
+                      </span>
+                      <span className="text-[9px] text-accent font-black uppercase tracking-widest">
+                        ${Number(order.total).toFixed(2)}
+                      </span>
+                      <span className="text-[9px] text-slate-300 font-medium">
+                        {format(new Date(order.created_at), 'dd/MM HH:mm', { locale: es })}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-smooth">
+                    {order.cliente_email && (
+                      <a
+                        href={`mailto:${order.cliente_email}?subject=Tu cotización pendiente&body=Hola ${order.cliente_nombre}, vi que iniciaste una cotización con nosotros...`}
+                        className="p-2.5 bg-slate-100 text-slate-500 hover:bg-primary-950 hover:text-white rounded-xl transition-smooth"
+                        title="Enviar email"
+                      >
+                        <Mail className="w-3.5 h-3.5" />
+                      </a>
+                    )}
+                    {phone && (
+                      <a
+                        href={`https://wa.me/${phone}?text=${whatsappMsg}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2.5 bg-green-100 text-green-600 hover:bg-green-500 hover:text-white rounded-xl transition-smooth"
+                        title="Contactar por WhatsApp"
+                      >
+                        <Phone className="w-3.5 h-3.5" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </motion.div>
 
       {/* Main Content Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">

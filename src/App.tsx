@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
+import { HelmetProvider } from 'react-helmet-async';
 import Home from './pages/Home';
 import Productos from './pages/Productos';
 import ProductDetail from './pages/ProductDetail';
@@ -13,6 +14,7 @@ import AdminOrdenes from './pages/admin/Ordenes';
 import AdminUsuarios from './pages/admin/Usuarios';
 import AdminCategorias from './pages/admin/Categorias';
 import AdminConfiguracion from './pages/admin/Configuracion';
+import AdminSEO from './pages/admin/SEO';
 import AdminLayout from './components/admin/AdminLayout';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
@@ -25,6 +27,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { TranslationProvider } from './contexts/TranslationContext';
 import { CurrencyProvider } from './contexts/CurrencyContext';
 import ProtectedRoute from './components/admin/ProtectedRoute';
+import Analytics from './components/analytics/Analytics';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -36,6 +39,7 @@ function ScrollToTop() {
 
 function App() {
   return (
+    <HelmetProvider>
     <TranslationProvider>
       <CurrencyProvider>
         <AuthProvider>
@@ -44,7 +48,7 @@ function App() {
           <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-500">
             <Routes>
               {/* Public Context (with Header/Footer) */}
-              <Route element={<><Header /><main className="flex-grow"><NavigationWrapper /></main><Footer /></>}>
+              <Route element={<><Analytics /><Header /><main className="flex-grow"><NavigationWrapper /></main><Footer /></>}>
                 <Route path="/" element={<Home />} />
                 <Route path="/productos" element={<Productos />} />
                 <Route path="/productos/:slug" element={<ProductDetail />} />
@@ -69,6 +73,7 @@ function App() {
                   <Route path="/admin/ordenes" element={<AdminOrdenes />} />
                   <Route path="/admin/usuarios" element={<AdminUsuarios />} />
                   <Route path="/admin/configuracion" element={<AdminConfiguracion />} />
+                  <Route path="/admin/seo" element={<AdminSEO />} />
                 </Route>
               </Route>
 
@@ -95,6 +100,7 @@ function App() {
         </AuthProvider>
       </CurrencyProvider>
     </TranslationProvider>
+    </HelmetProvider>
   );
 }
 
