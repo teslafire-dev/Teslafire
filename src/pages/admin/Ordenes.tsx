@@ -426,104 +426,124 @@ export default function AdminOrdenes() {
   );
 
   function handlePrintOrder(order: Order) {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
+    toast.loading("Generando documento técnico...");
+    
+    // Carga dinámica de jsPDF desde CDN
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    script.onload = () => {
+      const scriptAutotable = document.createElement('script');
+      scriptAutotable.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js';
+      scriptAutotable.onload = () => {
+        try {
+          const { jsPDF } = (window as any).jspdf;
+          const doc = new jsPDF();
 
-    const productsHtml = order.productos.map(p => `
-      <tr style="border-bottom: 1px solid #eee;">
-        <td style="padding: 12px 0; font-size: 11px;">
-          <div style="font-weight: 900; text-transform: uppercase;">${p.nombre}</div>
-          <div style="color: #666; font-size: 9px;">SKU: ${p.sku || 'N/A'}</div>
-        </td>
-        <td style="padding: 12px 0; text-align: center; font-weight: 900;">x${p.cantidad}</td>
-        <td style="padding: 12px 0; text-align: right; font-weight: 900;">$${Number(p.precio || 0).toFixed(2)}</td>
-      </tr>
-    `).join('');
+          // Configuración Estética
+          const primaryColor = [2, 6, 23]; // Dark Slate
+          const accentColor = [249, 115, 22]; // Accent Orange
 
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Orden_${order.localizador}</title>
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-            body { font-family: 'Inter', sans-serif; padding: 40px; color: #020617; line-height: 1.5; }
-            .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 4px solid #020617; padding-bottom: 20px; }
-            .logo { font-size: 24px; font-weight: 900; letter-spacing: -1px; text-transform: uppercase; }
-            .order-title { font-size: 10px; font-weight: 900; color: #64748b; text-transform: uppercase; letter-spacing: 2px; }
-            .order-id { font-size: 32px; font-weight: 900; letter-spacing: -2px; }
-            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
-            .info-box h4 { margin: 0 0 10px 0; font-size: 10px; text-transform: uppercase; color: #64748b; letter-spacing: 1px; }
-            .info-box p { margin: 2px 0; font-size: 12px; font-weight: 700; text-transform: uppercase; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th { text-align: left; font-size: 10px; text-transform: uppercase; color: #64748b; padding-bottom: 10px; border-bottom: 2px solid #020617; }
-            .total-section { margin-top: 40px; display: flex; justify-content: flex-end; }
-            .total-box { background: #020617; color: white; padding: 20px 40px; border-radius: 12px; text-align: right; }
-            .total-box span { font-size: 10px; text-transform: uppercase; opacity: 0.6; display: block; }
-            .total-box strong { font-size: 24px; font-weight: 900; }
-            @media print { .no-print { display: none; } }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div>
-              <div class="logo">DOBELL <span style="color: #f97316;">TÉCNICA</span></div>
-              <p style="font-size: 10px; color: #64748b; font-weight: 700;">SOLUCIONES INDUSTRIALES DE ALTO IMPACTO</p>
-            </div>
-            <div style="text-align: right;">
-              <div class="order-title">Comprobante de Cotización</div>
-              <div class="order-id">#${order.localizador}</div>
-            </div>
-          </div>
+          // Header
+          doc.setFillColor(...primaryColor);
+          doc.rect(0, 0, 210, 40, 'F');
+          
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(22);
+          doc.setFont("helvetica", "bold");
+          doc.text("DOBELL ", 15, 25);
+          
+          doc.setTextColor(...accentColor);
+          doc.text("TÉCNICA", 52, 25);
+          
+          doc.setFontSize(8);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(200, 200, 200);
+          doc.text("SOLUCIONES INDUSTRIALES DE ALTO IMPACTO", 15, 32);
 
-          <div class="info-grid">
-            <div class="info-box">
-              <h4>Información del Cliente</h4>
-              <p>${order.cliente_nombre}</p>
-              <p>ID: ${order.cliente_cedula}</p>
-              <p>TEL: ${order.cliente_telefono}</p>
-              <p>EMAIL: ${order.cliente_email}</p>
-            </div>
-            <div class="info-box" style="text-align: right;">
-              <h4>Detalles de Gestión</h4>
-              <p>FECHA: ${new Date(order.created_at).toLocaleString()}</p>
-              <p>ESTADO: ${order.estado.toUpperCase()}</p>
-            </div>
-          </div>
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(10);
+          doc.text(`ORDEN: #${order.localizador}`, 150, 20);
+          doc.text(`FECHA: ${new Date(order.created_at).toLocaleDateString()}`, 150, 27);
 
-          <table>
-            <thead>
-              <tr>
-                <th style="text-align: left;">Descripción del Equipo</th>
-                <th style="text-align: center;">Cantidad</th>
-                <th style="text-align: right;">Precio Unit.</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${productsHtml}
-            </tbody>
-          </table>
+          // Customer Info
+          doc.setTextColor(...primaryColor);
+          doc.setFontSize(12);
+          doc.setFont("helvetica", "bold");
+          doc.text("INFORMACIÓN DEL CLIENTE", 15, 55);
+          
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "normal");
+          doc.text([
+            `Nombre: ${order.cliente_nombre}`,
+            `ID/RIF: ${order.cliente_cedula}`,
+            `Teléfono: ${order.cliente_telefono}`,
+            `Email: ${order.cliente_email}`
+          ], 15, 65);
 
-          <div class="total-section">
-            <div class="total-box">
-              <span>Monto Total Neto</span>
-              <strong>$${Number(order.total || 0).toFixed(2)} USD</strong>
-            </div>
-          </div>
+          doc.text([
+            `Estado: ${order.estado.toUpperCase()}`,
+            `Localizador: ${order.localizador}`
+          ], 140, 65);
 
-          <div style="margin-top: 80px; text-align: center; border-top: 1px dashed #cbd5e1; padding-top: 20px;">
-            <p style="font-size: 10px; color: #64748b; font-weight: 600;">Este documento es un comprobante técnico de reserva. No representa una factura fiscal hasta su procesamiento administrativo final.</p>
-          </div>
+          // Table of Products
+          const tableRows = order.productos.map(p => [
+            p.nombre,
+            p.sku || 'N/A',
+            `x${p.cantidad}`,
+            `$${Number(p.precio || 0).toFixed(2)}`
+          ]);
 
-          <script>
-            window.onload = () => {
-              window.print();
-              setTimeout(() => { window.close(); }, 500);
-            };
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+          (doc as any).autoTable({
+            startY: 95,
+            head: [['Equipo / Descripción', 'SKU Técnico', 'Cant.', 'Precio Unit.']],
+            body: tableRows,
+            theme: 'grid',
+            headStyles: { fillColor: primaryColor, textColor: [255, 255, 255], fontStyle: 'bold' },
+            styles: { fontSize: 9, cellPadding: 5 },
+            columnStyles: {
+              0: { cellWidth: 80 },
+              1: { cellWidth: 40 },
+              2: { cellWidth: 20, halign: 'center' },
+              3: { cellWidth: 30, halign: 'right' }
+            }
+          });
+
+          // Total Section
+          const finalY = (doc as any).lastAutoTable.finalY + 10;
+          doc.setFillColor(...primaryColor);
+          doc.rect(130, finalY, 65, 15, 'F');
+          
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "bold");
+          doc.text("TOTAL RESERVA:", 135, finalY + 10);
+          
+          doc.setTextColor(...accentColor);
+          doc.setFontSize(14);
+          doc.text(`$${Number(order.total || 0).toFixed(2)}`, 165, finalY + 10);
+
+          // Footer Legal
+          doc.setTextColor(150, 150, 150);
+          doc.setFontSize(8);
+          doc.text("Este documento es un comprobante técnico de reserva comercial.", 105, 280, { align: 'center' });
+          doc.text("DOBELL TÉCNICA - Soluciones para la Seguridad Industrial.", 105, 285, { align: 'center' });
+
+          doc.save(`Orden_${order.localizador}.pdf`);
+          toast.dismiss();
+          toast.success("Comprobante descargado con éxito");
+        } catch (err) {
+          console.error(err);
+          toast.dismiss();
+          toast.error("Error al generar PDF");
+        }
+      };
+      document.head.appendChild(scriptAutotable);
+    };
+    script.onerror = () => {
+      toast.dismiss();
+      toast.error("Error al cargar motor de PDF");
+    };
+    document.head.appendChild(script);
   }
 }
 
