@@ -332,22 +332,6 @@ const Reservar = () => {
           </div>
         )}
       </AnimatePresence>
-
-      <AnimatePresence>
-        {showWhatsappModal && (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-3xl">
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-slate-950 rounded-[4rem] p-16 max-w-lg w-full text-center shadow-2xl border-4 border-slate-50 dark:border-accent/10">
-              <div className="w-24 h-24 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-10 border-2 border-green-500/20"><PackageCheck className="w-12 h-12 text-green-500 animate-bounce" /></div>
-              <h2 className="text-4xl font-black uppercase tracking-tighter dark:text-white mb-4 leading-none text-balance">{t('success.title')}</h2>
-              <div className="bg-slate-100 dark:bg-slate-900 px-10 py-5 rounded-[2.5rem] text-4xl font-black text-primary-950 dark:text-accent font-outfit shadow-inner mb-12 uppercase tracking-tighter">{pendingLocalizer}</div>
-              <div className="space-y-4">
-                <button onClick={() => { window.open(whatsappUrl, '_blank'); navigate(`/gracias/${pendingLocalizer}`); }} className="w-full h-20 bg-[#25D366] text-white rounded-[1.8rem] font-black uppercase text-sm tracking-widest flex items-center justify-center gap-4 active:scale-95 shadow-xl">{t('success.share_whatsapp')}</button>
-                <button onClick={() => navigate(`/gracias/${pendingLocalizer}`)} className="text-[11px] font-black uppercase text-slate-400 hover:text-slate-900 transition-colors tracking-widest pt-4">{t('common.close')}</button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };
