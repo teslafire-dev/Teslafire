@@ -430,25 +430,17 @@ export default function AdminUsuarios() {
                     </td>
                     <td className="px-10 py-8 text-right">
                       <div className="flex items-center justify-end gap-3">
-                         {user.rol !== 'admin' && (
+                         {user.rol === 'invitado' && (
                            <button 
-                            onClick={() => updateRole(user.id, 'admin')}
+                            onClick={() => updateRole(user.id, 'admin', user.email)}
                             className="h-11 px-6 text-[9px] font-black text-primary-950 bg-slate-100 rounded-xl hover:bg-primary-950 hover:text-white transition-smooth uppercase tracking-widest shadow-sm active:scale-95 flex items-center gap-2"
                            >
                               Elevar a Admin <ArrowRight className="w-3 h-3" />
                            </button>
                          )}
-                         {user.rol === 'invitado' && (
+                         {user.rol === 'admin' && (
                            <button 
-                            onClick={() => updateRole(user.id, 'editor')}
-                            className="h-11 px-6 text-[9px] font-black text-blue-600 bg-blue-50 rounded-xl hover:bg-blue-600 hover:text-white transition-smooth uppercase tracking-widest shadow-sm active:scale-95 flex items-center gap-2"
-                           >
-                              Hacer Editor <ArrowRight className="w-3 h-3" />
-                           </button>
-                         )}
-                         {user.rol !== 'invitado' && (
-                           <button 
-                            onClick={() => updateRole(user.id, 'invitado')}
+                            onClick={() => updateRole(user.id, 'invitado', user.email)}
                             className="h-11 px-6 text-[9px] font-black text-orange-600 bg-orange-50 rounded-xl hover:bg-orange-600 hover:text-white transition-smooth uppercase tracking-widest shadow-sm active:scale-95 flex items-center gap-2"
                            >
                               Degradar a Invitado
@@ -773,7 +765,6 @@ export default function AdminUsuarios() {
                         className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-6 text-sm font-bold outline-none focus:ring-2 focus:ring-accent transition-smooth appearance-none cursor-pointer"
                       >
                          <option value="invitado">Invitado (Solo Lectura)</option>
-                         <option value="editor">Editor (Operativo)</option>
                          <option value="admin">Administrador (Total)</option>
                       </select>
                    </div>

@@ -55,6 +55,9 @@ export default function AdminCRM() {
   const [selectedCount, setSelectedCount] = useState(0);
   const [activeCampaigns, setActiveCampaigns] = useState<any[]>([]);
   const [isCampaignsLoading, setIsCampaignsLoading] = useState(true);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [customerHistory, setCustomerHistory] = useState<any[]>([]);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
 
   useEffect(() => {
     fetchCRMData();
@@ -130,6 +133,28 @@ export default function AdminCRM() {
       toast.error("Error al cargar base de datos de clientes");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCustomerHistory = async (email: string) => {
+    setIsHistoryLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('campana_destinatarios')
+        .select(`
+          *,
+          campanas (
+            asunto
+          )
+        `)
+        .eq('email', email)
+        .order('created_at', { ascending: false });
+        
+      if (!error && data) setCustomerHistory(data);
+    } catch (err) {
+      console.error("Error history:", err);
+    } finally {
+      setIsHistoryLoading(false);
     }
   };
 
@@ -451,6 +476,97 @@ export default function AdminCRM() {
         )}
       </AnimatePresence>
 
+      {/* Campaign History Section (MASIVOS ENVIADOS) */}
+      <div className="bg-white rounded-[3.5rem] border border-slate-100 shadow-sm overflow-hidden mb-12">
+         <div className="p-10 border-b border-slate-50 bg-slate-50/20 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+               <div className="w-12 h-12 rounded-2xl bg-primary-950 text-accent flex items-center justify-center shadow-xl">
+                  <Mail className="w-6 h-6" />
+               </div>
+               <div className="flex flex-col">
+                  <h2 className="text-xl font-black text-primary-950 uppercase tracking-tighter">Historial de Envíos Masivos</h2>
+                  <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Interacción detallada por cada campaña ejecutada</p>
+               </div>
+            </div>
+            <div className="flex items-center gap-3">
+               <button 
+                 onClick={fetchCampaigns}
+                 className="p-3 hover:bg-slate-100 rounded-xl transition-smooth text-slate-400"
+               >
+                 <Clock className="w-5 h-5" />
+               </button>
+            </div>
+         </div>
+
+         <div className="overflow-x-auto">
+            <table className="w-full text-left">
+               <thead>
+                  <tr className="bg-slate-50/50">
+                     <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Campaña / Asunto</th>
+                     <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Estado</th>
+                     <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Alcance</th>
+                     <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Interacción (Click/Open)</th>
+                     <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Fecha de Envío</th>
+                  </tr>
+               </thead>
+               <tbody className="divide-y divide-slate-50">
+                  {isCampaignsLoading ? (
+                    <tr><td colSpan={5} className="py-20 text-center"><Loader2 className="w-10 h-10 animate-spin mx-auto text-slate-200" /></td></tr>
+                  ) : activeCampaigns.map((c) => (
+                    <tr key={c.id} className="hover:bg-slate-50/50 transition-smooth group">
+                       <td className="px-10 py-8">
+                          <div className="flex flex-col gap-1">
+                             <span className="text-sm font-black text-primary-950 uppercase tracking-tight line-clamp-1">{c.asunto}</span>
+                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">ID: {c.id.slice(0,8)}</span>
+                          </div>
+                       </td>
+                       <td className="px-10 py-8 text-center">
+                          <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border ${
+                            c.estado === 'completada' ? 'bg-green-50 text-green-600 border-green-100' :
+                            c.estado === 'enviando' ? 'bg-blue-50 text-blue-600 border-blue-100 animate-pulse' :
+                            'bg-red-50 text-red-600 border-red-100'
+                          }`}>
+                             {c.estado}
+                          </span>
+                       </td>
+                       <td className="px-10 py-8 text-center">
+                          <div className="flex flex-col">
+                             <span className="text-sm font-black text-primary-950 font-outfit">{c.total_destinatarios}</span>
+                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-tight">Destinatarios</span>
+                          </div>
+                       </td>
+                       <td className="px-10 py-8">
+                          <div className="flex flex-col gap-3 max-w-[180px] mx-auto">
+                             <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-tighter">
+                                <span className="text-indigo-500">Abiertos: {Math.round((c.abiertos / (c.enviados || 1)) * 100)}%</span>
+                                <span className="text-green-500">Clics: {Math.round((c.clics / (c.enviados || 1)) * 100)}%</span>
+                             </div>
+                             <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden flex">
+                                <div className="h-full bg-indigo-500" style={{ width: `${(c.abiertos / (c.total_destinatarios || 1)) * 100}%` }} />
+                                <div className="h-full bg-green-500" style={{ width: `${(c.clics / (c.total_destinatarios || 1)) * 100}%` }} />
+                             </div>
+                             <div className="flex justify-center gap-4 text-[8px] font-black text-slate-400 uppercase tracking-widest tabular-nums">
+                                <span>👁️ {c.abiertos}</span>
+                                <span>🖱️ {c.clics}</span>
+                                <span>❌ {c.fallidos}</span>
+                             </div>
+                          </div>
+                       </td>
+                       <td className="px-10 py-8 text-right">
+                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest tabular-nums">
+                             {format(new Date(c.created_at), "dd MMM yyyy, HH:mm", { locale: es })}
+                          </span>
+                       </td>
+                    </tr>
+                  ))}
+                  {activeCampaigns.length === 0 && !isCampaignsLoading && (
+                    <tr><td colSpan={5} className="py-20 text-center text-slate-300 font-bold uppercase italic tracking-widest text-xs">No hay historial de campañas registradas</td></tr>
+                  )}
+               </tbody>
+            </table>
+         </div>
+      </div>
+
       {/* Main CRM Core */}
       <div className="bg-white rounded-[3.5rem] border border-slate-100 shadow-sm overflow-hidden flex flex-col">
          {/* Filter Bar */}
@@ -567,12 +683,15 @@ export default function AdminCRM() {
                           <span className="text-sm font-black text-primary-950 font-outfit">${c.total_inversion.toFixed(2)}</span>
                        </td>
                        <td className="px-10 py-6 text-right">
-                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-smooth">
-                             <button className="p-3 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-accent hover:border-accent transition-smooth">
-                                <FileText className="w-4 h-4" />
-                             </button>
-                             <button className="p-3 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-accent hover:border-accent transition-smooth">
-                                <MessageSquare className="w-4 h-4" />
+                          <div className="flex items-center justify-end gap-2">
+                             <button 
+                               onClick={() => {
+                                 setSelectedCustomer(c);
+                                 fetchCustomerHistory(c.email);
+                               }}
+                               className="px-6 py-3 bg-white border border-slate-100 rounded-xl text-[9px] font-black text-slate-500 hover:text-accent hover:border-accent transition-smooth shadow-sm flex items-center gap-2 group/btn"
+                             >
+                                <FileText className="w-4 h-4 group-hover/btn:scale-110" /> Ver Historial
                              </button>
                           </div>
                        </td>
@@ -664,7 +783,115 @@ export default function AdminCRM() {
            </div>
          )}
       </AnimatePresence>
-      
+
+      {/* Customer Interaction History Drawer */}
+      <AnimatePresence>
+        {selectedCustomer && (
+          <div className="fixed inset-0 z-[150] flex justify-end">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setSelectedCustomer(null)}
+              className="absolute inset-0 bg-primary-950/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="relative w-full max-w-xl bg-white h-full shadow-2xl flex flex-col"
+            >
+               <div className="p-10 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                  <div className="flex items-center gap-4">
+                     <div className="w-16 h-16 bg-primary-950 text-white rounded-3xl flex items-center justify-center font-black text-2xl shadow-xl">
+                        {selectedCustomer.nombre.charAt(0)}
+                     </div>
+                     <div className="flex flex-col">
+                        <h3 className="text-xl font-black text-primary-950 uppercase tracking-tighter">{selectedCustomer.nombre}</h3>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{selectedCustomer.email}</span>
+                     </div>
+                  </div>
+                  <button onClick={() => setSelectedCustomer(null)} className="p-4 hover:bg-slate-100 rounded-2xl transition-smooth">
+                     <X className="w-6 h-6 text-slate-300" />
+                  </button>
+               </div>
+
+               <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
+                  <div className="space-y-12">
+                     <div>
+                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-6">Métricas de Valor</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                           <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                              <span className="text-2xl font-black font-outfit text-primary-950">${selectedCustomer.total_inversion.toFixed(2)}</span>
+                              <p className="text-[9px] font-black text-slate-400 uppercase mt-1">Inversión Total</p>
+                           </div>
+                           <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                              <span className="text-sm font-black text-primary-950 uppercase tracking-tight">{selectedCustomer.segmento}</span>
+                              <p className="text-[9px] font-black text-slate-400 uppercase mt-1">Estatus Comercial</p>
+                           </div>
+                        </div>
+                     </div>
+
+                     <div>
+                        <div className="flex items-center justify-between mb-8">
+                           <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Historial de Correos</h4>
+                           <span className="px-3 py-1 bg-green-50 text-green-600 rounded-lg text-[9px] font-black uppercase tracking-widest">
+                             {customerHistory.length} Envíos
+                           </span>
+                        </div>
+
+                        {isHistoryLoading ? (
+                           <div className="py-20 flex flex-col items-center gap-4">
+                              <Loader2 className="w-10 h-10 animate-spin text-accent" />
+                              <span className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Escaneando interacciones...</span>
+                           </div>
+                        ) : (
+                          <div className="space-y-6 relative before:absolute before:left-6 before:top-0 before:bottom-0 before:w-px before:bg-slate-100">
+                            {customerHistory.map((item, idx) => (
+                              <div key={item.id} className="relative pl-16 group">
+                                 <div className={`absolute left-4 top-0 w-4 h-4 rounded-full border-4 border-white shadow-sm z-10 transition-smooth group-hover:scale-125 ${
+                                   item.estado === 'clic' ? 'bg-green-500' : 
+                                   item.estado === 'abierto' ? 'bg-indigo-500' : 
+                                   item.estado === 'enviado' ? 'bg-blue-500' : 'bg-slate-200'
+                                 }`} />
+                                 
+                                 <div className="bg-white border border-slate-100 p-6 rounded-[2rem] shadow-sm hover:shadow-xl transition-smooth">
+                                    <div className="flex justify-between items-start mb-3">
+                                       <span className="text-xs font-black text-primary-950 uppercase tracking-tight leading-tight max-w-[70%]">
+                                          {item.campanas?.asunto}
+                                       </span>
+                                       <span className="text-[9px] font-black text-slate-300 uppercase tabular-nums">
+                                          {format(new Date(item.created_at), "dd MMM, HH:mm", { locale: es })}
+                                       </span>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-6 mt-4 pt-4 border-t border-slate-50">
+                                       <div className={`flex items-center gap-2 text-[9px] font-black uppercase tracking-widest ${item.enviado_at ? 'text-blue-500' : 'text-slate-300'}`}>
+                                          <Send className="w-3 h-3" /> Enviado
+                                       </div>
+                                       <div className={`flex items-center gap-2 text-[9px] font-black uppercase tracking-widest ${item.abierto_at ? 'text-indigo-500' : 'text-slate-300'}`}>
+                                          <MailOpen className="w-3 h-3" /> {item.abierto_at ? `Abierto ${format(new Date(item.abierto_at), "HH:mm")}` : 'Sin abrir'}
+                                       </div>
+                                       <div className={`flex items-center gap-2 text-[9px] font-black uppercase tracking-widest ${item.clic_at ? 'text-green-500' : 'text-slate-300'}`}>
+                                          <MousePointer2 className="w-3 h-3" /> {item.clic_at ? 'Hizo Clic' : 'Sin Clic'}
+                                       </div>
+                                    </div>
+                                 </div>
+                              </div>
+                            ))}
+                            {customerHistory.length === 0 && (
+                              <div className="bg-slate-50 p-10 rounded-[2.5rem] border border-dashed border-slate-200 text-center">
+                                 <Mail className="w-8 h-8 text-slate-200 mx-auto mb-4" />
+                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Aún no se han enviado campañas a este usuario</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                     </div>
+                  </div>
+               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Guía de Activación (Manual) */}
       <div className="bg-white rounded-[3.5rem] border border-slate-100 shadow-sm overflow-hidden p-12">
          <div className="flex items-center gap-4 mb-10">
