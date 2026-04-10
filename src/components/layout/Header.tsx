@@ -293,7 +293,7 @@ export default function Header() {
           {[
             { to: '/', label: t('nav.home') },
             { to: '/productos', label: t('nav.productos') },
-            { to: '/soluciones', label: t('nav.soluciones') },
+            { to: '/servicios', label: t('nav.servicios') },
             { to: '/nosotros', label: t('nav.nosotros') }
           ].map((item) => (
             <NavLink 
@@ -673,7 +673,7 @@ export default function Header() {
             {[
               { to: '/', label: t('nav.home') },
               { to: '/productos', label: t('nav.productos') },
-              { to: '/soluciones', label: t('nav.soluciones') },
+              { to: '/servicios', label: t('nav.servicios') },
               { to: '/nosotros', label: t('nav.nosotros') },
               { to: '/nosotros#contacto', label: t('nav.contacto') }
             ].map((item) => (

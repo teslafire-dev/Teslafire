@@ -20,7 +20,7 @@ import AdminLayout from './components/admin/AdminLayout';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import Nosotros from './pages/Nosotros';
-import Soluciones from './pages/Soluciones';
+import Servicios from './pages/Servicios';
 import Perfil from './pages/perfil/Perfil';
 import Historial from './pages/perfil/Historial';
 import { Toaster } from 'react-hot-toast';
@@ -68,7 +68,7 @@ function AppContent() {
             <Route path="/carrito" element={<Carrito />} />
             <Route path="/reservar" element={<Reservar />} />
             <Route path="/nosotros" element={<Nosotros />} />
-            <Route path="/soluciones" element={<Soluciones />} />
+            <Route path="/servicios" element={<Servicios />} />
             <Route path="/gracias/:localizador" element={<Gracias />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/perfil/historial" element={<Historial />} />

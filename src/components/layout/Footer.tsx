@@ -63,7 +63,7 @@ export default function Footer() {
             <nav className="flex flex-col gap-4">
               {[
                 { key: 'footer.link.about', to: '/nosotros' },
-                { key: 'footer.link.solutions', to: '/soluciones' },
+                { key: 'footer.link.services', to: '/servicios' },
                 { key: 'footer.link.contact', to: '/nosotros#contacto' },
                 { key: 'footer.link.terms', to: '#' },
                 { key: 'footer.link.privacy', to: '#' }
