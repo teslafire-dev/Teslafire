@@ -32,7 +32,7 @@ interface ConfigItem {
 
 const categories = [
   { id: 'contacto', name: 'Canales de Contacto', icon: Search, keys: ['email_contacto', 'telefono_whatsapp', 'direccion'] },
-  { id: 'brand', name: 'Identidad Visual (Multimedia)', icon: ImageIcon, keys: ['site_logo', 'site_logo_dark', 'site_favicon'] },
+  { id: 'brand', name: 'Identidad Visual (Multimedia)', icon: ImageIcon, keys: ['site_logo', 'site_logo_dark'] },
   { id: 'identidad', name: 'Identidad Visual (Paleta Clara)', icon: Palette, keys: ['color_primario', 'color_acento', 'color_header', 'color_footer', 'color_body_bg', 'color_botones_bg'] },
   { id: 'identidad_dark', name: 'Identidad Visual (Paleta Oscura)', icon: Palette, keys: ['color_primario_dark', 'color_acento_dark', 'color_header_dark', 'color_footer_dark', 'color_body_bg_dark', 'color_botones_bg_dark'] },
   { id: 'hero', name: 'Contenido del Hero', icon: Type, keys: ['hero_h1', 'hero_p', 'hero_imagen_url'] },
@@ -143,9 +143,8 @@ export default function Configuracion() {
             const ctx = canvas.getContext('2d');
             
             // Medidas según el asset (Logo o Favicon)
-            const isLogo = clave === 'site_logo' || clave === 'site_logo_dark';
-            const targetWidth = isLogo ? 500 : 64;
-            const targetHeight = isLogo ? 150 : 64;
+            const targetWidth = 500;
+            const targetHeight = 150;
 
             canvas.width = targetWidth;
             canvas.height = targetHeight;
@@ -154,9 +153,7 @@ export default function Configuracion() {
               ctx.clearRect(0, 0, targetWidth, targetHeight);
               
               // Lógica de "Cover/Contain" para no deformar
-              const scale = isLogo 
-                ? Math.min(targetWidth / img.width, targetHeight / img.height) // Logo: No deformar
-                : Math.max(targetWidth / img.width, targetHeight / img.height); // Favicon: Llenar
+              const scale = Math.min(targetWidth / img.width, targetHeight / img.height);
               
               const x = (targetWidth / 2) - (img.width / 2) * scale;
               const y = (targetHeight / 2) - (img.height / 2) * scale;
@@ -190,7 +187,7 @@ export default function Configuracion() {
 
       await handleSave(clave, publicUrl);
       handleChange(clave, publicUrl);
-      toast.success(`${clave.includes('logo') ? 'Logo' : 'Favicon'} optimizado y actualizado`);
+      toast.success("Logo optimizado y actualizado");
     } catch (err: any) {
       console.error(err);
       toast.error("Error al procesar la imagen de marca");
@@ -384,7 +381,7 @@ export default function Configuracion() {
                                     <Save className="w-4 h-4" />
                                   </button>
                                 </div>
-                                {item.clave === 'site_logo' || item.clave === 'site_logo_dark' || item.clave === 'site_favicon' ? (
+                                {item.clave === 'site_logo' || item.clave === 'site_logo_dark' ? (
                                   <div className="flex flex-col gap-4">
                                      <div className={`relative group aspect-video rounded-2xl border-2 border-dashed flex flex-col items-center justify-center overflow-hidden transition-smooth hover:border-accent ${item.clave === 'site_logo_dark' ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
                                         {item.valor ? (

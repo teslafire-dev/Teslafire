@@ -271,24 +271,21 @@ export default function Header() {
     } border-b border-slate-100 dark:border-slate-800`}>
       <div className="container mx-auto px-4 h-20 flex items-center justify-between">
         {/* Logo dinámico (Claro/Oscuro) */}
-        <Link to="/" className="flex items-center group h-full">
-          {config.site_logo || config.site_logo_dark ? (
-            <img 
-              src={isDarkMode ? (config.site_logo_dark || config.site_logo) : (config.site_logo || config.site_logo_dark)} 
-              alt="Logo Dobell" 
-              className="h-12 w-auto object-contain transition-smooth group-hover:scale-105"
-            />
-          ) : (
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-primary-950 dark:bg-accent rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-smooth">
-                <span className="text-white font-black text-2xl font-outfit">D</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-primary-950 dark:text-white font-black leading-none text-2xl font-outfit uppercase tracking-tighter">Dobell</span>
-                <span className="text-accent dark:text-accent-light text-[10px] font-black uppercase tracking-[0.3em] mt-0.5">Industrial</span>
-              </div>
-            </div>
-          )}
+        <Link to="/" className="flex items-center group h-16 relative">
+          <AnimatePresence mode="wait">
+            {(config.site_logo || config.site_logo_dark) ? (
+              <motion.img 
+                key={isDarkMode ? 'dark' : 'light'}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.3 }}
+                src={isDarkMode ? (config.site_logo_dark || config.site_logo) : (config.site_logo || config.site_logo_dark)} 
+                alt="Logo Dobell" 
+                className="h-16 w-auto object-contain transition-smooth group-hover:scale-105"
+              />
+            ) : null}
+          </AnimatePresence>
         </Link>
 
         {/* Desktop Navigation */}
