@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useCartStore } from '@/lib/store/cartStore';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   ShieldCheck, 
   ArrowRight, 
@@ -48,9 +49,15 @@ const Reservar = () => {
   const { usdRate } = useCurrency();
   const { t, lang } = useTranslation();
   const navigate = useNavigate();
+  const { user, nombre_completo, telefono: authTelefono } = useAuth(); // Perfil de sesión
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showWhatsappModal, setShowWhatsappModal] = useState(false);
   const [pendingLocalizer, setPendingLocalizer] = useState('');
+  
+  // Load saved customer data (fallback)
+  const [savedData] = useState(() => {
+    const saved = localStorage.getItem('dobell_customer_data');
+    return saved ? JSON.parse(saved) : {};
+  });
   
   // State for Quick View
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
@@ -59,10 +66,31 @@ const Reservar = () => {
 
   const total = items.reduce((acc, item) => acc + ((Number(item.price) || 0) * item.quantity), 0);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<ReservationData>({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<ReservationData>({
     resolver: zodResolver(reservationSchema),
-    defaultValues: { acceptTerms: true }
+    defaultValues: { 
+      acceptTerms: true,
+      nombre: nombre_completo || savedData.nombre || '',
+      telefono: authTelefono || savedData.telefono || '',
+      email: user?.email || savedData.email || '',
+      cedula: savedData.cedula || '',
+      aceptaMarketing: true
+    }
   });
+
+  // Sync with Auth as soon as it loads
+  useEffect(() => {
+    if (user || nombre_completo || authTelefono) {
+      reset({
+        acceptTerms: true,
+        nombre: nombre_completo || savedData.nombre || '',
+        telefono: authTelefono || savedData.telefono || '',
+        email: user?.email || savedData.email || '',
+        cedula: savedData.cedula || '',
+        aceptaMarketing: true
+      });
+    }
+  }, [user, nombre_completo, authTelefono, reset]);
 
   if (items.length === 0) {
     return (
@@ -104,19 +132,40 @@ const Reservar = () => {
         cliente_telefono: data.telefono,
         cliente_email: data.email, 
         cliente_cedula: data.cedula, 
-        mensaje: data.mensaje,
-        productos: items, // En el CRM se guarda como jsonb
+        mensaje: data.mensaje || '',
+        productos: items, 
         total: total, 
         estado: 'pendiente',
-        acepta_marketing: data.aceptaMarketing
+        acepta_marketing: data.aceptaMarketing === true
       });
-      if (orderError) throw orderError;
+
+      if (orderError) {
+        alert(`Database Error: ${orderError.message}`);
+        throw orderError;
+      }
       
+      // Save data for next time
+      localStorage.setItem('dobell_customer_data', JSON.stringify({
+        nombre: data.nombre,
+        telefono: data.telefono,
+        email: data.email,
+        cedula: data.cedula
+      }));
+
       setPendingLocalizer(localizer);
-      setShowWhatsappModal(true);
-      clearCart();
-    } catch (error) {
+      
+      // 1. Navegar primero
+      navigate(`/gracias/${localizer}`);
+      
+      // 2. Limpiar el carrito después de un breve delay para evitar parpadeos
+      setTimeout(() => {
+        clearCart();
+      }, 100);
+    } catch (error: any) {
       console.error('Error:', error);
+      if (!error.message?.includes('Database Error')) {
+        alert('An unexpected error occurred. Please check the console.');
+      }
     } finally {
       setIsSubmitting(false);
     }

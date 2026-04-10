@@ -25,8 +25,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import toast from "react-hot-toast";
 
 const reservationSchema = z.object({
@@ -48,10 +49,16 @@ export default function Carrito() {
   const { t, lang } = useTranslation();
   const { usdRate, eurRate } = useCurrency();
   const navigate = useNavigate();
+  const { user, nombre_completo, telefono: authTelefono } = useAuth();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [pendingLocalizer, setPendingLocalizer] = useState('');
+
+  // Local storage fallback
+  const [savedData] = useState(() => {
+    const saved = localStorage.getItem('dobell_customer_data');
+    return saved ? JSON.parse(saved) : {};
+  });
 
   const total = items.reduce((acc, item) => acc + ((Number(item.price) || 0) * item.quantity), 0);
   const totalBs = items.reduce((acc, item) => {
@@ -60,10 +67,31 @@ export default function Carrito() {
     return acc + ((Number(item.price) || 0) * item.quantity * rate);
   }, 0);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<ReservationData>({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<ReservationData>({
     resolver: zodResolver(reservationSchema),
-    defaultValues: { acceptTerms: true }
+    defaultValues: { 
+      acceptTerms: true,
+      nombre: nombre_completo || savedData.nombre || '',
+      telefono: authTelefono || savedData.telefono || '',
+      email: user?.email || savedData.email || '',
+      cedula: savedData.cedula || '',
+      aceptaMarketing: true
+    }
   });
+
+  // Load profile data into form
+  useEffect(() => {
+    if (user || nombre_completo || authTelefono) {
+      reset({
+        acceptTerms: true,
+        nombre: nombre_completo || savedData.nombre || '',
+        telefono: authTelefono || savedData.telefono || '',
+        email: user?.email || savedData.email || '',
+        cedula: savedData.cedula || '',
+        aceptaMarketing: true
+      });
+    }
+  }, [user, nombre_completo, authTelefono, reset]);
 
   const onSubmit = async (data: ReservationData) => {
     setIsSubmitting(true);
@@ -83,9 +111,20 @@ export default function Carrito() {
       });
       if (orderError) throw orderError;
       
+      // Save data for next time
+      localStorage.setItem('dobell_customer_data', JSON.stringify({
+        nombre: data.nombre,
+        telefono: data.telefono,
+        email: data.email,
+        cedula: data.cedula
+      }));
+
       setPendingLocalizer(localizer);
-      setShowSuccessModal(true);
-      clearCart();
+      // Salto directo a página de gracias
+      navigate(`/gracias/${localizer}`);
+      
+      // Limpiar después de navegar
+      setTimeout(() => clearCart(), 100);
     } catch (error: any) {
       toast.error("Error: " + error.message);
     } finally {
@@ -260,30 +299,6 @@ export default function Carrito() {
         </div>
       </div>
 
-      {/* SUCCESS MODAL */}
-      <AnimatePresence>
-        {showSuccessModal && (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-3xl">
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-slate-950 rounded-[4rem] p-16 max-w-lg w-full text-center shadow-2xl border-4 border-slate-50 dark:border-accent/10">
-              <div className="w-24 h-24 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-10 border-2 border-green-500/20">
-                <PackageCheck className="w-12 h-12 text-green-500 animate-bounce" />
-              </div>
-              <h2 className="text-4xl font-black uppercase tracking-tighter dark:text-white mb-4 leading-none text-balance">{t('success.title')}</h2>
-              <div className="bg-slate-100 dark:bg-slate-900 px-10 py-5 rounded-[2.5rem] text-4xl font-black text-primary-950 dark:text-accent font-outfit shadow-inner mb-12 uppercase tracking-tighter">
-                {pendingLocalizer}
-              </div>
-              <div className="space-y-4">
-                <button onClick={() => { window.open(whatsappUrl, '_blank'); navigate(`/gracias/${pendingLocalizer}`); }} className="w-full h-20 bg-[#25D366] text-white rounded-[1.8rem] font-black uppercase text-sm tracking-widest flex items-center justify-center gap-4 active:scale-95 shadow-xl">
-                  {t('success.share_whatsapp')}
-                </button>
-                <button onClick={() => navigate(`/gracias/${pendingLocalizer}`)} className="text-[11px] font-black uppercase text-slate-400 hover:text-slate-900 transition-colors tracking-widest pt-4">
-                  {t('common.close')}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

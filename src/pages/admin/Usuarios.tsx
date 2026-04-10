@@ -26,6 +26,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { logAction } from "@/lib/utils/logger";
 
 export default function AdminUsuarios() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -160,7 +161,7 @@ export default function AdminUsuarios() {
     fetchUsers(searchTerm);
   };
 
-  const updateRole = async (userId: string, newRole: string) => {
+  const updateRole = async (userId: string, newRole: string, targetEmail: string) => {
     const { error } = await supabase
       .from("perfiles")
       .update({ rol: newRole })
@@ -170,11 +171,12 @@ export default function AdminUsuarios() {
       toast.error("Error al actualizar rol");
     } else {
       toast.success(`Usuario actualizado a ${newRole}`);
+      await logAction(`Cambio de Rol: ${targetEmail} a ${newRole}`, user);
       fetchUsers(searchTerm);
     }
   };
 
-  const togglePermission = async (userId: string, field: string, currentValue: boolean) => {
+  const togglePermission = async (userId: string, field: string, currentValue: boolean, targetEmail: string) => {
     setUpdatingId(userId);
     const { error } = await supabase
       .from("perfiles")
@@ -185,6 +187,7 @@ export default function AdminUsuarios() {
       toast.error("Error al actualizar permiso");
     } else {
       toast.success("Permiso actualizado");
+      await logAction(`${!currentValue ? 'Añadió' : 'Quitó'} Permiso ${field} a ${targetEmail}`, user);
       fetchUsers();
     }
     setUpdatingId(null);

@@ -105,7 +105,7 @@ export default function Gracias() {
     if (!orderData) return;
     
     const productsList = orderData.productos
-      ?.map((p: any) => `• ${p.nombre} (${p.cantidad})`)
+      ?.map((p: any) => `• ${p.name || p.nombre} (${p.quantity || p.cantidad})`)
       .join('\n') || '';
 
     const message = `*SOLICITUD DE PRESUPUESTO - DOBELL INDUSTRIAL*\n\n` +
@@ -137,17 +137,6 @@ export default function Gracias() {
         
         {/* TOP SECTION: Success & Localizer (First Fold) */}
         <div className="w-full flex flex-col items-center gap-8 text-center animate-in fade-in zoom-in duration-1000">
-          <div className="relative">
-             <div className="absolute inset-0 bg-green-400 blur-3xl opacity-20 animate-pulse"></div>
-             <motion.div 
-               initial={{ scale: 0 }}
-               animate={{ scale: 1 }}
-               className="w-24 h-24 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center border-8 border-green-50 dark:border-green-950/20 shadow-2xl relative z-10"
-             >
-                <CheckCircle2Icon className="w-12 h-12 text-green-500" />
-             </motion.div>
-          </div>
-
           <div className="flex flex-col gap-4">
             <h1 className="text-4xl md:text-5xl font-black font-outfit text-slate-950 dark:text-white uppercase tracking-tighter leading-none">
               Reserva de Equipos <span className="text-accent underline decoration-4 decoration-accent/20 underline-offset-8">Exitosa</span>
@@ -216,14 +205,19 @@ export default function Gracias() {
                  </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {orderData?.productos?.map((p: any, i: number) => (
-                  <div key={i} className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 transition-smooth hover:bg-white dark:hover:bg-slate-800 hover:shadow-xl group">
-                     <div className="flex justify-between items-start gap-3 mb-4">
-                        <span className="text-xs font-black text-slate-950 dark:text-white uppercase leading-tight line-clamp-2">{p.nombre}</span>
-                        <span className="bg-accent text-white text-[9px] font-black w-7 h-7 rounded-lg flex items-center justify-center shrink-0">×{p.cantidad}</span>
+                  <div key={i} className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 transition-smooth hover:bg-white dark:hover:bg-slate-800 hover:shadow-xl group flex items-center gap-6">
+                     <div className="w-20 h-20 bg-white dark:bg-slate-900 rounded-2xl p-2 shrink-0 border border-slate-100 dark:border-slate-800 flex items-center justify-center overflow-hidden">
+                        <img src={p.image || '/placeholder-product.png'} alt={p.name} className="w-full h-full object-contain group-hover:scale-110 transition-smooth" />
                      </div>
-                     <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">SKU: {p.sku || 'N/A'}</span>
+                     <div className="flex-1 flex flex-col gap-1 min-w-0">
+                        <div className="flex justify-between items-start gap-3">
+                           <span className="text-sm font-black text-slate-950 dark:text-white uppercase leading-tight line-clamp-2">{p.name || p.nombre}</span>
+                           <span className="bg-accent text-white text-[10px] font-black px-2 py-1 rounded-lg flex items-center justify-center shrink-0">×{p.quantity || p.cantidad}</span>
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">SKU: {p.sku || 'N/A'}</span>
+                     </div>
                   </div>
                 ))}
               </div>

@@ -204,7 +204,6 @@ export default function Header() {
           const state = channel.presenceState();
           const allPresences = Object.values(state).flat() as any[];
           
-          // De-duplicate by IP address to count unique machines/locations
           const uniqueUsersMap = new Map();
           allPresences.forEach(curr => {
             const identity = curr.ip && curr.ip !== '0.0.0.0' ? curr.ip : (curr.visitor_id || curr.email);
@@ -232,10 +231,16 @@ export default function Header() {
           }
         });
 
-      return () => channel.unsubscribe();
+      return channel;
     };
 
-    setupPresence();
+    const channelPromise = setupPresence();
+
+    return () => {
+      channelPromise.then(channel => {
+        if (channel) channel.unsubscribe();
+      });
+    };
   }, [user]);
 
   const checkAndUpdatePeak = async (current: number) => {

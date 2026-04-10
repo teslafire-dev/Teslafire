@@ -66,7 +66,7 @@ function AppContent() {
             <Route path="/productos" element={<Productos />} />
             <Route path="/productos/:slug" element={<ProductDetail />} />
             <Route path="/carrito" element={<Carrito />} />
-            <Route path="/reservar" element={<Navigate to="/carrito" replace />} />
+            <Route path="/reservar" element={<Reservar />} />
             <Route path="/nosotros" element={<Nosotros />} />
             <Route path="/soluciones" element={<Soluciones />} />
             <Route path="/gracias/:localizador" element={<Gracias />} />

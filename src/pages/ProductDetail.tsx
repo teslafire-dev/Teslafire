@@ -100,6 +100,20 @@ export default function ProductDetail() {
     if (slug) fetchProduct();
   }, [slug]);
 
+  // Analytics: Track ViewContent when product is loaded
+  useEffect(() => {
+    if (product && (window as any).fbq) {
+      (window as any).fbq('track', 'ViewContent', {
+        content_name: product.nombre,
+        content_category: product.producto_categorias?.[0]?.categorias?.nombre || 'General',
+        content_ids: [product.id],
+        content_type: 'product',
+        value: product.precio || 0,
+        currency: product.moneda === 'EUR' ? 'EUR' : 'USD'
+      });
+    }
+  }, [product]);
+
   if (loading) return (
     <div className="flex justify-center items-center h-screen bg-slate-50">
       <Loader2 className="w-12 h-12 animate-spin text-accent" />
@@ -283,10 +297,19 @@ export default function ProductDetail() {
                     {(product.moneda === 'EUR' || product.moneda === 'EUR_ONLY') ? '€' : '$'}{(product.precio * 1.2).toFixed(2)}
                   </span>
                 )}
-                <div className="ml-auto px-4 py-2 bg-green-50 rounded-xl border border-green-100">
-                   <div className="flex items-center gap-2 text-green-600 text-[10px] font-black uppercase tracking-widest">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      {t('product.in_stock')}
+                <div className={`ml-auto px-4 py-2 rounded-xl border ${
+                  (product.stock > 10 || !product.stock) ? 'bg-green-50 border-green-100 text-green-600' :
+                  product.stock > 0 ? 'bg-orange-50 border-orange-100 text-orange-600' :
+                  'bg-red-50 border-red-100 text-red-600'
+                }`}>
+                   <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                      <div className={`w-2 h-2 rounded-full animate-pulse ${
+                        (product.stock > 10 || !product.stock) ? 'bg-green-500' :
+                        product.stock > 0 ? 'bg-orange-500' : 'bg-red-500'
+                      }`}></div>
+                      {product.stock > 10 || !product.stock ? t('product.in_stock') : 
+                       product.stock > 0 ? `${t('product.low_stock') || 'Stock Bajo'} (${product.stock})` : 
+                       t('product.out_of_stock') || 'Sin Stock'}
                    </div>
                 </div>
               </div>
