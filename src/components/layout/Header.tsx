@@ -8,6 +8,7 @@ import { useCartStore } from "@/lib/store/cartStore";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "@/contexts/TranslationContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -18,6 +19,7 @@ export default function Header() {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const { lang, setLang, t } = useTranslation();
+  const { usdRate, eurRate } = useCurrency();
   const { user, isAdmin, role, nombre_completo } = useAuth();
   const navigate = useNavigate();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -488,14 +490,19 @@ export default function Header() {
                   <div className="lg:hidden flex items-center p-4 bg-slate-50 dark:bg-slate-800/50 gap-4">
                     <div className="flex-1 flex gap-3 overflow-x-auto no-scrollbar scroll-smooth py-1">
                       {cartItems.map((item) => (
-                        <div key={item.id} className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 flex-shrink-0 border border-slate-100 dark:border-slate-700 overflow-hidden shadow-sm">
+                        <Link 
+                          key={item.id} 
+                          to={`/productos/${item.slug}`}
+                          onClick={() => setIsMiniCartOpen(false)}
+                          className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 flex-shrink-0 border border-slate-100 dark:border-slate-700 overflow-hidden shadow-sm relative"
+                        >
                           <img src={item.image} className="w-full h-full object-contain" />
                           {item.quantity > 1 && (
                             <div className="absolute top-0 right-0 bg-accent text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-white">
                               {item.quantity}
                             </div>
                           )}
-                        </div>
+                        </Link>
                       ))}
                     </div>
                     <Link 
@@ -513,16 +520,31 @@ export default function Header() {
                       Mi Cotización ({totalItems})
                     </p>
                                <div className="flex flex-col gap-4 max-h-80 overflow-y-auto custom-scrollbar pr-2 -mx-2 px-2 pb-2">
-                       {cartItems.map((item) => (
-                         <div key={item.id} className="flex gap-4 items-center group/item p-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-2xl transition-smooth">
-                            <div className="w-14 h-14 rounded-xl bg-slate-50 dark:bg-slate-800 flex-shrink-0 overflow-hidden border border-slate-100 dark:border-slate-700 p-1">
+                       {cartItems.map((item) => {
+                         const currentRate = (item.moneda === 'EUR' || item.moneda === 'EUR_ONLY') ? (eurRate || 1) : (usdRate || 1);
+                         const unitPrice = Number(item.price) || 0;
+                         const lineTotal = unitPrice * item.quantity;
+                         const showBs = item.moneda !== 'NONE' && item.moneda !== 'USD_ONLY' && item.moneda !== 'EUR_ONLY';
+                         const currencySymbol = (item.moneda === 'EUR' || item.moneda === 'EUR_ONLY') ? 'EUR' : 'USD';
+
+                         return (
+                          <div key={item.id} className="flex gap-4 items-center group/item p-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-2xl transition-smooth">
+                            <Link 
+                              to={`/productos/${item.slug}`}
+                              onClick={() => setIsMiniCartOpen(false)}
+                              className="w-14 h-14 rounded-xl bg-slate-50 dark:bg-slate-800 flex-shrink-0 overflow-hidden border border-slate-100 dark:border-slate-700 p-1 hover:border-accent transition-colors block"
+                            >
                                <img src={item.image || '/placeholder-product.png'} className="w-full h-full object-contain" />
-                            </div>
+                            </Link>
                             <div className="flex flex-col min-w-0 flex-1">
                                <div className="flex justify-between items-start gap-2">
-                                 <span className="text-[11px] font-black text-primary-950 dark:text-white uppercase truncate tracking-tight leading-tight">
+                                 <Link 
+                                   to={`/productos/${item.slug}`}
+                                   onClick={() => setIsMiniCartOpen(false)}
+                                   className="text-[11px] font-black text-primary-950 dark:text-white uppercase truncate tracking-tight leading-tight hover:text-accent transition-colors"
+                                 >
                                    {item.name}
-                                 </span>
+                                 </Link>
                                  <button 
                                    onClick={() => removeItem(item.id)}
                                    className="text-slate-300 hover:text-destructive transition-smooth p-1"
@@ -546,13 +568,21 @@ export default function Header() {
                                       +
                                     </button>
                                  </div>
-                                 <span className="text-[10px] font-black text-accent dark:text-accent-light uppercase tracking-widest">
-                                   {(Number(item.price) || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
-                                 </span>
+                                 <div className="flex flex-col items-end">
+                                   <span className="text-[11px] font-black text-accent dark:text-accent-light uppercase tracking-widest">
+                                     {lineTotal.toLocaleString('en-US', { style: 'currency', currency: currencySymbol })}
+                                   </span>
+                                   {showBs && (
+                                     <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter mt-0.5">
+                                       Bs. {(lineTotal * currentRate).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                     </span>
+                                   )}
+                                 </div>
                                </div>
                             </div>
-                         </div>
-                       ))}
+                          </div>
+                         );
+                       })}
                     </div>
 
                     <div className="mt-6 pt-6 border-t border-slate-50 dark:border-slate-800">

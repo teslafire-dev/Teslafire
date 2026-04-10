@@ -50,7 +50,7 @@ export default function Home() {
         if (categories) setDbCategories(categories);
       }
 
-      const highlightedProds: any[] = [];
+      const highlightedProdsMap = new Map();
       if (!catId) {
         const categoriesToFetch = dbCategories.length > 0 ? dbCategories : (await supabase.from('categorias').select('id').is('parent_id', null).order('orden')).data || [];
         for (const cat of categoriesToFetch.slice(0, 8)) {
@@ -60,7 +60,13 @@ export default function Home() {
             .eq('producto_categorias.categoria_id', cat.id)
             .limit(1)
             .order('created_at', { ascending: false });
-          if (prod && prod.length > 0) highlightedProds.push(prod[0]);
+          
+          if (prod && prod.length > 0) {
+            const item = prod[0];
+            if (!highlightedProdsMap.has(item.id)) {
+              highlightedProdsMap.set(item.id, item);
+            }
+          }
         }
       } else {
         const { data: subCats } = await supabase.from('categorias').select('id').eq('parent_id', catId);
@@ -71,9 +77,16 @@ export default function Home() {
           .in('producto_categorias.categoria_id', targetIds)
           .limit(8)
           .order('created_at', { ascending: false });
-        if (prod) highlightedProds.push(...prod);
+        
+        if (prod) {
+          prod.forEach(item => {
+            if (!highlightedProdsMap.has(item.id)) {
+              highlightedProdsMap.set(item.id, item);
+            }
+          });
+        }
       }
-      setFeaturedProducts(highlightedProds);
+      setFeaturedProducts(Array.from(highlightedProdsMap.values()));
     } catch (err) {
       console.error("❌ Home Catch:", err);
     } finally {
@@ -124,10 +137,10 @@ export default function Home() {
                     <span className="text-accent text-[9px] font-black uppercase tracking-[0.4em] font-outfit">{t('home.hero.tag')}</span>
                   </div>
                   
-                  <h1 className="text-5xl md:text-6xl lg:text-[4.5rem] font-black text-white leading-[0.9] tracking-tighter font-outfit uppercase italic drop-shadow-2xl">
+                  <h1 className="text-5xl md:text-6xl lg:text-[4.5rem] font-black text-white leading-[1.1] tracking-tighter font-outfit uppercase italic drop-shadow-2xl">
                     {(t('home.hero.title') || 'Protección Superior').split(' ').map((word, i) => (
                       word.toLowerCase() === 'superior' 
-                      ? <span key={i} className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-accent via-orange-400 to-accent py-2">
+                      ? <span key={i} className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-accent via-orange-400 to-accent px-2 py-1">
                           Superior 
                           <span className="absolute -bottom-1 left-0 w-full h-1 bg-accent/20 blur-xl"></span>
                         </span> 
@@ -168,10 +181,6 @@ export default function Home() {
                     allowFullScreen
                   ></iframe>
                   {/* Decorative Glass Overlay on corner */}
-                  <div className="absolute top-6 left-6 z-20 bg-primary-950/60 backdrop-blur-xl px-4 py-2 rounded-xl border border-white/10 flex items-center gap-2">
-                     <Play className="w-3 h-3 text-accent fill-current" />
-                     <span className="text-[9px] text-white font-black uppercase tracking-[0.2em]">Live Action</span>
-                  </div>
                 </div>
                 
                 {/* Visual Weight Under the Video */}

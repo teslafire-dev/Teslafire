@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Eye, Plus, Star, Check } from "lucide-react";
+import { Eye, Plus, Minus, X, Star, Check } from "lucide-react";
 import { useCartStore } from "@/lib/store/cartStore";
 import toast from "react-hot-toast";
 import { useTranslation } from "@/contexts/TranslationContext";
@@ -30,20 +30,39 @@ export default function ProductCard({
   isNew, 
   isOffer 
 }: ProductCardProps) {
-  const { addItem, items: cartItems } = useCartStore();
-  const isInCart = cartItems.some(item => item.id === id);
+  const { addItem, removeItem, updateQuantity, items: cartItems } = useCartStore();
+  const cartItem = cartItems.find(item => item.id === id);
+  const isInCart = !!cartItem;
+  const quantity = cartItem?.quantity || 0;
+  
   const { t } = useTranslation();
   const { usdRate, eurRate } = useCurrency();
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    addItem({ id, name, sku, price: price || 0, moneda, image });
-    toast.success("Producto añadido al carrito", {
-      style: {
-        borderRadius: '1rem',
-        background: '#0F172A',
-        color: '#fff',
-      },
+    e.stopPropagation();
+    addItem({ id, name, sku, price: price || 0, moneda, image, slug });
+    toast.success("Producto añadido", {
+      style: { borderRadius: '1rem', background: '#0F172A', color: '#fff' },
+    });
+  };
+
+  const handleRemoveOne = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (quantity > 1) {
+      updateQuantity(id, quantity - 1);
+    } else {
+      removeItem(id);
+    }
+  };
+
+  const handleReset = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    removeItem(id);
+    toast.error("Producto eliminado", {
+      style: { borderRadius: '1rem', background: '#0F172A', color: '#fff' },
     });
   };
 
@@ -56,22 +75,33 @@ export default function ProductCard({
           : 'border-slate-100 dark:border-slate-800'
       }`}
     >
-      {/* Badges */}
-      <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
+      {/* Badges & Reset Action */}
+      <div className="absolute top-3 inset-x-3 z-10 flex items-start justify-between">
+        <div className="flex flex-col gap-1.5">
+          {isInCart && (
+            <span className="bg-primary-950 text-white text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest shadow-lg shadow-primary-950/20 animate-in zoom-in duration-300 flex items-center gap-1.5 border border-white/20">
+              <Check className="w-2.5 h-2.5 text-accent" /> En Carrito
+            </span>
+          )}
+          {isNew && (
+            <span className="bg-accent text-white text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest shadow-lg shadow-accent/20 animate-in zoom-in duration-500">
+              Nuevo
+            </span>
+          )}
+          {isOffer && (
+            <span className="bg-destructive text-white text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest shadow-lg shadow-destructive/20 animate-in zoom-in duration-500">
+              Oferta
+            </span>
+          )}
+        </div>
+
         {isInCart && (
-          <span className="bg-primary-950 text-white text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest shadow-lg shadow-primary-950/20 animate-in zoom-in duration-300 flex items-center gap-1.5 border border-white/20">
-            <Check className="w-2.5 h-2.5 text-accent" /> En Carrito
-          </span>
-        )}
-        {isNew && (
-          <span className="bg-accent text-white text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest shadow-lg shadow-accent/20 animate-in zoom-in duration-500">
-            Nuevo
-          </span>
-        )}
-        {isOffer && (
-          <span className="bg-destructive text-white text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-widest shadow-lg shadow-destructive/20 animate-in zoom-in duration-500">
-            Oferta
-          </span>
+          <button 
+            onClick={handleReset}
+            className="w-8 h-8 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 border border-slate-100 dark:border-white/10 transition-all shadow-md active:scale-90"
+          >
+            <X className="w-4 h-4" />
+          </button>
         )}
       </div>
 
@@ -86,9 +116,9 @@ export default function ProductCard({
         
         {/* Quick Actions Overlay (Hidden on Mobile) */}
         <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-smooth translate-y-2 group-hover:translate-y-0 hidden md:flex">
-          <button className="p-3 bg-white dark:bg-slate-900 rounded-xl text-primary-950 dark:text-white shadow-xl hover:bg-accent hover:text-white transition-smooth active:scale-95">
+          <div className="p-3 bg-white dark:bg-slate-900 rounded-xl text-primary-950 dark:text-white shadow-xl hover:bg-accent hover:text-white transition-smooth active:scale-95">
             <Eye className="w-4 h-4" />
-          </button>
+          </div>
         </div>
       </div>
 
@@ -115,7 +145,7 @@ export default function ProductCard({
               <span className="text-lg font-black text-primary-950 dark:text-white font-outfit tracking-tighter leading-none">
                 {Number(price) > 0 ? (
                   `${(moneda === 'EUR' || moneda === 'EUR_ONLY') ? '€' : '$'}${Number(price).toFixed(2)}`
-                ) : "Cotizar"}
+                ) : t('consultar')}
               </span>
               {Number(price) > 0 && (moneda !== 'NONE' && moneda !== 'USD_ONLY' && moneda !== 'EUR_ONLY') && (
                 <span className="text-[10px] font-black text-slate-400 mt-1 uppercase tracking-widest">
@@ -124,16 +154,33 @@ export default function ProductCard({
               )}
             </div>
           </div>
-          <button 
-            onClick={handleAddToCart}
-            className={`p-3 rounded-xl transition-smooth shadow-lg active:scale-90 ${
-              isInCart 
-                ? 'bg-accent text-white shadow-accent/20' 
-                : 'bg-primary-950 text-white shadow-primary-950/10 hover:bg-accent'
-            }`}
-          >
-            <Plus className="w-5 h-5" />
-          </button>
+
+          <div className="flex items-center gap-1 group/actions" onClick={(e) => e.preventDefault()}>
+            {isInCart ? (
+              <div className="flex items-center bg-slate-100 dark:bg-slate-800/80 rounded-xl overflow-hidden border border-slate-200 dark:border-white/5 h-10 animate-in slide-in-from-right-4 duration-300">
+                 <button 
+                   onClick={handleRemoveOne}
+                   className="w-10 h-full flex items-center justify-center hover:bg-red-500 hover:text-white transition-all text-slate-500 dark:text-slate-400"
+                 >
+                   <Minus className="w-3.5 h-3.5" />
+                 </button>
+                 <span className="w-8 text-center text-[13px] font-black text-primary-950 dark:text-white">{quantity}</span>
+                 <button 
+                   onClick={handleAddToCart}
+                   className="w-10 h-full flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all text-slate-500 dark:text-slate-400"
+                 >
+                   <Plus className="w-3.5 h-3.5" />
+                 </button>
+              </div>
+            ) : (
+              <button 
+                onClick={handleAddToCart}
+                className="p-3 bg-primary-950 text-white rounded-xl transition-smooth shadow-lg shadow-primary-950/10 hover:bg-accent active:scale-90"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </Link>

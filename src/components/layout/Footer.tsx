@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail, Phone, MapPin, Facebook, Instagram, Linkedin, ShieldCheck, ArrowRight } from "lucide-react";
+import { Mail, Phone, MapPin, Instagram, Youtube, ShieldCheck, ArrowRight } from "lucide-react";
 import { useTranslation } from "@/contexts/TranslationContext";
 import { motion } from "framer-motion";
 
@@ -26,10 +26,19 @@ export default function Footer() {
               {t('footer.tagline')}
             </p>
             <div className="flex items-center gap-4">
-              {[Facebook, Instagram, Linkedin].map((Icon, i) => (
-                <Link key={i} to="#" className="w-11 h-11 bg-white/5 border border-white/5 rounded-xl flex items-center justify-center hover:bg-accent hover:border-accent hover:text-white transition-smooth active:scale-90">
-                  <Icon className="w-5 h-5" />
-                </Link>
+              {[
+                { icon: Instagram, url: "https://www.instagram.com/dobellserviceve/" },
+                { icon: Youtube, url: "https://www.youtube.com/channel/UCjomd4iL0oLHvl1EK80PM0Q" }
+              ].map((social, i) => (
+                <a 
+                  key={i} 
+                  href={social.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="w-11 h-11 bg-white/5 border border-white/5 rounded-xl flex items-center justify-center hover:bg-accent hover:border-accent hover:text-white transition-smooth active:scale-90"
+                >
+                  <social.icon className="w-5 h-5" />
+                </a>
               ))}
             </div>
           </div>
