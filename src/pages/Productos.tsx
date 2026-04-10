@@ -40,7 +40,6 @@ export default function Productos() {
   const fetchProducts = async () => {
     // 1. Check if we have this exact search in cache
     if (productsCache[cacheKey]) {
-      console.log("🚀 Usando caché para:", cacheKey);
       setProducts(productsCache[cacheKey]);
       setLoading(false);
       return;
@@ -48,35 +47,71 @@ export default function Productos() {
 
     setLoading(true);
     try {
-      console.log("🔍 Catálogo: Cargando productos con relaciones...");
+      // First, if there's a category filter, check if it's a parent
+      let targetCategoryIds: string[] = [];
+      if (currentCategory) {
+        const { data: catData } = await supabase
+          .from('categorias')
+          .select('id, slug, parent_id')
+          .eq('slug', currentCategory)
+          .single();
+        
+        if (catData) {
+          targetCategoryIds.push(catData.id);
+          // Get all subcategories if this is a parent
+          const { data: subCats } = await supabase
+            .from('categorias')
+            .select('id')
+            .eq('parent_id', catData.id);
+          
+          if (subCats) {
+            targetCategoryIds = [...targetCategoryIds, ...subCats.map(s => s.id)];
+          }
+        }
+      }
+
       let query = supabase.from('productos').select(`
         *,
-        marcas(nombre),
-        producto_categorias(
+        marcas!inner(nombre),
+        producto_categorias!inner(
           categoria_id,
-          categorias(nombre, nombre_en, slug)
+          categorias(nombre, nombre_en, slug, parent_id)
         )
       `);
 
-      const { data, error } = await query
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error("❌ Error en consulta con relaciones:", error);
-        // Si falla con relaciones, volvemos a carga simple para no dejar la web vacía
-        const fallback = await supabase.from('productos').select('*').order('created_at', { ascending: false });
-        setProducts(fallback.data || []);
-        return;
+      // Apply Filters
+      if (targetCategoryIds.length > 0) {
+        query = query.in('producto_categorias.categoria_id', targetCategoryIds);
       }
 
-      console.log("✅ Productos obtenidos con éxito:", data?.length || 0);
+      if (currentBrand) {
+        query = query.eq('marcas.nombre', currentBrand);
+      }
+
+      if (minPrice) {
+        query = query.gte('precio', parseFloat(minPrice));
+      }
+
+      if (maxPrice) {
+        query = query.lte('precio', parseFloat(maxPrice));
+      }
+
+      // Sort logic
+      if (sortBy === 'price_asc') query = query.order('precio', { ascending: true });
+      else if (sortBy === 'price_desc') query = query.order('precio', { ascending: false });
+      else query = query.order('created_at', { ascending: false });
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
       setProducts(data || []);
-      // Store in cache for future instant reuse
       if (data && data.length > 0) {
         productsCache[cacheKey] = data;
       }
     } catch (err) {
       console.error("Error fetching products:", err);
+      setProducts([]);
     } finally {
       setLoading(false);
     }

@@ -33,7 +33,7 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
       setLoading(true);
       try {
         const [catsRes, brandsRes] = await Promise.all([
-          supabase.from('categorias').select('id, nombre, slug').order('nombre'),
+          supabase.from('categorias').select('id, nombre, slug, parent_id').order('orden'),
           supabase.from('marcas').select('id, nombre').order('nombre')
         ]);
         
@@ -55,6 +55,8 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
     } else {
       params.delete(key);
     }
+    // Si cambiamos de categoría, limpiamos cualquier subcategoría previa para no confundir la URL
+    // (En este caso usaremos el slug para el filtrado principal)
     navigate(`${pathname}?${params.toString()}`, { replace: true });
     if (onFilterChange) onFilterChange();
   }
@@ -70,6 +72,10 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
     }, 500);
     return () => clearTimeout(timer);
   }, [localMaxPrice]);
+
+  // Group categories by parent
+  const mainCategories = categories.filter(c => !c.parent_id);
+  const getSubcategories = (parentId: string) => categories.filter(c => c.parent_id === parentId);
 
   return (
     <aside className="bg-white dark:bg-slate-900 rounded-[3.5rem] border border-slate-100 dark:border-slate-800 shadow-sm p-10 flex flex-col gap-10 sticky top-28 transition-colors duration-500">
@@ -97,7 +103,7 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
         </div>
       ) : (
         <>
-          {/* Categories Filter */}
+          {/* Categories Filter - HIERARCHICAL VIEW */}
           <div className="flex flex-col gap-6">
             <button 
               onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
@@ -111,7 +117,7 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
             </button>
             
             {isCategoriesOpen && (
-              <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent animate-in slide-in-from-top-2 duration-300">
+              <div className="flex flex-col gap-5 max-h-[500px] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent animate-in slide-in-from-top-2 duration-300">
                 <label 
                   className="flex items-center gap-3 cursor-pointer group"
                   onClick={() => handleFilterChange("categoria", null)}
@@ -123,25 +129,52 @@ export default function ProductFilters({ onFilterChange, isMobile }: ProductFilt
                     readOnly
                     className="w-4 h-4 text-accent border-slate-300 dark:border-slate-700 focus:ring-accent bg-transparent" 
                   />
-                  <span className={`text-sm ${!currentCategory ? 'text-accent font-bold' : 'text-slate-600 dark:text-slate-400 font-medium'} group-hover:text-accent transition-standard grow uppercase tracking-tight`}>
+                  <span className={`text-sm ${!currentCategory ? 'text-accent font-black' : 'text-slate-600 dark:text-slate-400 font-medium'} group-hover:text-accent transition-standard grow uppercase tracking-tight`}>
                     {t('catalog.all_categories')}
                   </span>
                 </label>
 
-                {categories.map((cat) => (
-                  <label key={cat.id} className="flex items-center gap-3 cursor-pointer group">
-                    <input 
-                      type="radio" 
-                      name="category"
-                      checked={currentCategory === cat.slug}
-                      onChange={() => handleFilterChange("categoria", currentCategory === cat.slug ? null : cat.slug)}
-                      className="w-4 h-4 text-accent border-slate-300 dark:border-slate-700 focus:ring-accent bg-transparent" 
-                    />
-                    <span className={`text-sm ${currentCategory === cat.slug ? 'text-accent font-bold' : 'text-slate-600 dark:text-slate-400 font-medium'} group-hover:text-accent transition-standard grow uppercase tracking-tight`}>
-                      {(lang === 'EN' && cat.nombre_en) ? cat.nombre_en : cat.nombre}
-                    </span>
-                  </label>
-                ))}
+                {mainCategories.map((mainCat) => {
+                  const subCategories = getSubcategories(mainCat.id);
+                  const isMainSelected = currentCategory === mainCat.slug;
+                  
+                  return (
+                    <div key={mainCat.id} className="flex flex-col gap-3">
+                      <label className="flex items-center gap-3 cursor-pointer group">
+                        <input 
+                          type="radio" 
+                          name="category"
+                          checked={isMainSelected}
+                          onChange={() => handleFilterChange("categoria", isMainSelected ? null : mainCat.slug)}
+                          className="w-4 h-4 text-accent border-slate-300 dark:border-slate-700 focus:ring-accent bg-transparent" 
+                        />
+                        <span className={`text-sm ${isMainSelected ? 'text-accent font-black' : 'text-primary-950 dark:text-white font-black'} group-hover:text-accent transition-standard grow uppercase tracking-tight border-b border-slate-50 dark:border-slate-800 pb-1`}>
+                          {(lang === 'EN' && mainCat.nombre_en) ? mainCat.nombre_en : mainCat.nombre}
+                        </span>
+                      </label>
+
+                      {/* Subcategories with indentation */}
+                      {subCategories.length > 0 && (
+                        <div className="flex flex-col gap-2 ml-6 border-l border-slate-100 dark:border-slate-800 pl-4">
+                          {subCategories.map((sub) => (
+                            <label key={sub.id} className="flex items-center gap-3 cursor-pointer group">
+                              <input 
+                                type="radio" 
+                                name="category"
+                                checked={currentCategory === sub.slug}
+                                onChange={() => handleFilterChange("categoria", currentCategory === sub.slug ? null : sub.slug)}
+                                className="w-3 h-3 text-accent border-slate-300 dark:border-slate-700 focus:ring-accent bg-transparent" 
+                              />
+                              <span className={`text-[11px] ${currentCategory === sub.slug ? 'text-accent font-black' : 'text-slate-500 dark:text-slate-400 font-medium'} group-hover:text-accent transition-standard grow uppercase tracking-widest`}>
+                                {(lang === 'EN' && sub.nombre_en) ? sub.nombre_en : sub.nombre}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
