@@ -53,7 +53,7 @@ export default function AdminUsuarios() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const { canManageUsers } = useAuth();
+  const { canManageUsers, user: currentUser } = useAuth();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [activity, setActivity] = useState<any[]>([]);
   const [blockedIps, setBlockedIps] = useState<any[]>([]);
@@ -171,7 +171,7 @@ export default function AdminUsuarios() {
       toast.error("Error al actualizar rol");
     } else {
       toast.success(`Usuario actualizado a ${newRole}`);
-      await logAction(`Cambio de Rol: ${targetEmail} a ${newRole}`, user);
+      await logAction(`Cambio de Rol: ${targetEmail} a ${newRole}`, currentUser);
       fetchUsers(searchTerm);
     }
   };
@@ -187,7 +187,7 @@ export default function AdminUsuarios() {
       toast.error("Error al actualizar permiso");
     } else {
       toast.success("Permiso actualizado");
-      await logAction(`${!currentValue ? 'Añadió' : 'Quitó'} Permiso ${field} a ${targetEmail}`, user);
+      await logAction(`${!currentValue ? 'Añadió' : 'Quitó'} Permiso ${field} a ${targetEmail}`, currentUser);
       fetchUsers();
     }
     setUpdatingId(null);
@@ -395,7 +395,7 @@ export default function AdminUsuarios() {
                     <td className="px-10 py-8">
                       <div className="flex items-center justify-center gap-2">
                          <button 
-                          onClick={() => togglePermission(user.id, 'can_manage_orders', user.can_manage_orders)}
+                          onClick={() => togglePermission(user.id, 'can_manage_orders', user.can_manage_orders, user.email)}
                           disabled={updatingId === user.id}
                           title="Gestionar Órdenes"
                           className={`p-3 rounded-xl border transition-smooth ${user.can_manage_orders ? 'bg-accent/10 border-accent/20 text-accent' : 'bg-slate-50 border-slate-100 text-slate-300'}`}
@@ -403,7 +403,7 @@ export default function AdminUsuarios() {
                             <ShoppingBag className="w-4 h-4" />
                          </button>
                          <button 
-                          onClick={() => togglePermission(user.id, 'can_manage_products', user.can_manage_products)}
+                          onClick={() => togglePermission(user.id, 'can_manage_products', user.can_manage_products, user.email)}
                           disabled={updatingId === user.id}
                           title="Gestionar Productos"
                           className={`p-3 rounded-xl border transition-smooth ${user.can_manage_products ? 'bg-accent/10 border-accent/20 text-accent' : 'bg-slate-50 border-slate-100 text-slate-300'}`}
@@ -411,7 +411,7 @@ export default function AdminUsuarios() {
                             <Package className="w-4 h-4" />
                          </button>
                          <button 
-                          onClick={() => togglePermission(user.id, 'can_manage_users', user.can_manage_users)}
+                          onClick={() => togglePermission(user.id, 'can_manage_users', user.can_manage_users, user.email)}
                           disabled={updatingId === user.id}
                           title="Gestionar Usuarios"
                           className={`p-3 rounded-xl border transition-smooth ${user.can_manage_users ? 'bg-accent/10 border-accent/20 text-accent' : 'bg-slate-50 border-slate-100 text-slate-300'}`}
@@ -419,7 +419,7 @@ export default function AdminUsuarios() {
                             <Users className="w-4 h-4" />
                          </button>
                          <button 
-                          onClick={() => togglePermission(user.id, 'can_manage_settings', user.can_manage_settings)}
+                          onClick={() => togglePermission(user.id, 'can_manage_settings', user.can_manage_settings, user.email)}
                           disabled={updatingId === user.id}
                           title="Configuración Global"
                           className={`p-3 rounded-xl border transition-smooth ${user.can_manage_settings ? 'bg-accent/10 border-accent/20 text-accent' : 'bg-slate-50 border-slate-100 text-slate-300'}`}
