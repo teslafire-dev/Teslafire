@@ -1,15 +1,12 @@
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { Analytics as VercelAnalytics } from "@vercel/analytics/react";
 
 /**
  * Analytics Component
  * Reads GTM ID, GA4 ID and Meta Pixel ID from the `configuracion` table
  * and injects them as script tags into the document <head> & <body>.
- * 
- * Config keys used:
- *   - analytics_gtm_id      e.g. GTM-XXXXXXX
- *   - analytics_ga4_id      e.g. G-XXXXXXXXXX
- *   - analytics_pixel_id    e.g. 1234567890123
+ * También integra Vercel Analytics nativamente.
  */
 export default function Analytics() {
   useEffect(() => {
@@ -108,5 +105,5 @@ src="https://www.facebook.com/tr?id=${pixelId}&ev=PageView&noscript=1"/>`;
     injectAnalytics();
   }, []);
 
-  return null;
+  return <VercelAnalytics />;
 }
