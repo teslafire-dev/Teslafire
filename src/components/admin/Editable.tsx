@@ -27,7 +27,11 @@ export function Editable({ keyName, as: Tag = 'span', className = '', children }
   const rawText = t(keyName);
   // Si t() devuelve la misma llave o está vacío, usamos el children por defecto
   const hasTranslation = rawText && rawText !== keyName;
-  const currentText = hasTranslation ? rawText : children;
+  
+  // Aseguramos que currentText sea estrictamente un string o vacío para TS
+  const currentText = hasTranslation 
+    ? String(rawText) 
+    : (typeof children === 'string' ? children : '');
 
   const langPrefix = lang.toLowerCase();
   const dbKey = `${langPrefix}_${keyName.replace(/\./g, '_')}`;
