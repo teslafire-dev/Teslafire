@@ -17,6 +17,7 @@ import {
   Filter} from "lucide-react";
 import ProductCard from "@/components/productos/ProductCard";
 import { useTranslation } from '@/contexts/TranslationContext';
+import { Editable } from '@/components/admin/Editable';
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
@@ -35,6 +36,14 @@ export default function Home() {
     window.scrollTo(0, 0);
     fetchData();
   }, []);
+
+  const handleCategoryClick = async (cat: any) => {
+    setActiveCategoryId(cat.id);
+    fetchData(cat.id, cat.nombre);
+    if (productsSectionRef.current) {
+      productsSectionRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   const fetchData = async (catId: string | null = null, catName: string | null = null) => {
     try {
@@ -94,16 +103,33 @@ export default function Home() {
     }
   };
 
-  const handleCategoryClick = (cat: any) => {
-    setActiveCategoryId(cat.id);
-    fetchData(cat.id, cat.nombre);
-    setTimeout(() => {
-      productsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
+  const getEmbedUrl = (url: string) => {
+    if (!url) return "https://www.youtube.com/embed/qim10BqdIgk?autoplay=0&mute=1&controls=1&showinfo=0&rel=0&modestbranding=1";
+    
+    // Si ya es un embed, lo dejamos casi igual pero aseguramos parámetros
+    if (url.includes('youtube.com/embed/')) {
+      const baseUrl = url.split('?')[0];
+      return `${baseUrl}?autoplay=0&mute=1&controls=1&showinfo=0&rel=0&modestbranding=1`;
+    }
+
+    // Extraer ID de formatos comunes
+    let videoId = '';
+    const watchMatch = url.match(/[?&]v=([^&#]+)/);
+    const shortMatch = url.match(/youtu\.be\/([^?&#]+)/);
+    
+    if (watchMatch) videoId = watchMatch[1];
+    else if (shortMatch) videoId = shortMatch[1];
+    else {
+      // Fallback si no detecta formato, intentar extraer última parte del path
+      const parts = url.split('/');
+      videoId = parts[parts.length - 1].split('?')[0];
+    }
+
+    return `https://www.youtube.com/embed/${videoId}?autoplay=0&mute=1&controls=1&showinfo=0&rel=0&modestbranding=1`;
   };
 
   return (
-    <div className="flex flex-col gap-12 md:gap-24 overflow-hidden dark:bg-slate-950 transition-colors duration-500 bg-grid-slate-900/[0.05] dark:bg-grid-white/[0.02]">
+    <div className="flex flex-col gap-12 md:gap-24 overflow-hidden dark:bg-slate-950 transition-colors duration-500 bg-grid-slate-900/[0.05] dark:bg-grid-white/[0.02] text-left">
       
       {/* Hero Section - REDESIGNED FOR IMPACT & SPACE */}
       <section className="relative min-h-[95vh] flex flex-col bg-primary-950 overflow-hidden">
@@ -134,27 +160,30 @@ export default function Home() {
                 <div className="flex flex-col gap-6">
                   <div className="inline-flex items-center gap-2 bg-white/5 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-full w-fit">
                     <span className="w-2 h-2 rounded-full bg-accent animate-ping"></span>
-                    <span className="text-accent text-[9px] font-black uppercase tracking-[0.4em] font-outfit">{t('home.hero.tag')}</span>
+                    <Editable keyName="home_hero_tag" className="text-accent text-[9px] font-black uppercase tracking-[0.4em] font-outfit">
+                      Dobell Service C.A.
+                    </Editable>
                   </div>
                   
-                  <h1 className="text-5xl md:text-6xl lg:text-[4.5rem] font-black text-white leading-[1.1] tracking-tighter font-outfit uppercase italic drop-shadow-2xl">
-                    {(t('home.hero.title') || 'Protección Superior').split(' ').map((word, i) => (
-                      word.toLowerCase() === 'superior' 
-                      ? <span key={i} className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-accent via-orange-400 to-accent px-2 py-1">
-                          Superior 
-                          <span className="absolute -bottom-1 left-0 w-full h-1 bg-accent/20 blur-xl"></span>
-                        </span> 
-                      : word + ' '
-                    ))}
-                  </h1>
+                  <Editable 
+                    keyName="home_hero_title" 
+                    as="h1" 
+                    className="text-5xl md:text-6xl lg:text-[4.5rem] font-black text-white leading-[1.1] tracking-tighter font-outfit uppercase italic drop-shadow-2xl" 
+                  >
+                    Protección Industrial de Élite
+                  </Editable>
                   
-                  <p className="text-lg md:text-xl text-slate-300 leading-relaxed font-medium tracking-wide max-w-xl border-l-4 border-accent pl-8 bg-gradient-to-r from-accent/5 to-transparent py-2">
-                     {t('home.hero.subtitle') || 'Protección para cada desafío industrial.'}
-                  </p>
+                  <Editable 
+                    keyName="home_hero_subtitle" 
+                    as="p" 
+                    className="text-lg md:text-xl text-slate-300 leading-relaxed font-medium tracking-wide max-w-xl border-l-4 border-accent pl-8 bg-gradient-to-r from-accent/5 to-transparent py-2" 
+                  >
+                    Líderes en Venezuela suministrando soluciones certificadas de seguridad industrial para los sectores petrolero, minero y manufacturero con los más altos estándares mundiales.
+                  </Editable>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-5">
-                   <Link to="/productos" className="group/btn flex items-center gap-4 bg-accent hover:bg-orange-600 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] transition-all duration-500 shadow-2xl shadow-accent/20 active:scale-95">
+                   <Link to="/productos" className="group/btn flex items-center gap-4 bg-[hsl(var(--button-bg,25_95%_53%))] hover:brightness-110 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] transition-all duration-500 shadow-2xl shadow-accent/20 active:scale-95">
                       {t('home.hero.cta.catalog') || 'Explorar Catálogo'}
                       <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-2 transition-smooth" />
                    </Link>
@@ -174,7 +203,7 @@ export default function Home() {
                 <div className="relative group rounded-[3.5rem] overflow-hidden border border-white/10 shadow-[0_50px_100px_rgba(0,0,0,0.5)] bg-slate-900 group aspect-[4/3] lg:aspect-square xl:aspect-video">
                   <iframe 
                     className="w-full h-full relative z-10 brightness-90 group-hover:brightness-100 transition-all duration-700 scale-105"
-                    src={t('hero_video_url') || "https://www.youtube.com/embed/qim10BqdIgk?autoplay=0&mute=1&controls=1&showinfo=0&rel=0&modestbranding=1"} 
+                    src={getEmbedUrl(t('hero_video_url'))} 
                     title="Dobell Hero Video"
                     frameBorder="0" 
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 

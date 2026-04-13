@@ -1,6 +1,7 @@
 import { Link, useNavigate, NavLink, useLocation } from "react-router-dom";
 import { Search, ShoppingCart, User, Menu, X, LogOut, Sun, Moon, Languages } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import { Editable } from "../admin/Editable";
 import { supabase } from "@/lib/supabase/client";
 import LoginModal from "../admin/LoginModal";
 import { useAuth } from "@/hooks/useAuth";
@@ -293,19 +294,19 @@ export default function Header() {
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center gap-10 ml-16 font-bold text-slate-600 dark:text-slate-400 transition-standard uppercase text-xs tracking-widest">
           {[
-            { to: '/', label: t('nav.home') },
-            { to: '/productos', label: t('nav.productos') },
-            { to: '/servicios', label: t('nav.servicios') },
-            { to: '/nosotros', label: t('nav.nosotros') }
+            { to: '/', label: 'Inicio', key: 'nav_home' },
+            { to: '/productos', label: 'Catálogo', key: 'nav_productos' },
+            { to: '/servicios', label: 'Servicios', key: 'nav_servicios' },
+            { to: '/nosotros', label: 'Nosotros', key: 'nav_nosotros' }
           ].map((item) => (
             <NavLink 
               key={item.to}
               to={item.to} 
               className={({ isActive }) => 
-                `relative hover:text-accent transition-standard ${isActive ? 'text-accent opacity-100 after:absolute after:bottom-[-8px] after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-accent after:rounded-full after:shadow-[0_0_12px_rgba(249,115,22,0.8)]' : 'opacity-80'}`
+                `relative hover:text-accent transition-standard ${isActive ? 'text-accent opacity-100 after:absolute after:bottom-[-2px] after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-accent after:rounded-full after:shadow-[0_0_12px_rgba(249,115,22,0.8)]' : 'opacity-80'}`
               }
             >
-              {item.label}
+              <Editable keyName={item.key}>{item.label}</Editable>
             </NavLink>
           ))}
         </nav>

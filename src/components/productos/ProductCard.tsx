@@ -175,7 +175,8 @@ export default function ProductCard({
             ) : (
               <button 
                 onClick={handleAddToCart}
-                className="p-3 bg-primary-950 text-white rounded-xl transition-smooth shadow-lg shadow-primary-950/10 hover:bg-accent active:scale-90"
+                style={{ backgroundColor: `hsl(var(--button-bg, 222.2 47.4% 11.2%))` }}
+                className="p-3 text-white rounded-xl transition-smooth shadow-lg shadow-primary-950/10 hover:brightness-110 active:scale-90"
               >
                 <Plus className="w-5 h-5" />
               </button>

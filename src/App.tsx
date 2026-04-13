@@ -114,18 +114,24 @@ function AppContent() {
   );
 }
 
+import { WisingWinProvider } from './contexts/WisingWinContext';
+import WisingWinToggle from './components/admin/WisingWinToggle';
+
 function App() {
   return (
     <HelmetProvider>
+    <AuthProvider>
+    <WisingWinProvider>
     <TranslationProvider>
       <CurrencyProvider>
-        <AuthProvider>
           <Router>
             <AppContent />
+            <WisingWinToggle />
           </Router>
-        </AuthProvider>
       </CurrencyProvider>
     </TranslationProvider>
+    </WisingWinProvider>
+    </AuthProvider>
     </HelmetProvider>
   );
 }

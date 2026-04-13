@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from "@/lib/supabase/client";
+import { useWisingWin } from './WisingWinContext';
 
 type Language = 'ES' | 'EN';
 
@@ -487,35 +487,64 @@ EN: {
 };
 
 const TranslationContext = createContext<TranslationContextType | undefined>(undefined);
+const hexToHsl = (hex: string): string => {
+  hex = hex.replace(/#/g, '');
+  if (hex.length === 3) hex = hex.split('').map(s => s + s).join('');
+  const r = parseInt(hex.substring(0, 2), 16) / 255;
+  const g = parseInt(hex.substring(2, 4), 16) / 255;
+  const b = parseInt(hex.substring(4, 6), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s, l = (max + min) / 2;
+  if (max === min) h = s = 0;
+  else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+  return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+};
 
 export function TranslationProvider({ children }: { children: React.ReactNode }) {
+  const { dbConfig: configs, loading: loadingConfig } = useWisingWin();
   const [lang, setLangState] = useState<Language>(() => {
      const saved = localStorage.getItem('app_lang');
      return (saved === 'EN' || saved === 'ES') ? saved : 'ES';
   });
-  const [dbConfig, setDbConfig] = useState<Record<string, string>>({});
-
-  const [loadingConfig, setLoadingConfig] = useState(true);
 
   useEffect(() => {
-    async function fetchConfig() {
-      try {
-        const { data, error } = await supabase.from('configuracion').select('clave, valor');
-        if (!error && data) {
-          const configObj: Record<string, string> = {};
-          data.forEach(item => {
-            configObj[item.clave] = item.valor;
-          });
-          setDbConfig(configObj);
+    if (configs && Object.keys(configs).length > 0) {
+      const root = document.documentElement;
+      const isDark = root.classList.contains('dark');
+
+      const applyColor = (key: string, cssVar: string) => {
+        const item = configs[key];
+        const val = (item && typeof item === 'object') ? item.color : item;
+        if (val && typeof val === 'string' && val.startsWith('#')) {
+          root.style.setProperty(cssVar, hexToHsl(val));
         }
-      } catch (err) {
-        console.error("Error loading translation config:", err);
-      } finally {
-        setLoadingConfig(false);
+      };
+
+      if (!isDark) {
+        applyColor('color_primario', '--primary');
+        applyColor('color_acento', '--accent');
+        applyColor('color_botones_bg', '--button-bg');
+        applyColor('color_body_bg', '--background');
+      } else {
+        applyColor('color_primario_dark', '--primary');
+        applyColor('color_acento_dark', '--accent');
+        applyColor('color_botones_bg_dark', '--button-bg');
+        applyColor('color_body_bg_dark', '--background');
       }
+      
+      applyColor('color_acento', '--accent-dynamic'); 
+      applyColor('color_botones_bg', '--button-bg-dynamic');
     }
-    fetchConfig();
-  }, []);
+  }, [configs]);
 
   const setLang = (newLang: Language) => {
     setLangState(newLang);
@@ -523,18 +552,21 @@ export function TranslationProvider({ children }: { children: React.ReactNode })
   };
 
   const t = (key: string) => {
+    if (!configs) return (translations[lang] as any)[key] || key;
+
     const cleanKey = key.includes('.') ? key.replace(/\./g, '_') : key;
-    const langPrefix = lang.toLowerCase(); // 'es' or 'en'
+    const langPrefix = lang.toLowerCase();
     const dbKey = `${langPrefix}_${cleanKey}`;
 
-    // 1. Try language-specific DB override (en_hero_title or es_hero_title)
-    if (dbConfig[dbKey]) return dbConfig[dbKey];
+    const configItem = configs[dbKey] || configs[key];
+    if (configItem) {
+      if (typeof configItem === 'object' && configItem.text !== undefined) {
+        return configItem.text;
+      }
+      return configItem;
+    }
 
-    // 2. Try direct match (for non-prefixed keys in DB)
-    if (dbConfig[key]) return dbConfig[key];
-
-    // 3. Fallback to static dictionaries
-    return translations[lang][key] || key;
+    return (translations[lang] as any)[key] || key;
   };
 
   if (loadingConfig) {

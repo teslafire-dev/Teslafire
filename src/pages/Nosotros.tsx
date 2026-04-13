@@ -21,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from '@/contexts/TranslationContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Editable } from '@/components/admin/Editable';
 
 export default function Nosotros() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -153,15 +154,38 @@ export default function Nosotros() {
           ))}
         </div>
       )
+    },
+    {
+      id: "contacto",
+      title: "Contáctenos",
+      icon: <Send className="w-5 h-5" />,
+      content: (
+        <div className="flex flex-col gap-8">
+           <div className="flex flex-col gap-2">
+              <h4 className="text-2xl font-black text-primary-950 dark:text-white uppercase tracking-tighter">¿En qué podemos asesorarle?</h4>
+              <p className="text-slate-500 text-xs font-bold uppercase tracking-widest italic">Estamos listos para atender su requerimiento industrial.</p>
+           </div>
+           <form onSubmit={handleContactSubmit} className="flex flex-col gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <input type="text" placeholder="Nombre completo" required className="bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl px-6 py-5 text-[10px] font-bold outline-none focus:ring-2 focus:ring-accent transition-smooth dark:text-white uppercase tracking-widest" />
+                 <input type="email" placeholder="Correo corporativo" required className="bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl px-6 py-5 text-[10px] font-bold outline-none focus:ring-2 focus:ring-accent transition-smooth dark:text-white uppercase tracking-widest" />
+              </div>
+              <textarea rows={4} placeholder="Escriba su mensaje aquí..." required className="bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-[2rem] px-6 py-5 text-[10px] font-bold outline-none focus:ring-2 focus:ring-accent transition-smooth resize-none dark:text-white uppercase tracking-widest"></textarea>
+              <button className="h-20 bg-accent text-white rounded-3xl font-black uppercase text-xs tracking-[0.2em] hover:bg-primary-950 transition-smooth active:scale-95 flex items-center justify-center gap-4 shadow-xl shadow-accent/20">
+                 ENVIAR CONSULTA <Send className="w-4 h-4" />
+              </button>
+           </form>
+        </div>
+      )
     }
   ];
 
   return (
     <div className="flex flex-col gap-8 lg:gap-12 pt-44 pb-20 bg-white dark:bg-slate-950 transition-colors duration-500 overflow-hidden">
       
-      {/* Hero Nosotros - Side by Side Layout */}
+      {/* Hero Nosotros - Map on the Right Side */}
       <section className="container mx-auto px-6">
-        <div className="flex flex-col lg:flex-row gap-16 items-center lg:items-center">
+        <div className="flex flex-col lg:flex-row gap-16 items-center">
           
           {/* Left: Text Content */}
           <motion.div 
@@ -171,72 +195,87 @@ export default function Nosotros() {
             className="flex-1 text-left"
           >
             <div className="inline-flex items-center gap-3 bg-accent/20 border border-accent/20 px-5 py-2 rounded-2xl w-fit mb-6">
-              <span className="text-accent text-[10px] font-black uppercase tracking-[0.4em] font-outfit">Suministro con Valor</span>
+              <Editable keyName="nosotros_hero_tag" className="text-accent text-[10px] font-black uppercase tracking-[0.4em] font-outfit">
+                Suministro con Valor
+              </Editable>
             </div>
             <h1 className="text-6xl md:text-8xl font-black text-primary-950 dark:text-white leading-[0.9] tracking-tighter font-outfit uppercase mb-6">
-              Dobell <br />
-              <span className="text-accent underline decoration-8 decoration-accent/10 underline-offset-[12px]">Service</span>
+              <Editable keyName="nosotros_hero_title_top" as="span">Dobell</Editable> <br />
+              <Editable keyName="nosotros_hero_title_bottom" as="span" className="text-accent underline decoration-8 decoration-accent/10 underline-offset-[12px]">
+                Service
+              </Editable>
             </h1>
-            <p className="text-xl text-slate-500 dark:text-slate-400 leading-relaxed max-w-xl font-medium mb-8">
-               Suministrar Equipos de Protección Personal de Alta Calidad con asesoramiento técnica integral para los sectores más exigentes de Venezuela.
-            </p>
+            <Editable 
+              keyName="nosotros_hero_subtitle" 
+              as="p" 
+              className="text-xl text-slate-500 dark:text-slate-400 leading-relaxed max-w-xl font-medium mb-8" 
+            >
+              Suministrar Equipos de Protección Personal de Alta Calidad con asesoramiento técnica integral para los sectores más exigentes de Venezuela.
+            </Editable>
             <div className="flex flex-col sm:flex-row gap-4 mb-4">
                <button 
                  onClick={() => navigate('/productos')}
                  className="bg-primary-950 dark:bg-accent text-white px-10 py-5 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-2xl active:scale-95 transition-smooth hover:bg-accent dark:hover:bg-primary-950"
                >
-                 Ver Catálogo
+                 <Editable keyName="nosotros_hero_cta">Ver Catálogo</Editable>
                </button>
             </div>
           </motion.div>
 
-          {/* Right: Compact Pillars Grid */}
+          {/* Right: Google Map instead of Pillars */}
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1 }}
-            className="lg:w-[500px] relative"
+            whileHover={{ scale: 1.03, y: -10 }}
+            transition={{ type: "spring", stiffness: 300, damping: 15 }}
+            className="lg:w-[500px] h-[500px] relative cursor-pointer"
           >
-             <div className="absolute inset-0 bg-accent/10 blur-[120px] rounded-full"></div>
-             <div className="relative grid grid-cols-2 gap-4">
-                {pilares.map((pilar, i) => (
-                  <div 
-                    key={i} 
-                    className="aspect-square bg-white dark:bg-slate-900 text-primary-950 dark:text-white rounded-[3rem] p-8 flex flex-col justify-between border border-slate-100 dark:border-slate-800 shadow-xl transition-all duration-500 group cursor-default hover:bg-accent hover:text-white hover:border-accent hover:scale-[1.05]"
-                  >
-                     <div className="p-3 bg-accent/20 w-fit rounded-xl text-accent group-hover:bg-white/20 group-hover:text-white transition-colors">
-                        {pilar.icon}
-                     </div>
-                     <div className="flex flex-col gap-1">
-                        <h3 className="text-lg font-black uppercase tracking-tighter leading-tight">{pilar.title}</h3>
-                        <p className="text-[9px] font-bold uppercase tracking-widest opacity-60 leading-tight">{pilar.desc}</p>
-                     </div>
-                  </div>
-                ))}
+             <div className="absolute inset-x-10 bottom-10 top-20 bg-accent/20 blur-[100px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
+             <div className="relative h-full bg-white dark:bg-slate-900 rounded-[4rem] overflow-hidden border border-slate-100 dark:border-slate-800 shadow-2xl group transition-all duration-700">
+                <iframe 
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3926.5451296726883!2d-67.92876482397198!3d10.169123189944743!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e80614e21a8cd37%3A0xcbd8d68ea1947c39!2sDobell%20Service%2C%20C.A.!5e0!3m2!1ses!2sve!4v1713018800000!5m2!1ses!2sve" 
+                  className="w-full h-full border-none grayscale-[0.4] group-hover:grayscale-0 group-hover:scale-110 transition-all duration-1000"
+                  allowFullScreen={true} 
+                  loading="lazy" 
+                ></iframe>
+                
+                {/* Floating Map Label with extra hover pop */}
+                <div className="absolute bottom-8 inset-x-8">
+                   <motion.div 
+                     whileHover={{ y: -5 }}
+                     className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl p-7 rounded-[2.5rem] border border-white/20 shadow-2xl transition-all duration-500 group-hover:border-accent/40"
+                   >
+                      <p className="text-[11px] font-black text-accent uppercase tracking-[0.4em] mb-2 flex items-center gap-2">
+                        <MapPin className="w-3 h-3 animate-bounce" />
+                        <Editable keyName="nosotros_map_tag">¡AQUÍ ESTAMOS!</Editable>
+                      </p>
+                      <p className="text-[14px] font-black text-primary-950 dark:text-white uppercase leading-tight">
+                        <Editable keyName="nosotros_map_location">Centro Empresarial Arturo Michelena, Valencia</Editable>
+                      </p>
+                   </motion.div>
+                </div>
              </div>
           </motion.div>
-
         </div>
       </section>
 
-      {/* Identity Tabs Section - DRATICALLY REDUCED SEPARATION */}
-      <section className="container mx-auto px-6 -mt-4 lg:-mt-8">
+      {/* Identity Tabs Section */}
+      <section className="container mx-auto px-6 mt-12">
         <div className="flex flex-col items-center gap-8 pt-12 pb-20 bg-slate-50/50 dark:bg-slate-900/20 rounded-[5rem] border border-slate-100 dark:border-slate-800/50">
-            <div className="flex flex-wrap justify-center gap-6 p-2 bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl shadow-primary-950/5 border border-slate-100 dark:border-slate-800">
+            <div className="flex flex-wrap justify-center gap-2 p-2 bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl border border-slate-100 dark:border-slate-800">
                {sections.map(sec => (
                  <button
                    key={sec.id}
                    onClick={() => setActiveTab(sec.id)}
-                   className={`px-10 py-5 rounded-[2.5rem] font-black uppercase text-[11px] tracking-widest transition-smooth flex items-center gap-4 ${
+                   className={`px-8 py-4 rounded-[2.5rem] font-black uppercase text-[10px] tracking-widest transition-smooth flex items-center gap-3 ${
                      activeTab === sec.id 
-                      ? 'bg-slate-950 dark:bg-white text-white dark:text-primary-950 shadow-[20px_20px_60px_rgba(0,0,0,0.1)] scale-105' 
+                      ? 'bg-slate-950 dark:bg-white text-white dark:text-primary-950 shadow-xl' 
                       : 'text-slate-400 dark:text-slate-500 hover:text-accent'
                    }`}
                  >
-                   <div className={`${activeTab === sec.id ? 'text-accent' : 'text-slate-300'}`}>
-                     {sec.icon}
-                   </div>
-                   {sec.title}
+                   <Editable keyName={`nosotros_tab_${sec.id}`}>
+                     {sec.title}
+                   </Editable>
                  </button>
                ))}
             </div>
@@ -245,88 +284,19 @@ export default function Nosotros() {
                <AnimatePresence mode="wait">
                  <motion.div
                    key={activeTab}
-                   initial={{ opacity: 0, y: 15 }}
-                   animate={{ opacity: 1, y: 0 }}
-                   exit={{ opacity: 0, y: -15 }}
-                   transition={{ duration: 0.3 }}
+                   initial={{ opacity: 0 }}
+                   animate={{ opacity: 1 }}
+                   exit={{ opacity: 0 }}
                  >
-                   <div className="bg-white dark:bg-slate-900 shadow-2xl shadow-primary-950/5 rounded-[4rem] border border-slate-100 dark:border-slate-800 p-12 md:p-16">
+                    <div className="bg-white dark:bg-slate-900 shadow-2xl shadow-primary-950/5 rounded-[4rem] border border-slate-100 dark:border-slate-800 p-12 md:p-16">
                       {sections.find(s => s.id === activeTab)?.content}
-                   </div>
+                    </div>
                  </motion.div>
                </AnimatePresence>
             </div>
         </div>
       </section>
 
-      {/* Trust Markers Section */}
-      <motion.section 
-        initial={{ opacity: 0, scale: 0.95 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 1 }}
-        className="bg-primary-950 py-32 rounded-[5rem] mx-4 text-white overflow-hidden relative"
-      >
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            {[
-              { label: "Años de Exp.", value: "15+" },
-              { label: "Clientes", value: "2.5k" },
-              { label: "Productos", value: "2k+" },
-              { label: "Marcas", value: "50+" }
-            ].map((stat, i) => (
-              <div key={i}>
-                 <span className="text-4xl font-black text-accent tracking-tighter mb-2 font-outfit block">{stat.value}</span>
-                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{stat.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </motion.section>
-
-      {/* Final Contact Section */}
-      <motion.section 
-        id="contacto" 
-        initial={{ opacity: 0, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="container mx-auto px-6 mb-20"
-      >
-         <div className="flex flex-col lg:flex-row gap-20 items-center">
-            <div className="lg:w-2/5 flex flex-col gap-10">
-               <h2 className="text-6xl font-black font-outfit text-primary-950 dark:text-white uppercase tracking-tighter leading-[0.85]">
-                  Hablemos <br />con <span className="text-accent">Valor</span>
-               </h2>
-               <div className="flex flex-col gap-4 max-w-xs">
-                  {[
-                    { icon: Phone, title: "WhatsApp", val: "+58 (424) 451-1155" },
-                    { icon: Mail, title: "Email", val: "ventas@dobellservice.com" }
-                  ].map((inf, i) => (
-                    <div key={i} className="flex gap-5 items-center p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 group/info transition-smooth hover:border-accent">
-                       <inf.icon className="w-6 h-6 text-accent group-hover/info:scale-110 transition-smooth" />
-                       <div className="flex flex-col">
-                          <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">{inf.title}</span>
-                          <span className="text-sm font-black text-primary-950 dark:text-white uppercase tracking-tight">{inf.val}</span>
-                       </div>
-                    </div>
-                  ))}
-               </div>
-            </div>
-
-            <div className="flex-1 w-full">
-               <form onSubmit={handleContactSubmit} className="bg-white dark:bg-slate-900 p-10 md:p-16 rounded-[4rem] border border-slate-100 dark:border-slate-800 shadow-[0_30px_100px_rgba(0,0,0,0.05)] flex flex-col gap-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     <input type="text" placeholder="Nombre completo" required className="bg-slate-50 dark:bg-slate-800 border border-slate-50 dark:border-slate-700 rounded-2xl px-6 py-5 text-xs font-bold outline-none focus:ring-2 focus:ring-accent transition-smooth dark:text-white" />
-                     <input type="email" placeholder="Correo corporativo" required className="bg-slate-50 dark:bg-slate-800 border border-slate-50 dark:border-slate-700 rounded-2xl px-6 py-5 text-xs font-bold outline-none focus:ring-2 focus:ring-accent transition-smooth dark:text-white" />
-                  </div>
-                  <textarea rows={4} placeholder="¿En qué podemos asesorarle?" required className="bg-slate-50 dark:bg-slate-800 border border-slate-50 dark:border-slate-700 rounded-[2rem] px-6 py-5 text-xs font-bold outline-none focus:ring-2 focus:ring-accent transition-smooth resize-none dark:text-white"></textarea>
-                  <button className="h-20 bg-primary-950 dark:bg-accent text-white rounded-3xl font-black uppercase text-xs tracking-[0.2em] hover:bg-accent dark:hover:bg-primary-950 transition-smooth active:scale-95 flex items-center justify-center gap-4 shadow-2xl shadow-primary-950/20">
-                     ENVIAR CONSULTA <Send className="w-4 h-4" />
-                  </button>
-               </form>
-            </div>
-         </div>
-      </motion.section>
     </div>
   );
 }
