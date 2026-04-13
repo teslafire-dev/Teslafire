@@ -174,7 +174,7 @@ export default function Home() {
                 <div className="relative group rounded-[3.5rem] overflow-hidden border border-white/10 shadow-[0_50px_100px_rgba(0,0,0,0.5)] bg-slate-900 group aspect-[4/3] lg:aspect-square xl:aspect-video">
                   <iframe 
                     className="w-full h-full relative z-10 brightness-90 group-hover:brightness-100 transition-all duration-700 scale-105"
-                    src="https://www.youtube.com/embed/qim10BqdIgk?autoplay=0&mute=1&controls=1&showinfo=0&rel=0&modestbranding=1" 
+                    src={t('hero_video_url') || "https://www.youtube.com/embed/qim10BqdIgk?autoplay=0&mute=1&controls=1&showinfo=0&rel=0&modestbranding=1"} 
                     title="Dobell Hero Video"
                     frameBorder="0" 
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
