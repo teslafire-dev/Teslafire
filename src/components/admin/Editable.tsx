@@ -1,3 +1,4 @@
+// Force deploy: Fix TS types for Vercel build
 import React, { useState, useRef, useEffect } from 'react';
 import { useWisingWin } from '@/contexts/WisingWinContext';
 import { createPortal } from 'react-dom';
