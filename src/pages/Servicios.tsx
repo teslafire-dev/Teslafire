@@ -269,21 +269,40 @@ export default function Servicios() {
           </motion.div>
           
           <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col gap-3"
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex flex-col gap-6"
           >
-             <div className="hidden md:flex items-center gap-6 bg-slate-50 dark:bg-slate-900 px-8 py-4 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-xl group hover:border-accent transition-colors">
-                <Settings className="w-5 h-5 text-accent group-hover:rotate-90 transition-transform" />
-                <span className="text-[9px] font-black text-slate-400 group-hover:text-primary-950 dark:group-hover:text-white uppercase tracking-widest text-left">
+             {/* Card 1: Soporte Técnico */}
+             <div className="hidden md:flex flex-col gap-3 p-8 bg-white dark:bg-slate-900/40 backdrop-blur-2xl rounded-[2.5rem] border border-slate-200 dark:border-white/5 shadow-2xl group hover:border-accent/50 transition-all duration-700 hover:-translate-y-2 hover:-rotate-1">
+                <div className="flex items-center gap-3">
+                   <div className="p-2.5 bg-accent/10 rounded-xl group-hover:bg-accent group-hover:text-white transition-colors duration-500">
+                      <Settings className="w-5 h-5 text-accent group-hover:text-inherit" />
+                   </div>
+                   <span className="text-[9px] font-black uppercase tracking-[0.3em] text-accent">Ingeniería</span>
+                </div>
+                <h4 className="text-2xl font-black text-primary-950 dark:text-white uppercase tracking-tighter leading-none">
                   <Editable keyName="servicios_hero_card1">Soporte Técnico</Editable>
-                </span>
+                </h4>
+                <div className="w-12 h-1 bg-slate-200 dark:bg-white/10 rounded-full group-hover:w-full group-hover:bg-accent transition-all duration-700"></div>
              </div>
-             <div className="hidden md:flex items-center gap-6 bg-slate-950 px-8 py-4 rounded-[2rem] border border-white/5 shadow-2xl group hover:border-accent transition-colors">
-                <CheckCircle2 className="w-5 h-5 text-accent" />
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest text-left">
+
+             {/* Card 2: Formación */}
+             <div className="hidden md:flex flex-col gap-3 p-8 bg-primary-950 rounded-[2.5rem] border border-accent/20 shadow-2xl group hover:border-accent transition-all duration-700 hover:-translate-y-2 hover:rotate-1">
+                <div className="flex items-center gap-3">
+                   <div className="p-2.5 bg-accent/20 rounded-xl">
+                      <CheckCircle2 className="w-5 h-5 text-accent" />
+                   </div>
+                   <span className="text-[9px] font-black uppercase tracking-[0.3em] text-accent/80">Certificación</span>
+                </div>
+                <h4 className="text-2xl font-black text-white uppercase tracking-tighter leading-none">
                   <Editable keyName="servicios_hero_card2">Formación Inpsasel</Editable>
-                </span>
+                </h4>
+                <div className="flex gap-1 mt-1">
+                   {[1,2,3,4,5].map(i => (
+                     <div key={i} className="w-4 h-1 bg-accent/20 rounded-full"></div>
+                   ))}
+                </div>
              </div>
           </motion.div>
         </div>
