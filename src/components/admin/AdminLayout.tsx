@@ -80,12 +80,12 @@ export default function AdminLayout() {
   const menuItems = [
     { name: "Dashboard", icon: LayoutDashboard, href: "/admin", permission: true },
     { name: "Órdenes", icon: ShoppingBag, href: "/admin/ordenes", permission: canManageOrders },
+    { name: "Páginas y Menús", icon: Layout, href: "/admin/menus", permission: canManageSettings },
+    { name: "Usuarios", icon: Users, href: "/admin/usuarios", permission: canManageUsers },
     { name: "Productos", icon: Package, href: "/admin/productos", permission: canManageProducts },
     { name: "Categorías", icon: Tags, href: "/admin/categorias", permission: canManageProducts },
-    { name: "Páginas y Menús", icon: Layout, href: "/admin/menus", permission: canManageSettings },
     { name: "CRM Estratégico", icon: Zap, href: "/admin/crm", permission: canManageUsers },
     { name: "Gestión SEO", icon: Globe, href: "/admin/seo", permission: canManageSettings },
-    { name: "Usuarios", icon: Users, href: "/admin/usuarios", permission: canManageUsers },
     { name: "Ajustes", icon: Settings, href: "/admin/configuracion", permission: canManageSettings },
   ];
 

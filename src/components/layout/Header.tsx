@@ -1,5 +1,5 @@
 import { Link, useNavigate, NavLink, useLocation } from "react-router-dom";
-import { Search, ShoppingCart, User, Menu, X, LogOut, Sun, Moon, Languages } from "lucide-react";
+import { Search, ShoppingCart, User, Menu, X, LogOut, Sun, Moon, Languages, ExternalLink } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Editable } from "../admin/Editable";
 import { supabase } from "@/lib/supabase/client";
