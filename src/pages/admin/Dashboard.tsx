@@ -186,7 +186,7 @@ export default function AdminDashboard() {
     { label: "Clientes Únicos", value: stats.activeCustomers.toLocaleString(), icon: Users, color: "bg-purple-100 text-purple-600" },
     { label: "Alertas Stock", value: stats.lowStock.toLocaleString(), icon: AlertCircle, color: "bg-red-100 text-red-600" },
     { label: "Visitas Hoy", value: stats.visitorsToday.toLocaleString(), icon: Globe, color: "bg-orange-100 text-accent" },
-    { label: "Record Online", value: stats.visitorPeak.toLocaleString(), icon: Zap, color: "bg-yellow-100 text-yellow-600" }
+    { label: "Record Online", value: stats.visitorPeak.toLocaleString(), icon: Activity, color: "bg-yellow-100 text-yellow-600" }
   ];
 
   return (
@@ -332,7 +332,7 @@ export default function AdminDashboard() {
                   <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Top 5 Categorías más cotizadas</span>
                </div>
                <div className="p-3 bg-purple-50 text-purple-500 rounded-2xl">
-                  <Zap className="w-5 h-5" />
+                  <TrendingUp className="w-5 h-5" />
                </div>
             </div>
             <div className="flex flex-col gap-6 mt-4">

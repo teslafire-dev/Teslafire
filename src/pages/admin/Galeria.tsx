@@ -151,7 +151,7 @@ export default function AdminGaleria() {
                 </div>
                 <div className="p-5 flex flex-col gap-1">
                    <span className="text-[10px] font-black text-primary-950 uppercase truncate tracking-tight">{file.name}</span>
-                   <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{(file.metadata?.size / 1024).toFixed(1)} KB • {file.metadata?.mimetype?.split('/')[1] || 'img'}</span>
+                   <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{((file.metadata?.size || 0) / 1024).toFixed(1)} KB • {file.metadata?.mimetype?.split('/')[1] || 'img'}</span>
                 </div>
              </motion.div>
            ))}

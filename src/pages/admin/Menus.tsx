@@ -80,7 +80,7 @@ export default function AdminMenus() {
   };
 
   const handleAddToMenu = async (type: 'page' | 'category' | 'custom') => {
-    let itemsToAdd = [];
+    let itemsToAdd: any[] = [];
     if (type === 'page') {
       itemsToAdd = paginas.filter(p => selectedPages.includes(p.id)).map(p => ({
         label: p.titulo, label_en: p.titulo_en || '', url: `/${p.slug}`, tipo: 'page', orden: menus.length + 1, location: 'header'

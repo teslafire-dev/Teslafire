@@ -349,7 +349,7 @@ export default function DynamicPage() {
                                { id: 'row-3', name: '3 Caps', icon: Grid3X3 },
                                { id: 'gallery', name: 'Galería', icon: Layout }
                             ].map(block => (
-                              <button key={block.id} onClick={() => handleAddToMenu ? handleAddWidget(block.id, w.id) : null} className="flex flex-col items-center gap-2 p-4 hover:bg-slate-50 dark:hover:bg-white/5 rounded-2xl transition-all group">
+                              <button key={block.id} onClick={() => handleAddWidget(block.id, w.id)} className="flex flex-col items-center gap-2 p-4 hover:bg-slate-50 dark:hover:bg-white/5 rounded-2xl transition-all group">
                                  <block.icon className="w-5 h-5 text-slate-400 group-hover:text-accent" />
                                  <span className="text-[8px] font-black uppercase text-slate-300">{block.name}</span>
                               </button>

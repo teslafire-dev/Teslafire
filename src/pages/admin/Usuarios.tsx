@@ -690,16 +690,7 @@ export default function AdminUsuarios() {
         </div>
       )}
 
-      <div className="bg-primary-950 text-white p-12 rounded-[4rem] shadow-2xl shadow-primary-950/40 flex items-center gap-10 group relative overflow-hidden">
-         <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-smooth duration-1000"></div>
-         <div className="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center shrink-0 shadow-inner group-hover:bg-accent/20 transition-smooth">
-            <ShieldCheck className="w-10 h-10 text-accent" />
-         </div>
-         <div className="flex flex-col gap-2 relative z-10">
-            <h3 className="text-2xl font-black font-outfit uppercase tracking-tighter">Protocolo de Autorización</h3>
-            <p className="text-slate-400 text-sm font-medium max-w-3xl leading-relaxed">Como Administrador General, usted controla la integridad del catálogo industrial. Asegúrese de otorgar permisos de **Editor** únicamente a personal técnico capacitado para evitar inconsistencias en los SKUs.</p>
-         </div>
-      </div>
+
 
       <AnimatePresence>
         {isCreateModalOpen && (
