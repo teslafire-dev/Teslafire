@@ -15,9 +15,10 @@ import {
   Mail,
   Phone,
   Globe,
-  Zap,
   MousePointer2,
-  RefreshCcw
+  RefreshCcw,
+  Activity,
+  TrendingUp
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase/client";
