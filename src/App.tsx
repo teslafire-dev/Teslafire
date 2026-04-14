@@ -16,11 +16,13 @@ import AdminCategorias from './pages/admin/Categorias';
 import AdminConfiguracion from './pages/admin/Configuracion';
 import AdminSEO from './pages/admin/SEO';
 import AdminCRM from './pages/admin/CRM';
+import AdminMenus from './pages/admin/Menus';
 import AdminLayout from './components/admin/AdminLayout';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import Nosotros from './pages/Nosotros';
 import Servicios from './pages/Servicios';
+import DynamicPage from './pages/DynamicPage';
 import Perfil from './pages/perfil/Perfil';
 import Historial from './pages/perfil/Historial';
 import { Toaster } from 'react-hot-toast';
@@ -72,6 +74,7 @@ function AppContent() {
             <Route path="/gracias/:localizador" element={<Gracias />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/perfil/historial" element={<Historial />} />
+            <Route path="/:slug" element={<DynamicPage />} />
           </Route>
 
           {/* Admin Context (Login) */}
@@ -88,6 +91,7 @@ function AppContent() {
               <Route path="/admin/crm" element={<AdminCRM />} />
               <Route path="/admin/configuracion" element={<AdminConfiguracion />} />
               <Route path="/admin/seo" element={<AdminSEO />} />
+              <Route path="/admin/menus" element={<AdminMenus />} />
             </Route>
           </Route>
 

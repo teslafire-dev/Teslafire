@@ -30,7 +30,7 @@ export default function Header() {
   const [isLiveDropdownOpen, setIsLiveDropdownOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const liveRef = useRef<HTMLDivElement>(null);
-  const { items: cartItems, removeItem, updateQuantity } = useCartStore();
+  const { items: cartItems, removeItem, updateQuantity, clearCart } = useCartStore();
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   const { pathname } = useLocation();
@@ -145,6 +145,8 @@ export default function Header() {
     return () => window.removeEventListener("scroll", controlNavbar);
   }, [lastScrollY]);
 
+  const [dynamicMenus, setDynamicMenus] = useState<any[]>([]);
+
   useEffect(() => {
     async function fetchConfig() {
       const { data } = await supabase.from('configuracion').select('*');
@@ -156,7 +158,18 @@ export default function Header() {
         setConfig(configMap);
       }
     }
+
+    async function fetchMenus() {
+      const { data } = await supabase
+        .from('menus')
+        .select('*')
+        .eq('location', 'header')
+        .order('orden', { ascending: true });
+      if (data) setDynamicMenus(data);
+    }
+
     fetchConfig();
+    fetchMenus();
   }, []);
 
   // Presence Tracking
@@ -293,20 +306,20 @@ export default function Header() {
 
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center gap-10 ml-16 font-bold text-slate-600 dark:text-slate-400 transition-standard uppercase text-xs tracking-widest">
-          {[
-            { to: '/', label: 'Inicio', key: 'nav_home' },
-            { to: '/productos', label: 'Catálogo', key: 'nav_productos' },
-            { to: '/servicios', label: 'Servicios', key: 'nav_servicios' },
-            { to: '/nosotros', label: 'Nosotros', key: 'nav_nosotros' }
-          ].map((item) => (
+          {dynamicMenus.map((item) => (
             <NavLink 
-              key={item.to}
-              to={item.to} 
+              key={item.id}
+              to={item.url} 
               className={({ isActive }) => 
                 `relative hover:text-accent transition-standard ${isActive ? 'text-accent opacity-100 after:absolute after:bottom-[-2px] after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-accent after:rounded-full after:shadow-[0_0_12px_rgba(249,115,22,0.8)]' : 'opacity-80'}`
               }
             >
-              <Editable keyName={item.key}>{item.label}</Editable>
+              <Editable 
+                keyName={`menu_label_${item.id}`}
+                className="pointer-events-none"
+              >
+                {item.label}
+              </Editable>
             </NavLink>
           ))}
         </nav>
@@ -517,9 +530,22 @@ export default function Header() {
 
                   {/* Vista Desktop (Dropdown) */}
                   <div className="hidden lg:block p-6">
-                    <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-50 dark:border-slate-800 pb-4 mb-4">
-                      Mi Cotización ({totalItems})
-                    </p>
+                    <div className="flex items-center justify-between border-b border-slate-50 dark:border-slate-800 pb-4 mb-4">
+                      <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                        Mi Cotización ({totalItems})
+                      </p>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          clearCart();
+                          toast.success('Carrito vacío');
+                        }}
+                        className="text-[9px] font-bold text-red-400 hover:text-red-500 uppercase tracking-widest flex items-center gap-1.5 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                        Limpiar
+                      </button>
+                    </div>
                                <div className="flex flex-col gap-4 max-h-80 overflow-y-auto custom-scrollbar pr-2 -mx-2 px-2 pb-2">
                        {cartItems.map((item) => {
                          const currentRate = (item.moneda === 'EUR' || item.moneda === 'EUR_ONLY') ? (eurRate || 1) : (usdRate || 1);
@@ -701,22 +727,26 @@ export default function Header() {
       {isMenuOpen && (
         <div className="lg:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-8 absolute top-full left-0 w-full shadow-2xl animate-in slide-in-from-top duration-300">
           <nav className="flex flex-col gap-6 font-bold text-slate-600 dark:text-slate-400 uppercase text-sm tracking-widest text-center">
-            {[
-              { to: '/', label: t('nav.home') },
-              { to: '/productos', label: t('nav.productos') },
-              { to: '/servicios', label: t('nav.servicios') },
-              { to: '/nosotros', label: t('nav.nosotros') },
-              { to: '/nosotros#contacto', label: t('nav.contacto') }
-            ].map((item) => (
+            {dynamicMenus.map((item) => (
               <NavLink 
-                key={item.to}
-                to={item.to} 
+                key={item.id}
+                to={item.url} 
                 onClick={() => setIsMenuOpen(false)}
                 className={({ isActive }) => 
-                  `transition-smooth ${isActive ? 'text-accent scale-110' : ''}`
+                  `px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 group ${
+                    isActive 
+                      ? 'bg-accent text-white shadow-lg shadow-accent/20' 
+                      : 'text-slate-600 dark:text-slate-400 hover:text-accent hover:bg-accent/5'
+                  }`
                 }
               >
-                {item.label}
+                <Editable 
+                  keyName={`menu_label_${item.id}`}
+                  className="pointer-events-none"
+                >
+                  {item.label}
+                </Editable>
+                {item.tipo === 'external' && <ExternalLink className="w-3 h-3 opacity-30 group-hover:opacity-100" />}
               </NavLink>
             ))}
             {isAdmin && (

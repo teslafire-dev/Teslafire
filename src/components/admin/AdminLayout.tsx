@@ -79,12 +79,13 @@ export default function AdminLayout() {
   const menuItems = [
     { name: "Dashboard", icon: LayoutDashboard, href: "/admin", permission: true },
     { name: "Órdenes", icon: ShoppingBag, href: "/admin/ordenes", permission: canManageOrders },
-    { name: "Categorías", icon: Tags, href: "/admin/categorias", permission: canManageProducts },
     { name: "Productos", icon: Package, href: "/admin/productos", permission: canManageProducts },
-    { name: "Usuarios", icon: Users, href: "/admin/usuarios", permission: canManageUsers },
+    { name: "Categorías", icon: Tags, href: "/admin/categorias", permission: canManageProducts },
+    { name: "Páginas y Menús", icon: Layout, href: "/admin/menus", permission: canManageSettings },
     { name: "CRM Estratégico", icon: Zap, href: "/admin/crm", permission: canManageUsers },
-    { name: "SEO", icon: Globe, href: "/admin/seo", permission: canManageSettings },
-    { name: "Configuración", icon: Settings, href: "/admin/configuracion", permission: canManageSettings },
+    { name: "Gestión SEO", icon: Globe, href: "/admin/seo", permission: canManageSettings },
+    { name: "Usuarios", icon: Users, href: "/admin/usuarios", permission: canManageUsers },
+    { name: "Ajustes", icon: Settings, href: "/admin/configuracion", permission: canManageSettings },
   ];
 
   return (
@@ -107,7 +108,7 @@ export default function AdminLayout() {
           </div>
         </Link>
 
-        <nav className="flex-1 flex flex-col gap-3 px-8 relative z-10">
+        <nav className="flex-1 flex flex-col gap-3 px-8 relative z-10 overflow-y-auto custom-scrollbar pt-2 pb-10 scroll-smooth">
           {menuItems.map((item) => {
             if (!item.permission) return null;
             const isActive = pathname === item.href;
