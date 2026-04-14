@@ -271,17 +271,17 @@ export default function Servicios() {
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex gap-4"
+            className="flex flex-col gap-3"
           >
-             <div className="hidden md:flex flex-col gap-4 bg-slate-50 dark:bg-slate-900 p-8 rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-xl group hover:border-accent transition-colors">
-                <Settings className="w-8 h-8 text-accent group-hover:rotate-90 transition-transform" />
-                <span className="text-[10px] font-black text-slate-400 group-hover:text-primary-950 dark:group-hover:text-white uppercase tracking-widest text-left">
+             <div className="hidden md:flex items-center gap-6 bg-slate-50 dark:bg-slate-900 px-8 py-4 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-xl group hover:border-accent transition-colors">
+                <Settings className="w-5 h-5 text-accent group-hover:rotate-90 transition-transform" />
+                <span className="text-[9px] font-black text-slate-400 group-hover:text-primary-950 dark:group-hover:text-white uppercase tracking-widest text-left">
                   <Editable keyName="servicios_hero_card1">Soporte Técnico</Editable>
                 </span>
              </div>
-             <div className="hidden md:flex flex-col gap-4 bg-slate-950 p-8 rounded-[3rem] border border-white/5 shadow-2xl group hover:border-accent transition-colors">
-                <CheckCircle2 className="w-8 h-8 text-accent" />
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-left">
+             <div className="hidden md:flex items-center gap-6 bg-slate-950 px-8 py-4 rounded-[2rem] border border-white/5 shadow-2xl group hover:border-accent transition-colors">
+                <CheckCircle2 className="w-5 h-5 text-accent" />
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest text-left">
                   <Editable keyName="servicios_hero_card2">Formación Inpsasel</Editable>
                 </span>
              </div>
