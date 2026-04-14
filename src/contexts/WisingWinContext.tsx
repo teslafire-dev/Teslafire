@@ -22,7 +22,7 @@ export function WisingWinProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
-  const isAdmin = user?.role === 'ADMIN' || user?.email?.includes('admin') || true;
+  const isAdmin = user?.role === 'ADMIN' || user?.email?.includes('admin');
 
   const refreshConfig = async () => {
     try {

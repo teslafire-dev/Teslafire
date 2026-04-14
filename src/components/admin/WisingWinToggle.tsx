@@ -7,8 +7,8 @@ export default function WisingWinToggle() {
   const { isActive, toggleActive } = useWisingWin();
   const { user } = useAuth();
 
-  // Solo mostrar si es admin
-  const isAdmin = user?.role === 'ADMIN' || user?.email?.includes('admin') || true;
+  // Solo mostrar si es admin (estricto para producción)
+  const isAdmin = user?.role === 'ADMIN' || user?.email?.includes('admin');
 
   if (!isAdmin) return null;
 
