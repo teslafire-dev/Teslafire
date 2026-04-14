@@ -14,7 +14,7 @@ import {
   Tags,
   Image as ImageIcon,
   Globe,
-  Zap,
+  BarChart3,
   Layout
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -84,7 +84,8 @@ export default function AdminLayout() {
     { name: "Usuarios", icon: Users, href: "/admin/usuarios", permission: canManageUsers },
     { name: "Productos", icon: Package, href: "/admin/productos", permission: canManageProducts },
     { name: "Categorías", icon: Tags, href: "/admin/categorias", permission: canManageProducts },
-    { name: "CRM Estratégico", icon: Zap, href: "/admin/crm", permission: canManageUsers },
+    { name: "Análisis CRM", icon: BarChart3, href: "/admin/crm", permission: canManageUsers },
+    { name: "Galería Assets", icon: ImageIcon, href: "/admin/galeria", permission: canManageSettings },
     { name: "Gestión SEO", icon: Globe, href: "/admin/seo", permission: canManageSettings },
     { name: "Ajustes", icon: Settings, href: "/admin/configuracion", permission: canManageSettings },
   ];

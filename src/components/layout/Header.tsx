@@ -1,5 +1,5 @@
 import { Link, useNavigate, NavLink, useLocation } from "react-router-dom";
-import { Search, ShoppingCart, User, Menu, X, LogOut, Sun, Moon, Languages, ExternalLink } from "lucide-react";
+import { Search, ShoppingCart, User, Menu, X, LogOut, Sun, Moon, Languages, ExternalLink, ChevronDown } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Editable } from "../admin/Editable";
 import { supabase } from "@/lib/supabase/client";
@@ -34,6 +34,8 @@ export default function Header() {
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   const { pathname } = useLocation();
+
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   // AUTO-OPEN ON ADD
   const prevTotalRef = useRef(totalItems);
@@ -172,6 +174,12 @@ export default function Header() {
     fetchMenus();
   }, []);
 
+  // Tree Logic for Dropdowns
+  const menuTree = dynamicMenus.filter(m => !m.parent_id).map(parent => ({
+    ...parent,
+    children: dynamicMenus.filter(child => child.parent_id === parent.id)
+  }));
+
   // Presence Tracking
   useEffect(() => {
     let visitorId = localStorage.getItem('dobell_visitor_id');
@@ -286,7 +294,7 @@ export default function Header() {
         : 'bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl py-4'
     } border-b border-slate-100 dark:border-slate-800`}>
       <div className="container mx-auto px-4 h-20 flex items-center justify-between">
-        {/* Logo dinámico (Claro/Oscuro) */}
+        {/* Logo dinámico */}
         <Link to="/" className="flex items-center group h-16 relative">
           <AnimatePresence mode="wait">
             {(config.site_logo || config.site_logo_dark) ? (
@@ -304,24 +312,62 @@ export default function Header() {
           </AnimatePresence>
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center gap-10 ml-16 font-bold text-slate-600 dark:text-slate-400 transition-standard uppercase text-xs tracking-widest">
-          {dynamicMenus.map((item) => (
-            <NavLink 
-              key={item.id}
-              to={item.url} 
-              className={({ isActive }) => 
-                `relative hover:text-accent transition-standard ${isActive ? 'text-accent opacity-100 after:absolute after:bottom-[-2px] after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-accent after:rounded-full after:shadow-[0_0_12px_rgba(249,115,22,0.8)]' : 'opacity-80'}`
-              }
-            >
-              <Editable 
-                keyName={`menu_label_${item.id}`}
-                className="pointer-events-none"
+        {/* Desktop Navigation with Submenus */}
+        <nav className="hidden lg:flex items-center gap-8 ml-16 font-bold text-slate-600 dark:text-slate-400 uppercase text-[10px] tracking-widest h-full">
+          {menuTree.map((item) => {
+            const hasChildren = item.children && item.children.length > 0;
+            return (
+              <div 
+                key={item.id} 
+                className="relative h-full flex items-center"
+                onMouseEnter={() => {
+                  setActiveDropdown(item.id);
+                  const win = window as any;
+                  if (win.headerTimeout) clearTimeout(win.headerTimeout);
+                }}
+                onMouseLeave={() => {
+                  const win = window as any;
+                  win.headerTimeout = setTimeout(() => setActiveDropdown(null), 200);
+                }}
               >
-                {item.label}
-              </Editable>
-            </NavLink>
-          ))}
+                <NavLink 
+                  to={item.url} 
+                  className={({ isActive }) => 
+                    `relative h-full flex items-center gap-1.5 hover:text-accent transition-all ${isActive ? 'text-accent opacity-100' : 'opacity-80'}`
+                  }
+                >
+                  <Editable keyName={`menu_label_${item.id}`} className="pointer-events-none">
+                    {(lang === 'EN' && item.label_en) ? item.label_en : item.label}
+                  </Editable>
+                  {hasChildren && <ChevronDown className={`w-3 h-3 transition-transform ${activeDropdown === item.id ? 'rotate-180' : ''}`} />}
+                </NavLink>
+
+                {/* Submenu Dropdown */}
+                <AnimatePresence>
+                  {hasChildren && activeDropdown === item.id && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute top-full left-0 mt-0 w-64 bg-white dark:bg-slate-900 shadow-2xl rounded-b-[2.5rem] border border-slate-100 dark:border-slate-800 p-4 z-[100] animate-in slide-in-from-top-2"
+                    >
+                      <div className="flex flex-col gap-1">
+                        {item.children.map((child: any) => (
+                           <Link
+                             key={child.id}
+                             to={child.url}
+                             className="px-6 py-4 hover:bg-slate-50 dark:hover:bg-white/5 rounded-2xl text-slate-500 hover:text-accent transition-all text-xs font-black uppercase tracking-tighter"
+                           >
+                              {(lang === 'EN' && child.label_en) ? child.label_en : child.label}
+                           </Link>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
         </nav>
 
         {/* Search & Actions */}
@@ -335,452 +381,87 @@ export default function Header() {
               placeholder={t('search.placeholder')}
               className="w-full bg-slate-100/50 dark:bg-slate-800/50 border border-transparent rounded-2xl py-2.5 pl-11 pr-4 text-xs font-bold focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-accent outline-none transition-smooth shadow-inner dark:text-slate-100 uppercase tracking-wider"
             />
-            
-            {/* Search Results Dropdown */}
-            <AnimatePresence>
-              {searchResults.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden z-[60]"
-                >
-                  <div className="max-h-[380px] overflow-y-auto p-2">
-                    <p className="px-4 py-2 text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-50 dark:border-slate-800 mb-1">Resultados encontrados</p>
-                    {searchResults.map((prod) => (
-                      <Link
-                        key={prod.id}
-                        to={`/productos/${prod.slug || prod.id}`}
-                        onClick={() => {
-                          setSearchQuery("");
-                          setSearchResults([]);
-                        }}
-                        className="flex items-center gap-4 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-smooth group"
-                      >
-                        <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden flex-shrink-0">
-                          <img 
-                            src={prod.imagenes_urls?.[0] || '/placeholder-product.png'} 
-                            alt={prod.nombre}
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-[11px] font-black text-primary-950 dark:text-white uppercase truncate tracking-tight group-hover:text-accent transition-colors">
-                            {(lang === 'EN' && prod.nombre_en) ? prod.nombre_en : prod.nombre}
-                          </span>
-                          <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">SKU: {prod.sku}</span>
-                        </div>
-                      </Link>
-                    ))}
-                    <Link 
-                      to="/productos" 
-                      onClick={() => setSearchResults([])}
-                      className="block text-center py-3 text-[9px] font-black text-accent uppercase tracking-widest hover:bg-accent/5 transition-smooth mt-1 rounded-xl"
-                    >
-                      Ver todos los productos
-                    </Link>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
           
           <div className="flex items-center gap-1.5 p-1 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
-            {/* Live Count (Admin only) */}
+             {/* Admin Live Count */}
             {isAdmin && (
               <div className="relative" ref={liveRef}>
-                <button 
-                  onClick={() => setIsLiveDropdownOpen(!isLiveDropdownOpen)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl border shadow-sm mr-1 transition-smooth active:scale-95 ${
-                    isLiveDropdownOpen ? 'bg-primary-950 text-white border-primary-950' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-700'
-                  }`}
-                >
-                  <span className="relative flex h-2.5 w-2.5">
+                <button onClick={() => setIsLiveDropdownOpen(!isLiveDropdownOpen)} className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-smooth ${isLiveDropdownOpen ? 'bg-primary-950 text-white' : 'bg-white dark:bg-slate-900'}`}>
+                  <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                   </span>
-                  <span className="text-[9px] font-black uppercase tracking-widest flex items-center gap-1">
-                    {onlineCount} <span className={isLiveDropdownOpen ? 'text-accent' : 'text-slate-400 dark:text-slate-500'}>Live</span>
-                  </span>
+                  <span className="text-[9px] font-black uppercase">{onlineCount}</span>
                 </button>
-
-                {/* Live Users Dropdown */}
-                <AnimatePresence>
-                  {isLiveDropdownOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.9, y: 10 }}
-                      className="absolute top-full left-0 mt-3 w-72 bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl border border-slate-50 dark:border-slate-800 p-2 z-[100] overflow-hidden"
-                    >
-                      <div className="px-4 py-3 border-b border-slate-50 dark:border-slate-800 mb-2">
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Tráfico en Tiempo Real</p>
-                      </div>
-                      <div className="flex flex-col gap-1 max-h-64 overflow-y-auto pr-1">
-                        {onlineUsers.map((u, i) => (
-                          <div key={i} className="flex flex-col p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-smooth border border-transparent hover:border-slate-100">
-                             <div className="flex items-center justify-between">
-                               <span className="text-[10px] font-black text-primary-950 dark:text-white uppercase truncate max-w-[150px]">
-                                 {u.email && u.email !== 'Visitante' ? u.email : 'Visitante Anónimo'}
-                               </span>
-                               <span className="text-[8px] font-bold text-green-500 uppercase tracking-widest">Activo</span>
-                             </div>
-                             <span className="text-[9px] font-bold text-slate-400 mt-1 font-mono tracking-tighter bg-slate-100 dark:bg-slate-950 px-2 py-0.5 rounded w-fit">
-                               {!u.ip || u.ip === '0.0.0.0' ? 'IP Protegida/VPN' : u.ip}
-                             </span>
-                          </div>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </div>
             )}
             
-            <button 
-              onClick={toggleDarkMode}
-              className="p-2.5 rounded-xl transition-smooth hover:bg-white dark:hover:bg-slate-700 hover:text-primary-950 dark:hover:text-white text-slate-400 active:scale-90"
-              title="Alternar Tema"
-            >
+            <button onClick={toggleDarkMode} className="p-2.5 rounded-xl text-slate-400 hover:text-accent transition-smooth">
               {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
-            <div className="w-px h-4 bg-slate-200 dark:bg-slate-700"></div>
-            <button 
-              onClick={toggleLanguage}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl transition-smooth hover:bg-white dark:hover:bg-slate-700 hover:text-primary-950 dark:hover:text-white text-slate-400 active:scale-90"
-              title="Cambiar Idioma"
-            >
-              <Languages className="w-4 h-4" />
-              <span className="text-[9px] font-black uppercase">{lang}</span>
+            <button onClick={toggleLanguage} className="flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-accent font-black uppercase text-[9px]">
+               <Languages className="w-4 h-4" /> {lang}
             </button>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
-          <div 
-            className="relative"
-            onMouseEnter={() => setIsMiniCartOpen(true)}
-            onMouseLeave={() => setIsMiniCartOpen(false)}
-          >
-            <motion.div
-              key={totalItems}
-              initial={totalItems > 0 ? { scale: 1.2 } : {}}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 500, damping: 15 }}
-            >
-              <Link 
-                to="/carrito" 
-                className={`relative flex items-center justify-center p-3 rounded-2xl transition-smooth shadow-inner border border-transparent ${
-                  totalItems > 0 
-                    ? 'bg-accent text-white shadow-accent/20 border-accent/20' 
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                }`}
-              >
+          <div className="relative">
+              <Link to="/carrito" className={`p-3 rounded-2xl transition-smooth flex items-center justify-center relative ${totalItems > 0 ? 'bg-accent text-white' : 'bg-slate-100 text-slate-400'}`}>
                 <ShoppingCart className="w-6 h-6" />
-                <AnimatePresence>
-                  {totalItems > 0 && (
-                    <motion.span 
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
-                      className="absolute -top-1 -right-1 bg-destructive text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-800 shadow-md"
-                    >
-                      {totalItems}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
+                {totalItems > 0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center">{totalItems}</span>}
               </Link>
-            </motion.div>
-
-            <AnimatePresence>
-              {(isMiniCartOpen && totalItems > 0 && pathname !== '/carrito') && (
-                <motion.div
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className={`fixed lg:absolute top-full lg:top-full left-0 lg:left-auto right-0 lg:mt-4 w-full lg:w-80 bg-white dark:bg-slate-900 shadow-2xl lg:rounded-[2.5rem] border-b lg:border border-slate-100 dark:border-slate-800 overflow-hidden z-[100]`}
-                >
-                  {/* Vista Mobile (Sub-Header deslizable) */}
-                  <div className="lg:hidden flex items-center p-4 bg-slate-50 dark:bg-slate-800/50 gap-4">
-                    <div className="flex-1 flex gap-3 overflow-x-auto no-scrollbar scroll-smooth py-1">
-                      {cartItems.map((item) => (
-                        <Link 
-                          key={item.id} 
-                          to={`/productos/${item.slug}`}
-                          onClick={() => setIsMiniCartOpen(false)}
-                          className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 flex-shrink-0 border border-slate-100 dark:border-slate-700 overflow-hidden shadow-sm relative"
-                        >
-                          <img src={item.image} className="w-full h-full object-contain" />
-                          {item.quantity > 1 && (
-                            <div className="absolute top-0 right-0 bg-accent text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-white">
-                              {item.quantity}
-                            </div>
-                          )}
-                        </Link>
-                      ))}
-                    </div>
-                    <Link 
-                      to="/carrito" 
-                      onClick={() => setIsMiniCartOpen(false)}
-                      className="bg-primary-950 text-white px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-primary-950/20 active:scale-95 whitespace-nowrap"
-                    >
-                      Ver Carrito
-                    </Link>
-                  </div>
-
-                  {/* Vista Desktop (Dropdown) */}
-                  <div className="hidden lg:block p-6">
-                    <div className="flex items-center justify-between border-b border-slate-50 dark:border-slate-800 pb-4 mb-4">
-                      <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                        Mi Cotización ({totalItems})
-                      </p>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          clearCart();
-                          toast.success('Carrito vacío');
-                        }}
-                        className="text-[9px] font-bold text-red-400 hover:text-red-500 uppercase tracking-widest flex items-center gap-1.5 transition-colors"
-                      >
-                        <X className="w-3 h-3" />
-                        Limpiar
-                      </button>
-                    </div>
-                               <div className="flex flex-col gap-4 max-h-80 overflow-y-auto custom-scrollbar pr-2 -mx-2 px-2 pb-2">
-                       {cartItems.map((item) => {
-                         const currentRate = (item.moneda === 'EUR' || item.moneda === 'EUR_ONLY') ? (eurRate || 1) : (usdRate || 1);
-                         const unitPrice = Number(item.price) || 0;
-                         const lineTotal = unitPrice * item.quantity;
-                         const showBs = item.moneda !== 'NONE' && item.moneda !== 'USD_ONLY' && item.moneda !== 'EUR_ONLY';
-                         const currencySymbol = (item.moneda === 'EUR' || item.moneda === 'EUR_ONLY') ? 'EUR' : 'USD';
-
-                         return (
-                          <div key={item.id} className="flex gap-4 items-center group/item p-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-2xl transition-smooth">
-                            <Link 
-                              to={`/productos/${item.slug}`}
-                              onClick={() => setIsMiniCartOpen(false)}
-                              className="w-14 h-14 rounded-xl bg-slate-50 dark:bg-slate-800 flex-shrink-0 overflow-hidden border border-slate-100 dark:border-slate-700 p-1 hover:border-accent transition-colors block"
-                            >
-                               <img src={item.image || '/placeholder-product.png'} className="w-full h-full object-contain" />
-                            </Link>
-                            <div className="flex flex-col min-w-0 flex-1">
-                               <div className="flex justify-between items-start gap-2">
-                                 <Link 
-                                   to={`/productos/${item.slug}`}
-                                   onClick={() => setIsMiniCartOpen(false)}
-                                   className="text-[11px] font-black text-primary-950 dark:text-white uppercase truncate tracking-tight leading-tight hover:text-accent transition-colors"
-                                 >
-                                   {item.name}
-                                 </Link>
-                                 <button 
-                                   onClick={() => removeItem(item.id)}
-                                   className="text-slate-300 hover:text-destructive transition-smooth p-1"
-                                 >
-                                   <X className="w-3 h-3" />
-                                 </button>
-                               </div>
-                               <div className="flex items-center justify-between mt-2">
-                                 <div className="flex items-center gap-2 bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-lg p-1">
-                                    <button 
-                                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                      className="w-5 h-5 flex items-center justify-center text-xs font-black text-slate-400 hover:text-accent transition-smooth"
-                                    >
-                                      -
-                                    </button>
-                                    <span className="text-[10px] font-black text-primary-950 dark:text-white w-4 text-center">{item.quantity}</span>
-                                    <button 
-                                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                      className="w-5 h-5 flex items-center justify-center text-xs font-black text-slate-400 hover:text-accent transition-smooth"
-                                    >
-                                      +
-                                    </button>
-                                 </div>
-                                 <div className="flex flex-col items-end">
-                                   <span className="text-[11px] font-black text-accent dark:text-accent-light uppercase tracking-widest">
-                                     {lineTotal.toLocaleString('en-US', { style: 'currency', currency: currencySymbol })}
-                                   </span>
-                                   {showBs && (
-                                     <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter mt-0.5">
-                                       Bs. {(lineTotal * currentRate).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                     </span>
-                                   )}
-                                 </div>
-                               </div>
-                            </div>
-                          </div>
-                         );
-                       })}
-                    </div>
-
-                    <div className="mt-6 pt-6 border-t border-slate-50 dark:border-slate-800">
-                       <Link 
-                        to="/carrito" 
-                        onClick={() => setIsMiniCartOpen(false)}
-                        className="w-full block bg-primary-950 dark:bg-accent text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-center hover:opacity-90 transition-smooth shadow-xl active:scale-95"
-                       >
-                         Ver Carrito
-                       </Link>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
 
           {user ? (
-            <div className="flex items-center gap-3 relative" ref={userMenuRef}>
-              <div className="hidden lg:flex flex-col items-end mr-2">
-                <span className="text-[9px] font-black text-primary-950 dark:text-slate-200 uppercase tracking-tighter leading-none">{nombre_completo || user.email?.split('@')[0]}</span>
-                <span className="text-[8px] font-black text-accent uppercase tracking-widest mt-1">
-                  {role === 'invitado' ? 'Cliente' : role}
-                </span>
-              </div>
-              <button 
-                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className={`p-3 transition-smooth rounded-2xl shadow-inner active:scale-95 ${
-                  isUserMenuOpen 
-                    ? 'bg-primary-950 dark:bg-accent text-white shadow-2xl' 
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-primary-950 dark:hover:text-white'
-                }`}
-                title="Menú de Usuario"
-              >
+            <div className="relative" ref={userMenuRef}>
+              <button onClick={() => setIsUserMenuOpen(!isUserMenuOpen)} className="p-3 bg-slate-100 rounded-2xl text-slate-400 hover:text-primary-950">
                 <User className="w-6 h-6" />
               </button>
-
-              {/* User Dropdown Menu */}
               <AnimatePresence>
                 {isUserMenuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    transition={{ duration: 0.2, ease: "easeOut" }}
-                    className="absolute top-full right-0 mt-4 w-64 bg-white rounded-3xl shadow-2xl border border-slate-50 overflow-hidden z-[100]"
-                  >
-                    <div className="p-2 flex flex-col">
-                      <div className="px-5 py-4 border-b border-slate-50 mb-1">
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Cuenta Activa</p>
-                        <p className="text-xs font-bold text-primary-950 mt-1 truncate">{user.email}</p>
-                      </div>
-                      
-                      <Link 
-                        to="/perfil" 
-                        onClick={() => setIsUserMenuOpen(false)}
-                        className="flex items-center gap-3 px-4 py-3 text-[10px] font-black text-slate-600 hover:bg-slate-50 hover:text-primary-950 rounded-2xl transition-smooth uppercase tracking-widest"
-                      >
-                        <User className="w-4 h-4" />
-                        Mi Perfil
-                      </Link>
-
-                      <Link 
-                        to="/perfil/historial" 
-                        onClick={() => setIsUserMenuOpen(false)}
-                        className="flex items-center gap-3 px-4 py-3 text-[10px] font-black text-slate-600 hover:bg-slate-50 hover:text-primary-950 rounded-2xl transition-smooth uppercase tracking-widest"
-                      >
-                        <ShoppingCart className="w-4 h-4" />
-                        Mis Reservas
-                      </Link>
-
-                      {isAdmin && (
-                        <Link 
-                          to="/admin" 
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-3 text-[10px] font-black text-slate-600 hover:bg-primary-950 hover:text-white rounded-2xl transition-smooth uppercase tracking-widest bg-slate-50 mt-1"
-                        >
-                          <Menu className="w-4 h-4" />
-                          Panel Admin
-                        </Link>
-                      )}
-
-                      <div className="h-px bg-slate-50 my-1 mx-2"></div>
-
-                      <button 
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-[10px] font-black text-destructive hover:bg-destructive/5 hover:text-destructive transition-smooth rounded-2xl uppercase tracking-widest"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        Cerrar Sesión
-                      </button>
-                    </div>
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute top-full right-0 mt-4 w-64 bg-white rounded-3xl shadow-2xl border border-slate-50 p-2 z-[100]">
+                    <Link to="/perfil" className="block px-4 py-3 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50">Perfil</Link>
+                    {isAdmin && <Link to="/admin" className="block px-4 py-3 text-[10px] font-black uppercase text-accent hover:bg-accent/5">Panel Admin</Link>}
+                    <button onClick={handleLogout} className="w-full text-left px-4 py-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50">Salir</button>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
           ) : (
-            <button 
-              onClick={() => setShowLoginModal(true)}
-              className="p-3 bg-slate-900 text-white rounded-2xl hover:bg-slate-800 transition-smooth shadow-lg active:scale-95"
-            >
-              <User className="w-6 h-6" />
-            </button>
+            <button onClick={() => setShowLoginModal(true)} className="p-3 bg-slate-900 text-white rounded-2xl"><User className="w-6 h-6" /></button>
           )}
-          <button 
-            className="lg:hidden p-2 text-slate-600"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
+
+          <button className="lg:hidden p-2 text-slate-600" onClick={() => setIsMenuOpen(!isMenuOpen)}>
             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      {isMenuOpen && (
-        <div className="lg:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-8 absolute top-full left-0 w-full shadow-2xl animate-in slide-in-from-top duration-300">
-          <nav className="flex flex-col gap-6 font-bold text-slate-600 dark:text-slate-400 uppercase text-sm tracking-widest text-center">
-            {dynamicMenus.map((item) => (
-              <NavLink 
-                key={item.id}
-                to={item.url} 
-                onClick={() => setIsMenuOpen(false)}
-                className={({ isActive }) => 
-                  `px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 group ${
-                    isActive 
-                      ? 'bg-accent text-white shadow-lg shadow-accent/20' 
-                      : 'text-slate-600 dark:text-slate-400 hover:text-accent hover:bg-accent/5'
-                  }`
-                }
-              >
-                <Editable 
-                  keyName={`menu_label_${item.id}`}
-                  className="pointer-events-none"
-                >
-                  {item.label}
-                </Editable>
-                {item.tipo === 'external' && <ExternalLink className="w-3 h-3 opacity-30 group-hover:opacity-100" />}
-              </NavLink>
-            ))}
-            {isAdmin && (
-              <Link to="/admin" className="text-accent underline underline-offset-8 decoration-accent/30" onClick={() => setIsMenuOpen(false)}>
-                {t('admin.panel')}
-              </Link>
-            )}
+      {/* Mobile Menu with logic */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="lg:hidden bg-white border-t border-slate-100 overflow-hidden">
+             <nav className="flex flex-col p-6 gap-4">
+                {menuTree.map(item => (
+                   <div key={item.id} className="flex flex-col gap-2">
+                      <Link to={item.url} onClick={() => setIsMenuOpen(false)} className="text-sm font-black uppercase text-primary-950 tracking-widest">{item.label}</Link>
+                      <div className="flex flex-col pl-4 border-l border-slate-100 gap-3 mt-2">
+                        {item.children.map((child: any) => (
+                          <Link key={child.id} to={child.url} onClick={() => setIsMenuOpen(false)} className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                            {child.label}
+                          </Link>
+                        ))}
+                      </div>
+                   </div>
+                ))}
+             </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-            {/* Mobile Controls */}
-            <div className="flex items-center justify-center gap-4 pt-8 border-t border-slate-100 dark:border-slate-800">
-               <button 
-                  onClick={toggleDarkMode}
-                  className="flex-1 flex items-center justify-center gap-3 bg-slate-50 dark:bg-slate-800 py-4 rounded-2xl text-[10px] font-black text-slate-400"
-               >
-                  {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                  {isDarkMode ? 'MODO LUZ' : 'MODO OSCURO'}
-               </button>
-               <button 
-                  onClick={toggleLanguage}
-                  className="flex-1 flex items-center justify-center gap-3 bg-slate-50 dark:bg-slate-800 py-4 rounded-2xl text-[10px] font-black text-slate-400"
-               >
-                  <Languages className="w-4 h-4" />
-                  {lang}
-               </button>
-            </div>
-          </nav>
-        </div>
-      )}
-
-      {/* Login Modal */}
-      <LoginModal 
-        isOpen={showLoginModal} 
-        onClose={() => setShowLoginModal(false)} 
-      />
+      <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
     </header>
   );
 }

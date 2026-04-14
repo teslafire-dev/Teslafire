@@ -9,7 +9,6 @@ import {
   CheckCircle2, 
   Clock, 
   ShoppingCart, 
-  Zap,
   TrendingUp,
   AlertCircle,
   X,
@@ -21,7 +20,8 @@ import {
   MousePointer2,
   MailOpen,
   AlertTriangle,
-  Loader2
+  Loader2,
+  Activity
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
@@ -235,7 +235,7 @@ export default function AdminCRM() {
     { label: "Base de Datos", value: customers.length, icon: Users, color: "bg-blue-50 text-blue-600" },
     { label: "Aceptan Marketing", value: customers.filter(c => (c as any).acepta_marketing).length || 0, icon: CheckCircle2, color: "bg-indigo-50 text-indigo-600" },
     { label: "Ventas de Hoy", value: customers.filter(c => format(new Date(c.ultima_interaccion), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')).length, icon: TrendingUp, color: "bg-green-50 text-green-600" },
-    { label: "Tasa Conversión", value: customers.length > 0 ? `${((customers.filter(c => c.segmento === 'completado').length / customers.length) * 100).toFixed(1)}%` : "0%", icon: Zap, color: "bg-purple-50 text-purple-600" }
+    { label: "Tasa Conversión", value: customers.length > 0 ? `${((customers.filter(c => c.segmento === 'completado').length / customers.length) * 100).toFixed(1)}%` : "0%", icon: Activity, color: "bg-purple-50 text-purple-600" }
   ];
 
   return (
@@ -244,7 +244,7 @@ export default function AdminCRM() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div className="flex flex-col gap-2">
            <div className="flex items-center gap-3 text-accent font-black uppercase text-[10px] tracking-[0.4em] font-outfit">
-              <Zap className="w-3 h-3 animate-pulse" /> Estrategia de Crecimiento
+              <TrendingUp className="w-3 h-3" /> Estrategia de Crecimiento
            </div>
            <h1 className="text-4xl md:text-5xl font-black font-outfit text-primary-950 uppercase tracking-tighter leading-none">Centro de CRM</h1>
            <p className="text-slate-500 font-medium tracking-wide">Gestión de audiencias y campañas de anuncios técnicos.</p>

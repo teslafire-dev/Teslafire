@@ -1,3 +1,4 @@
+import { useLocation } from "react-router-dom";
 import { Zap, Lock, Settings2, Eye } from "lucide-react";
 import { useWisingWin } from "@/contexts/WisingWinContext";
 import { useAuth } from '@/hooks/useAuth';
@@ -6,11 +7,15 @@ import { motion, AnimatePresence } from "framer-motion";
 export default function WisingWinToggle() {
   const { isActive, toggleActive } = useWisingWin();
   const { user } = useAuth();
+  const { pathname } = useLocation();
 
-  // Solo mostrar si es admin (estricto para producción)
+  // Ocultar si estamos en el panel de administración
+  const isAdminPath = pathname.startsWith('/admin');
+
+  // Solo mostrar si es admin y NO estamos en la ruta de administración
   const isAdmin = user?.role === 'ADMIN' || user?.email?.includes('admin');
 
-  if (!isAdmin) return null;
+  if (!isAdmin || isAdminPath) return null;
 
   return (
     <div className="fixed bottom-8 left-8 z-[1000] flex flex-col gap-4">
