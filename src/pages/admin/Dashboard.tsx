@@ -18,7 +18,8 @@ import {
   MousePointer2,
   RefreshCcw,
   Activity,
-  TrendingUp
+  TrendingUp,
+  History
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase/client";
@@ -47,6 +48,11 @@ export default function AdminDashboard() {
   });
   const [abandonedCarts, setAbandonedCarts] = useState<any[]>([]);
   const [abandonedLoading, setAbandonedLoading] = useState(false);
+  
+  // Historial de Tasas
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [ratesHistory, setRatesHistory] = useState<any[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -123,6 +129,34 @@ export default function AdminDashboard() {
       console.error("Error fetching abandoned carts:", err);
     } finally {
       setAbandonedLoading(false);
+    }
+  };
+
+  const fetchRatesHistory = async () => {
+    setHistoryLoading(true);
+    try {
+      const { data } = await supabase
+        .from('historial_tasas')
+        .select('*')
+        .order('fecha', { ascending: false })
+        .limit(10);
+      setRatesHistory(data || []);
+    } catch (err) {
+      console.error("Error fetching rates history:", err);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const handleManualRateRecord = async () => {
+    const toastId = toast.loading("Registrando tasa de hoy...");
+    try {
+      const { data, error } = await supabase.functions.invoke('save-daily-rates');
+      if (error) throw error;
+      toast.success("Tasa registrada exitosamente", { id: toastId });
+      fetchRatesHistory();
+    } catch (err: any) {
+      toast.error(err.message || "Error al registrar tasa", { id: toastId });
     }
   };
 
@@ -222,9 +256,17 @@ export default function AdminDashboard() {
       <div className="bg-primary-950 p-10 rounded-[4rem] shadow-2xl text-white flex flex-col md:flex-row md:items-center justify-between gap-8 overflow-hidden relative border border-white/5">
         <div className="absolute top-0 right-0 w-64 h-64 bg-accent/10 rounded-full -mr-32 -mt-32 blur-[100px]"></div>
         <div className="flex flex-col gap-3 relative z-10">
-          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-accent flex items-center gap-3">
-            <RefreshCcw className={`w-3.5 h-3.5 ${currencyLoading ? 'animate-spin' : ''}`} /> Monitor de Cambio BCV
-          </span>
+          <div className="flex items-center gap-4">
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-accent flex items-center gap-3">
+              <RefreshCcw className={`w-3.5 h-3.5 ${currencyLoading ? 'animate-spin' : ''}`} /> Monitor de Cambio BCV
+            </span>
+            <button 
+              onClick={() => { setIsHistoryOpen(true); fetchRatesHistory(); }}
+              className="bg-white/10 hover:bg-white/20 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-smooth"
+            >
+              <History className="w-3 h-3" /> Ver Historial
+            </button>
+          </div>
           <h3 className="text-3xl font-black uppercase tracking-tighter leading-none font-outfit">Tasa Activa del Sistema</h3>
           <p className="text-sm text-slate-400 font-medium tracking-wide">Incluye el valor BCV oficial más tus ajustes fijos ("markup").</p>
         </div>
@@ -580,6 +622,85 @@ export default function AdminDashboard() {
            </div>
         </div>
       </div>
+      {/* Rates History Modal */}
+      <AnimatePresence>
+        {isHistoryOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsHistoryOpen(false)}
+              className="absolute inset-0 bg-primary-950/80 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-2xl bg-white rounded-[4rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+            >
+              <div className="p-10 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                <div className="flex flex-col gap-1">
+                  <h3 className="text-2xl font-black font-outfit text-primary-950 uppercase tracking-tighter">Historial de Tasas</h3>
+                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Registros Diarios Guardados</span>
+                </div>
+                <button 
+                  onClick={handleManualRateRecord}
+                  className="bg-accent text-white px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:brightness-110 transition-smooth shadow-lg shadow-accent/20"
+                >
+                  Registrar Hoy Manualmente
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-10">
+                {historyLoading ? (
+                  <div className="flex flex-col items-center justify-center py-20 gap-4">
+                    <Loader2 className="w-8 h-8 animate-spin text-accent" />
+                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Consultando Historial...</span>
+                  </div>
+                ) : ratesHistory.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-20 gap-4 text-slate-300">
+                    <History className="w-12 h-12" />
+                    <p className="text-sm font-black uppercase tracking-tighter">No hay registros aún técnicos.</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    {ratesHistory.map((entry, idx) => (
+                      <div key={idx} className="bg-slate-50 border border-slate-100 p-6 rounded-3xl flex items-center justify-between group hover:border-accent transition-smooth">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest leading-none">
+                            {format(new Date(entry.fecha), 'EEEE, dd MMMM yyyy', { locale: es })}
+                          </span>
+                          <span className="text-sm font-black text-primary-950 uppercase tracking-tight">Registro Diario Sincronizado</span>
+                        </div>
+                        <div className="flex items-center gap-8">
+                          <div className="flex flex-col items-end">
+                            <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest">USD FINAL</span>
+                            <span className="text-xl font-black font-outfit text-primary-950 tracking-tighter">Bs. {Number(entry.usd_final).toFixed(2)}</span>
+                          </div>
+                          <div className="flex flex-col items-end">
+                            <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest">EUR FINAL</span>
+                            <span className="text-xl font-black font-outfit text-accent tracking-tighter">Bs. {Number(entry.eur_final).toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="p-8 bg-slate-50 border-t border-slate-100 flex justify-center">
+                <button 
+                  onClick={() => setIsHistoryOpen(false)}
+                  className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] hover:text-primary-950 transition-smooth"
+                >
+                  [ CERRAR VENTANA ]
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

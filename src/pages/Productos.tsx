@@ -118,7 +118,14 @@ export default function Productos() {
   };
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pt-32 md:pt-40 pb-40 relative transition-colors duration-500">
+    <div className="bg-slate-50 dark:bg-slate-950 min-h-screen relative transition-colors duration-500">
+      {/* Dynamic Blue Header Cut */}
+      <div className="absolute top-0 left-0 right-0 h-72 md:h-96 bg-primary diagonal-cut z-0 pointer-events-none">
+        {/* Subtle Industrial Overlay */}
+        <div className="absolute inset-0 industrial-dots opacity-40"></div>
+      </div>
+
+      <div className="relative z-10 pt-36 md:pt-48 pb-40">
       {/* Mobile Filters Drawer */}
       <AnimatePresence>
         {isMobileFilterOpen && (
@@ -160,15 +167,15 @@ export default function Productos() {
           <div className="flex-1 flex flex-col gap-10">
             {/* Catalog Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-              <div className="flex flex-col gap-3">
-                <h1 className="text-4xl md:text-6xl font-black font-outfit text-primary-950 dark:text-white uppercase tracking-tighter leading-none">
+              <div className="flex flex-col gap-3 relative z-10">
+                <h1 className="text-4xl md:text-6xl font-black font-outfit text-white uppercase tracking-tighter leading-none drop-shadow-md">
                    {t('catalog.title').split(' ').map((word, i) => (
                       word === 'Productos' || word === 'Products' 
                       ? <span key={i} className="text-accent underline decoration-4 decoration-accent/20 underline-offset-8 transition-smooth" style={{ textDecorationThickness: '6px' }}>{word}</span> 
                       : word + ' '
                    ))}
                 </h1>
-                <p className="text-slate-500 dark:text-slate-400 font-medium tracking-wide">
+                <p className="text-slate-100/90 font-medium tracking-wide">
                    {t('catalog.showing_results').replace('{count}', products.length.toString())}
                 </p>
               </div>
@@ -280,6 +287,7 @@ export default function Productos() {
             )}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

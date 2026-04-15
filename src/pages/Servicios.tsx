@@ -240,10 +240,15 @@ export default function Servicios() {
   ];
 
   return (
-    <div className="flex flex-col gap-20 pt-44 pb-32 bg-white dark:bg-slate-950 transition-colors duration-500 overflow-hidden text-left">
+    <div className="flex flex-col gap-20 pb-32 bg-white dark:bg-slate-950 transition-colors duration-500 overflow-hidden text-left relative">
       
+      {/* Dynamic Blue Header Cut */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-primary diagonal-cut z-0 pointer-events-none">
+        <div className="absolute inset-0 industrial-dots opacity-40"></div>
+      </div>
+
       {/* Hero Header */}
-      <section className="container mx-auto px-6 relative">
+      <section className="container mx-auto px-6 relative z-10 pt-44">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-12">
           <motion.div 
             initial={{ opacity: 0, x: -50 }}
@@ -255,14 +260,14 @@ export default function Servicios() {
                 Ingeniería en Seguridad
               </Editable>
             </div>
-            <h1 className="text-6xl md:text-8xl font-black text-primary-950 dark:text-white leading-[0.9] tracking-tighter font-outfit uppercase">
+            <h1 className="text-6xl md:text-8xl font-black text-white leading-[0.9] tracking-tighter font-outfit uppercase drop-shadow-lg">
               <Editable keyName="servicios_hero_title_top" as="span">Servicios</Editable> <br />
               <Editable keyName="servicios_hero_title_accent" as="span" className="text-accent underline decoration-8 decoration-accent/10 underline-offset-[12px]">Certificados</Editable>
             </h1>
             <Editable 
               keyName="servicios_hero_subtitle" 
               as="p" 
-              className="text-xl text-slate-500 dark:text-slate-400 leading-relaxed font-medium mt-4 max-w-xl" 
+              className="text-xl text-slate-100/80 leading-relaxed font-medium mt-4 max-w-xl" 
             >
               Ofrecemos asesoramiento técnico integral y programas de capacitación especializada para garantizar la máxima seguridad en sus operaciones industriales.
             </Editable>

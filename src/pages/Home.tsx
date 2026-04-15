@@ -132,15 +132,21 @@ export default function Home() {
     <div className="flex flex-col gap-12 md:gap-24 overflow-hidden dark:bg-slate-950 transition-colors duration-500 bg-grid-slate-900/[0.05] dark:bg-grid-white/[0.02] text-left">
       
       {/* Hero Section - REDESIGNED FOR IMPACT & SPACE */}
-      <section className="relative min-h-[95vh] flex flex-col bg-primary-950 overflow-hidden">
+      <section className="relative min-h-[95vh] flex flex-col bg-primary overflow-hidden diagonal-cut pb-32">
         <div className="absolute inset-0 z-0">
           <motion.img 
             style={{ y: y2 }}
             src={t('home.hero.imagen_url')} 
             alt={t('home.hero.tag')} 
-            className="w-full h-full object-cover brightness-[0.22] scale-110" 
+            className="w-full h-full object-cover brightness-[0.7] scale-110" 
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-primary-950 via-primary-950/40 to-primary-950/20"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-primary-950/70 via-primary-950/30 to-transparent"></div>
+          
+          {/* Industrial Texture Layer - Dark Tactical Dots */}
+          <div className="absolute inset-0 industrial-dots-dark opacity-25"></div>
+
+          {/* Decorative Security Stripe (Light Blue) */}
+          <div className="absolute left-0 top-1/4 bottom-1/4 w-1.5 bg-blue-400 shadow-[0_0_20px_rgba(93,167,219,0.5)] z-20 rounded-r-full"></div>
           
           {/* Decorative Glows */}
           <div className="absolute top-1/4 -left-20 w-[500px] h-[500px] bg-accent/10 rounded-full blur-[160px] animate-pulse"></div>
@@ -176,14 +182,19 @@ export default function Home() {
                   <Editable 
                     keyName="home_hero_subtitle" 
                     as="p" 
-                    className="text-lg md:text-xl text-slate-300 leading-relaxed font-medium tracking-wide max-w-xl border-l-4 border-accent pl-8 bg-gradient-to-r from-accent/5 to-transparent py-2" 
+                    className="text-lg md:text-xl text-slate-300 leading-relaxed font-medium tracking-wide max-w-xl border-l-4 border-accent pl-8 bg-gradient-to-r from-accent/5 to-transparent py-2 relative" 
                   >
                     Líderes en Venezuela suministrando soluciones certificadas de seguridad industrial para los sectores petrolero, minero y manufacturero con los más altos estándares mundiales.
+                    {/* Subtle X markers near subtitle */}
+                    <div className="absolute -bottom-10 right-0 grid grid-cols-2 gap-2 text-blue-400/20 font-black text-xs select-none">
+                      <span>X</span><span>X</span>
+                      <span>X</span><span>X</span>
+                    </div>
                   </Editable>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-5">
-                   <Link to="/productos" className="group/btn flex items-center gap-4 bg-[hsl(var(--button-bg,25_95%_53%))] hover:brightness-110 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] transition-all duration-500 shadow-2xl shadow-accent/20 active:scale-95">
+                   <Link to="/productos" className="group/btn flex items-center gap-4 bg-accent hover:brightness-110 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] transition-all duration-500 shadow-2xl shadow-accent/20 active:scale-95">
                       {t('home.hero.cta.catalog') || 'Explorar Catálogo'}
                       <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-2 transition-smooth" />
                    </Link>
@@ -200,7 +211,13 @@ export default function Home() {
                 transition={{ duration: 1, delay: 0.3 }}
                 className="lg:col-span-5 relative"
               >
-                <div className="relative group rounded-[3.5rem] overflow-hidden border border-white/10 shadow-[0_50px_100px_rgba(0,0,0,0.5)] bg-slate-900 group aspect-[4/3] lg:aspect-square xl:aspect-video">
+                {/* Decorative 2x2 X group markers (perfect match with reference) */}
+                <div className="absolute -top-12 -right-12 grid grid-cols-2 gap-3 text-blue-400 opacity-40 font-black text-2xl select-none hidden lg:grid">
+                  <span>X</span><span>X</span>
+                  <span>X</span><span>X</span>
+                </div>
+                
+                <div className="relative group rounded-[3.5rem] overflow-hidden border border-white/10 shadow-[0_50px_100px_rgba(0,0,0,0.5)] bg-slate-900 group aspect-[4/3] lg:aspect-square xl:aspect-video text-left">
                   <iframe 
                     className="w-full h-full relative z-10 brightness-90 group-hover:brightness-100 transition-all duration-700 scale-105"
                     src={getEmbedUrl(t('hero_video_url'))} 
@@ -209,7 +226,6 @@ export default function Home() {
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                     allowFullScreen
                   ></iframe>
-                  {/* Decorative Glass Overlay on corner */}
                 </div>
                 
                 {/* Visual Weight Under the Video */}
@@ -278,8 +294,11 @@ export default function Home() {
       {/* Featured Products */}
       <motion.section 
         ref={productsSectionRef}
-        className="bg-slate-50 dark:bg-slate-900/50 py-32 rounded-[6rem] mx-4 shadow-inner relative z-10 border border-slate-100 dark:border-slate-800 transition-colors duration-500 scroll-mt-28"
+        className="bg-slate-50 dark:bg-slate-950 pt-48 pb-32 -mt-16 diagonal-top shadow-inner relative z-10 border border-slate-100 dark:border-white/5 transition-colors duration-500 scroll-mt-28 overflow-hidden"
       >
+        {/* Decorative Industrial Pattern background for this section */}
+        <div className="absolute inset-0 industrial-dots-dark opacity-10 pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-80 h-80 bg-accent/5 rounded-full blur-[120px]"></div>
         <div className="container mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
             <div className="flex flex-col gap-6">

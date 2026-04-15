@@ -4,22 +4,20 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
+    /* Paleta Industrial Bold Vibrante - MÁS CLARA */
+    --primary: 215 85% 35%; /* Azul industrial vibrante */
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 25 95% 53%; /* Industrial Orange */
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --accent: 199 89% 48%; /* Azul Eléctrico Vibrante (sustituye al naranja) */
+    --accent-foreground: 0 0% 100%;
+    --safety-blue: 205 60% 60%; /* Azul claro eléctrico para líneas */
+    --harmony-grey: 215 16% 47%; /* Gris Platino para armonía visual */
+    
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
@@ -27,25 +25,55 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 222 47% 11%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 222 47% 11%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
     --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary-foreground: 222 47% 11%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 25 95% 53%;
+    --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+  }
+
+  /* Utilidades de Diseño Industrial */
+  .industrial-dots {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1.5px, transparent 1.5px);
+    background-size: 24px 24px;
+  }
+
+  .industrial-dots-dark {
+    background-image: radial-gradient(rgba(0, 0, 0, 0.1) 1.5px, transparent 1.5px);
+    background-size: 24px 24px;
+  }
+
+  .diagonal-cut {
+    clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+  }
+
+  .diagonal-top {
+    clip-path: polygon(0 15%, 100% 0, 100% 100%, 0 100%);
+  }
+
+  .diagonal-both {
+    clip-path: polygon(0 15%, 100% 0, 100% 85%, 0 100%);
+  }
+
+  .industrial-x {
+    background-image: 
+      linear-gradient(45deg, transparent 48%, rgba(93, 167, 219, 0.2) 48%, rgba(93, 167, 219, 0.2) 52%, transparent 52%),
+      linear-gradient(-45deg, transparent 48%, rgba(93, 167, 219, 0.2) 48%, rgba(93, 167, 219, 0.2) 52%, transparent 52%);
+    background-size: 30px 30px;
   }
 }
 

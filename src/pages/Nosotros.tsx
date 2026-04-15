@@ -181,10 +181,15 @@ export default function Nosotros() {
   ];
 
   return (
-    <div className="flex flex-col gap-8 lg:gap-12 pt-44 pb-20 bg-white dark:bg-slate-950 transition-colors duration-500 overflow-hidden">
+    <div className="flex flex-col gap-8 lg:gap-12 pb-20 bg-white dark:bg-slate-950 transition-colors duration-500 overflow-hidden relative">
       
+      {/* Dynamic Blue Header Cut */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-primary diagonal-cut z-0 pointer-events-none">
+        <div className="absolute inset-0 industrial-dots opacity-40"></div>
+      </div>
+
       {/* Hero Nosotros - Map on the Right Side */}
-      <section className="container mx-auto px-6">
+      <section className="container mx-auto px-6 relative z-10 pt-44">
         <div className="flex flex-col lg:flex-row gap-16 items-center">
           
           {/* Left: Text Content */}
@@ -199,7 +204,7 @@ export default function Nosotros() {
                 Suministro con Valor
               </Editable>
             </div>
-            <h1 className="text-6xl md:text-8xl font-black text-primary-950 dark:text-white leading-[0.9] tracking-tighter font-outfit uppercase mb-6">
+            <h1 className="text-6xl md:text-8xl font-black text-white leading-[0.9] tracking-tighter font-outfit uppercase mb-6 drop-shadow-lg">
               <Editable keyName="nosotros_hero_title_top" as="span">Dobell</Editable> <br />
               <Editable keyName="nosotros_hero_title_bottom" as="span" className="text-accent underline decoration-8 decoration-accent/10 underline-offset-[12px]">
                 Service
@@ -208,7 +213,7 @@ export default function Nosotros() {
             <Editable 
               keyName="nosotros_hero_subtitle" 
               as="p" 
-              className="text-xl text-slate-500 dark:text-slate-400 leading-relaxed max-w-xl font-medium mb-8" 
+              className="text-xl text-slate-100/80 leading-relaxed max-w-xl font-medium mb-8" 
             >
               Suministrar Equipos de Protección Personal de Alta Calidad con asesoramiento técnica integral para los sectores más exigentes de Venezuela.
             </Editable>
