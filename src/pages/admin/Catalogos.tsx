@@ -14,7 +14,10 @@ import {
   FolderOpen,
   Save,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  ShoppingBag,
+  X,
+  CreditCard
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -26,6 +29,7 @@ export default function AdminCatalogos() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [converting, setConverting] = useState(false);
   
   // Selection/Edit State
   const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(null);
@@ -38,6 +42,15 @@ export default function AdminCatalogos() {
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  // Order Conversion Modal State
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [orderClientName, setOrderClientName] = useState('');
+  const [orderClientPhone, setOrderClientPhone] = useState('');
+  const [orderClientEmail, setOrderClientEmail] = useState('');
+  const [orderClientCedula, setOrderClientCedula] = useState('');
+  const [orderStatus, setOrderStatus] = useState<'completada' | 'pendiente'>('completada');
+  const [orderNotes, setOrderNotes] = useState('');
 
   useEffect(() => {
     fetchInitialData();
@@ -373,6 +386,66 @@ export default function AdminCatalogos() {
     document.body.appendChild(script);
   };
 
+  const handleOpenOrderModal = () => {
+    if (selectedProductIds.length === 0) {
+      toast.error("Por favor selecciona al menos un producto para facturar");
+      return;
+    }
+    // Prepare defaults
+    setOrderClientName('');
+    setOrderClientPhone('');
+    setOrderClientEmail('');
+    setOrderClientCedula('');
+    setOrderStatus('completada');
+    setOrderNotes('');
+    setIsOrderModalOpen(true);
+  };
+
+  const handleConvertCatalogToOrder = async () => {
+    setConverting(true);
+    const toastId = toast.loading("Registrando orden...");
+
+    try {
+      const selectedProducts = products.filter(p => selectedProductIds.includes(p.id));
+      const totalAmount = selectedProducts.reduce((sum, p) => sum + Number(p.precio || 0), 0);
+      
+      const orderItems = selectedProducts.map(p => ({
+        id: p.id,
+        nombre: p.nombre,
+        sku: p.sku,
+        precio: Number(p.precio || 0),
+        quantity: 1
+      }));
+
+      const randomLocalizer = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+      const { error } = await supabase
+        .from('ordenes')
+        .insert({
+          localizador: randomLocalizer,
+          cliente_nombre: orderClientName || 'Cliente Verbal / Catálogo',
+          cliente_telefono: orderClientPhone || '',
+          cliente_email: orderClientEmail || '',
+          cliente_cedula: orderClientCedula || '',
+          mensaje: orderNotes || `Orden creada directamente a partir del catálogo: ${catalogTitle}`,
+          productos: orderItems,
+          total: totalAmount,
+          estado: orderStatus, // completada (Pagada) o pendiente (En proceso)
+          acepta_marketing: false
+        });
+
+      if (error) throw error;
+
+      toast.success(`¡Orden #${randomLocalizer} creada con éxito!`, { id: toastId });
+      setIsOrderModalOpen(false);
+    } catch (error: any) {
+      console.error("Error converting catalog to order:", error);
+      toast.error("Error al crear la orden: " + error.message, { id: toastId });
+    } finally {
+      setConverting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-40 gap-4 text-slate-400">
@@ -386,7 +459,7 @@ export default function AdminCatalogos() {
   const allFilteredSelected = filtered.length > 0 && filtered.every(p => selectedProductIds.includes(p.id));
 
   return (
-    <div className="flex flex-col gap-10 max-w-7xl mx-auto w-full pb-24 text-left">
+    <div className="flex flex-col gap-10 max-w-7xl mx-auto w-full pb-24 text-left relative">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-8 rounded-[2.5rem] border border-slate-50 shadow-sm gap-6">
@@ -394,7 +467,7 @@ export default function AdminCatalogos() {
           <h1 className="text-4xl font-black font-outfit text-primary-950 uppercase tracking-tighter">Creador de Catálogos</h1>
           <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mt-1">Crea y edita catálogos personalizados para exportar en PDF.</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <button 
             onClick={handleCreateNewCatalog}
             className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all"
@@ -417,7 +490,16 @@ export default function AdminCatalogos() {
             className="flex items-center gap-3 bg-accent text-white hover:bg-accent/90 px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-accent/20 transition-all disabled:opacity-50"
           >
             {generating ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            Exportar PDF ({selectedProductIds.length})
+            Exportar PDF
+          </button>
+
+          <button 
+            onClick={handleOpenOrderModal}
+            disabled={selectedProductIds.length === 0}
+            className="flex items-center gap-3 bg-emerald-600 text-white hover:bg-emerald-700 px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-emerald-600/20 transition-all disabled:opacity-50"
+          >
+            <ShoppingBag className="w-4 h-4" />
+            Convertir en Orden
           </button>
         </div>
       </div>
@@ -623,6 +705,127 @@ export default function AdminCatalogos() {
         </div>
 
       </div>
+
+      {/* CONVERT TO ORDER MODAL */}
+      {isOrderModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-primary-950/60 backdrop-blur-md" onClick={() => setIsOrderModalOpen(false)}></div>
+          
+          <div className="bg-white rounded-[3rem] shadow-2xl relative w-full max-w-lg overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="p-8 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center">
+                  <CreditCard className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black font-outfit text-primary-950 uppercase tracking-tighter">Convertir en Orden</h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Registra esta venta en el CRM de órdenes</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsOrderModalOpen(false)}
+                className="p-2.5 bg-white border border-slate-200/50 hover:bg-slate-100 rounded-xl transition-all"
+              >
+                <X className="w-5 h-5 text-slate-400" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-8 space-y-5">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Nombre del Cliente</label>
+                  <input 
+                    type="text" 
+                    placeholder="Ej. Juan Pérez"
+                    value={orderClientName}
+                    onChange={(e) => setOrderClientName(e.target.value)}
+                    className="bg-slate-50 p-4 rounded-xl text-xs font-bold focus:bg-white border-none outline-none focus:ring-1 focus:ring-accent"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Cédula / RIF</label>
+                  <input 
+                    type="text" 
+                    placeholder="Ej. V-12345678"
+                    value={orderClientCedula}
+                    onChange={(e) => setOrderClientCedula(e.target.value)}
+                    className="bg-slate-50 p-4 rounded-xl text-xs font-bold focus:bg-white border-none outline-none focus:ring-1 focus:ring-accent"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Teléfono</label>
+                  <input 
+                    type="text" 
+                    placeholder="Ej. +58 412 1234567"
+                    value={orderClientPhone}
+                    onChange={(e) => setOrderClientPhone(e.target.value)}
+                    className="bg-slate-50 p-4 rounded-xl text-xs font-bold focus:bg-white border-none outline-none focus:ring-1 focus:ring-accent"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Correo Electrónico</label>
+                  <input 
+                    type="email" 
+                    placeholder="Ej. juan@correo.com"
+                    value={orderClientEmail}
+                    onChange={(e) => setOrderClientEmail(e.target.value)}
+                    className="bg-slate-50 p-4 rounded-xl text-xs font-bold focus:bg-white border-none outline-none focus:ring-1 focus:ring-accent"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Estado de la Orden</label>
+                <select 
+                  value={orderStatus} 
+                  onChange={(e) => setOrderStatus(e.target.value as any)}
+                  className="bg-slate-50 p-4 rounded-xl text-xs font-black uppercase tracking-wider text-slate-500 border-none outline-none focus:ring-1 focus:ring-accent"
+                >
+                  <option value="completada">Completada (Facturado / Pagado)</option>
+                  <option value="pendiente">Pendiente (En Proceso / Espera)</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-black uppercase text-slate-400 ml-1">Mensaje o Notas de Pago</label>
+                <textarea 
+                  rows={3} 
+                  placeholder="Ej. Pago en dólares efectivo, entregado en tienda."
+                  value={orderNotes}
+                  onChange={(e) => setOrderNotes(e.target.value)}
+                  className="bg-slate-50 p-4 rounded-xl text-xs font-bold focus:bg-white border-none resize-none outline-none focus:ring-1 focus:ring-accent"
+                />
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-8 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+              <button 
+                type="button" 
+                onClick={() => setIsOrderModalOpen(false)}
+                className="px-6 py-4 rounded-2xl bg-white border border-slate-200/50 hover:bg-slate-100 text-slate-500 font-black uppercase text-[10px] tracking-widest transition-all"
+              >
+                Cancelar
+              </button>
+              
+              <button 
+                type="button" 
+                onClick={handleConvertCatalogToOrder}
+                disabled={converting}
+                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-emerald-600/20 transition-all disabled:opacity-50"
+              >
+                {converting ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                Registrar Orden
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
