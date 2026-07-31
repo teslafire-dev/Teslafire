@@ -159,7 +159,7 @@ export default function Configuracion() {
     updateProfile 
   } = useAuth();
   
-  const { usdRate, eurRate, loading: currencyLoading } = useCurrency();
+  const { usdRate, eurRate, usdMarkupSelected, eurMarkupSelected, loading: currencyLoading } = useCurrency();
 
   const [profileForm, setProfileForm] = useState({
     nombre_completo: "",
@@ -382,7 +382,7 @@ export default function Configuracion() {
                                     <div className="flex flex-col">
                                       <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">
                                         Tasa Oficial Detectada: Bs. {(
-                                          item.clave === 'markup_bcv_usd' ? (usdRate - parseFloat(item.valor || '0')) : (eurRate - parseFloat(item.valor || '0'))
+                                          item.clave === 'markup_bcv_usd' ? (usdRate - usdMarkupSelected) : (eurRate - eurMarkupSelected)
                                         ).toFixed(2)}
                                       </span>
                                       <div className="flex items-center relative">
@@ -394,14 +394,14 @@ export default function Configuracion() {
                                           step="0.01"
                                           className="w-full bg-slate-50 focus:bg-white border border-slate-100 rounded-xl py-3 pl-12 pr-4 text-sm font-bold focus:ring-2 focus:ring-accent outline-none text-slate-900 transition-smooth" 
                                           value={(
-                                            (item.clave === 'markup_bcv_usd' ? (usdRate - parseFloat(item.valor || '0')) : (eurRate - parseFloat(item.valor || '0'))) 
+                                            (item.clave === 'markup_bcv_usd' ? (usdRate - usdMarkupSelected) : (eurRate - eurMarkupSelected)) 
                                             + parseFloat(item.valor || '0')
-                                          ).toFixed(2).replace(/\.00$/, '')}
+                                          ).toFixed(2)}
                                           onChange={(e) => {
-                                            const baseRate = item.clave === 'markup_bcv_usd' ? (usdRate - parseFloat(item.valor || '0')) : (eurRate - parseFloat(item.valor || '0'));
+                                            const baseRate = item.clave === 'markup_bcv_usd' ? (usdRate - usdMarkupSelected) : (eurRate - eurMarkupSelected);
                                             const finalDesired = parseFloat(e.target.value) || baseRate;
                                             const diff = finalDesired - baseRate;
-                                            handleChange(item.clave, diff.toString());
+                                            handleChange(item.clave, diff.toFixed(4));
                                           }}
                                         />
                                       </div>
