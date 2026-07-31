@@ -145,7 +145,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col gap-12 md:gap-24 overflow-hidden dark:bg-slate-950 transition-colors duration-500 text-left bg-slate-50/30">
+    <div className="flex flex-col gap-4 md:gap-6 overflow-hidden dark:bg-slate-950 transition-colors duration-500 text-left bg-slate-50/30">
       
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex flex-col justify-center items-center overflow-hidden pb-20 pt-28 bg-primary">
