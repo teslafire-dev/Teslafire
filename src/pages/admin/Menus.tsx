@@ -119,6 +119,17 @@ export default function AdminMenus() {
     if (!error) { toast.success('Eliminado'); fetchData(); }
   };
 
+  const handleDeletePage = async (id: string) => {
+    if (!confirm('¿Seguro que deseas eliminar esta página permanentemente?')) return;
+    const { error } = await supabase.from('paginas').delete().eq('id', id);
+    if (!error) {
+      toast.success('Página eliminada');
+      fetchData();
+    } else {
+      toast.error('Error al eliminar: ' + error.message);
+    }
+  };
+
   const renderMenuStructure = (parentId: string | null = null, level = 0) => {
     return menus
       .filter(m => m.parent_id === parentId)
@@ -285,7 +296,7 @@ export default function AdminMenus() {
                         <a href={`/${p.slug}`} target="_blank" className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-primary-950 hover:text-white transition-all">
                            <Eye className="w-5 h-5" />
                         </a>
-                        <button className="p-4 bg-red-50 text-red-300 rounded-2xl hover:bg-red-500 hover:text-white transition-all">
+                        <button onClick={() => handleDeletePage(p.id)} className="p-4 bg-red-50 text-red-300 rounded-2xl hover:bg-red-500 hover:text-white transition-all" title="Eliminar página">
                            <Trash2 className="w-5 h-5" />
                         </button>
                      </div>
