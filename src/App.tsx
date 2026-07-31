@@ -18,6 +18,7 @@ import AdminSEO from './pages/admin/SEO';
 import AdminCRM from './pages/admin/CRM';
 import AdminMenus from './pages/admin/Menus';
 import AdminGaleria from './pages/admin/Galeria';
+import AdminCatalogos from './pages/admin/Catalogos';
 import AdminLayout from './components/admin/AdminLayout';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
@@ -94,6 +95,7 @@ function AppContent() {
               <Route path="/admin/seo" element={<AdminSEO />} />
               <Route path="/admin/menus" element={<AdminMenus />} />
               <Route path="/admin/galeria" element={<AdminGaleria />} />
+              <Route path="/admin/catalogos" element={<AdminCatalogos />} />
             </Route>
           </Route>
 

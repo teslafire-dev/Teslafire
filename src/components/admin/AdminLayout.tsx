@@ -15,7 +15,8 @@ import {
   Image as ImageIcon,
   Globe,
   BarChart3,
-  Layout
+  Layout,
+  FileText
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase/client";
@@ -83,6 +84,7 @@ export default function AdminLayout() {
     { name: "Páginas y Menús", icon: Layout, href: "/admin/menus", permission: canManageSettings },
     { name: "Usuarios", icon: Users, href: "/admin/usuarios", permission: canManageUsers },
     { name: "Productos", icon: Package, href: "/admin/productos", permission: canManageProducts },
+    { name: "Creador de Catálogos", icon: FileText, href: "/admin/catalogos", permission: canManageProducts },
     { name: "Categorías", icon: Tags, href: "/admin/categorias", permission: canManageProducts },
     { name: "Análisis CRM", icon: BarChart3, href: "/admin/crm", permission: canManageUsers },
     { name: "Galería Assets", icon: ImageIcon, href: "/admin/galeria", permission: canManageSettings },
