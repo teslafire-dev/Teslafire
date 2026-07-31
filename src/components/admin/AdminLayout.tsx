@@ -86,7 +86,7 @@ export default function AdminLayout() {
     { name: "Productos", icon: Package, href: "/admin/productos", permission: canManageProducts },
     { name: "Creador de Catálogos", icon: FileText, href: "/admin/catalogos", permission: canManageProducts },
     { name: "Categorías", icon: Tags, href: "/admin/categorias", permission: canManageProducts },
-    { name: "Análisis CRM", icon: BarChart3, href: "/admin/crm", permission: canManageUsers },
+    { name: "Análisis CRM", icon: BarChart3, href: "/admin/crm", permission: false },
     { name: "Galería Assets", icon: ImageIcon, href: "/admin/galeria", permission: canManageSettings },
     { name: "Gestión SEO", icon: Globe, href: "/admin/seo", permission: canManageSettings },
     { name: "Ajustes", icon: Settings, href: "/admin/configuracion", permission: canManageSettings },
