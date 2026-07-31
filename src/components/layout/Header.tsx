@@ -305,7 +305,7 @@ export default function Header() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3 }}
                 src={isDarkMode ? (config.site_logo_dark || config.site_logo) : (config.site_logo || config.site_logo_dark)} 
-                alt="Logo Dobell" 
+                alt="Logo Venemax" 
                 className="h-16 w-auto object-contain transition-smooth group-hover:scale-105"
               />
             ) : null}
