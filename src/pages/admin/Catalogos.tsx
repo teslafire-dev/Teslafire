@@ -9,56 +9,204 @@ import {
   CheckSquare, 
   Square,
   RefreshCcw,
-  ArrowRight,
   Package,
-  Layers,
   Settings,
-  Tags,
+  FolderOpen,
+  Save,
   CheckCircle2,
-  X
+  AlertCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AdminCatalogos() {
+  // DB States
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [savedCatalogs, setSavedCatalogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
+  
+  // Selection/Edit State
+  const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(null);
+  const [catalogTitle, setCatalogTitle] = useState('Nuevo Catálogo de Productos');
+  const [catalogSubtitle, setCatalogSubtitle] = useState('Venemax Store - Valencia, Venezuela');
+  const [catalogContact, setCatalogContact] = useState('+58 (241) 822.38.44 | venemax1@hotmail.com');
+  const [includeDescriptions, setIncludeDescriptions] = useState(true);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  
-  // Customization Form
-  const [catalogTitle, setCatalogTitle] = useState('Catálogo Oficial de Productos');
-  const [catalogSubtitle, setCatalogSubtitle] = useState('Venemax Store - Valencia, Venezuela');
-  const [catalogContact, setCatalogContact] = useState('+58 (241) 822.38.44 | venemax1@hotmail.com');
-  const [includeImages, setIncludeImages] = useState(true);
-  const [includeDescriptions, setIncludeDescriptions] = useState(true);
-
-  // Selected Products State
-  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
 
   useEffect(() => {
-    fetchData();
+    fetchInitialData();
   }, []);
 
-  const fetchData = async () => {
+  const fetchInitialData = async () => {
     setLoading(true);
     try {
-      const [productsRes, categoriesRes] = await Promise.all([
-        supabase.from('productos').select('*, marcas(nombre), categorias(nombre)').order('nombre'),
-        supabase.from('categorias').select('*').order('nombre')
-      ]);
+      // 1. Fetch Products using junction table categories
+      const { data: productsData, error: pError } = await supabase
+        .from('productos')
+        .select(`
+          *,
+          marcas(nombre),
+          producto_categorias(
+            categoria_id,
+            categorias(nombre)
+          )
+        `)
+        .order('nombre');
 
-      if (productsRes.data) setProducts(productsRes.data);
-      if (categoriesRes.data) setCategories(categoriesRes.data);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      toast.error("Error al cargar los productos");
+      if (pError) throw pError;
+      setProducts(productsData || []);
+
+      // 2. Fetch Categories
+      const { data: catsData, error: cError } = await supabase
+        .from('categorias')
+        .select('*')
+        .order('nombre');
+
+      if (cError) throw cError;
+      setCategories(catsData || []);
+
+      // 3. Fetch Saved Catalogs
+      await fetchSavedCatalogs();
+
+    } catch (error: any) {
+      console.error("Error loading initial catalog data:", error);
+      toast.error("Error al cargar la información: " + error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSavedCatalogs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('catalogos')
+        .select('*, catalogo_productos(producto_id)')
+        .order('updated_at', { ascending: false });
+      
+      if (error) throw error;
+      setSavedCatalogs(data || []);
+    } catch (error: any) {
+      console.error("Error loading catalogs:", error);
+    }
+  };
+
+  const handleSelectCatalog = (catalog: any) => {
+    setSelectedCatalogId(catalog.id);
+    setCatalogTitle(catalog.titulo);
+    setCatalogSubtitle(catalog.subtitulo || '');
+    setCatalogContact(catalog.contacto || '');
+    setIncludeDescriptions(catalog.incluir_descripciones !== false);
+    
+    // Set selected products
+    const productIds = catalog.catalogo_productos?.map((cp: any) => cp.producto_id) || [];
+    setSelectedProductIds(productIds);
+    toast.success(`Catálogo "${catalog.titulo}" cargado`);
+  };
+
+  const handleCreateNewCatalog = () => {
+    setSelectedCatalogId(null);
+    setCatalogTitle('Nuevo Catálogo Venemax');
+    setCatalogSubtitle('Venemax Store - Valencia, Venezuela');
+    setCatalogContact('+58 (241) 822.38.44 | venemax1@hotmail.com');
+    setIncludeDescriptions(true);
+    setSelectedProductIds([]);
+    toast.success("Formulario preparado para nuevo catálogo");
+  };
+
+  const handleSaveCatalog = async () => {
+    if (!catalogTitle.trim()) {
+      toast.error("El catálogo necesita un título");
+      return;
+    }
+
+    setSaving(true);
+    const toastId = toast.loading("Guardando catálogo...");
+    try {
+      let catalogId = selectedCatalogId;
+
+      // 1. Insert or Update Catalog metadata
+      if (catalogId) {
+        const { error } = await supabase
+          .from('catalogos')
+          .update({
+            titulo: catalogTitle,
+            subtitulo: catalogSubtitle,
+            contacto: catalogContact,
+            incluir_descripciones: includeDescriptions,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', catalogId);
+
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase
+          .from('catalogos')
+          .insert({
+            titulo: catalogTitle,
+            subtitulo: catalogSubtitle,
+            contacto: catalogContact,
+            incluir_descripciones: includeDescriptions
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        catalogId = data.id;
+        setSelectedCatalogId(catalogId);
+      }
+
+      // 2. Sync products selection (Delete old mappings, write new ones)
+      const { error: deleteError } = await supabase
+        .from('catalogo_productos')
+        .delete()
+        .eq('catalogo_id', catalogId);
+
+      if (deleteError) throw deleteError;
+
+      if (selectedProductIds.length > 0) {
+        const insertRows = selectedProductIds.map(pId => ({
+          catalogo_id: catalogId!,
+          producto_id: pId
+        }));
+        
+        const { error: insertError } = await supabase
+          .from('catalogo_productos')
+          .insert(insertRows);
+
+        if (insertError) throw insertError;
+      }
+
+      toast.success("¡Catálogo guardado con éxito!", { id: toastId });
+      await fetchSavedCatalogs();
+    } catch (error: any) {
+      console.error("Error saving catalog:", error);
+      toast.error("Error al guardar catálogo: " + error.message, { id: toastId });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteCatalog = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Avoid selecting the deleted item
+    if (!confirm("¿Seguro que deseas eliminar este catálogo permanentemente?")) return;
+
+    try {
+      const { error } = await supabase.from('catalogos').delete().eq('id', id);
+      if (error) throw error;
+
+      toast.success("Catálogo eliminado");
+      if (selectedCatalogId === id) {
+        handleCreateNewCatalog();
+      }
+      await fetchSavedCatalogs();
+    } catch (error: any) {
+      toast.error("Error al eliminar: " + error.message);
     }
   };
 
@@ -74,10 +222,8 @@ export default function AdminCatalogos() {
     const allSelected = filteredIds.every(id => selectedProductIds.includes(id));
 
     if (allSelected) {
-      // Unselect all filtered
       setSelectedProductIds(prev => prev.filter(id => !filteredIds.includes(id)));
     } else {
-      // Select all filtered
       setSelectedProductIds(prev => Array.from(new Set([...prev, ...filteredIds])));
     }
   };
@@ -86,7 +232,10 @@ export default function AdminCatalogos() {
     return products.filter(p => {
       const matchesSearch = p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
                             p.sku.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === 'all' || p.categoria_id === selectedCategory;
+      
+      const matchesCategory = selectedCategory === 'all' || 
+                              p.producto_categorias?.some((pc: any) => pc.categoria_id === selectedCategory);
+      
       return matchesSearch && matchesCategory;
     });
   };
@@ -154,14 +303,17 @@ export default function AdminCatalogos() {
             ['SKU', 'PRODUCTO', 'MARCA', 'CATEGORÍA', 'PRECIO', 'DESCRIPCIÓN']
           ];
 
-          const tableRows = selectedProducts.map(p => [
-            p.sku,
-            p.nombre,
-            p.marcas?.nombre || 'Genérica',
-            p.categorias?.nombre || 'General',
-            p.precio ? `$${Number(p.precio).toFixed(2)}` : 'A Cotizar',
-            includeDescriptions ? (p.descripcion || 'Sin descripción técnica.') : ''
-          ]);
+          const tableRows = selectedProducts.map(p => {
+            const catName = p.producto_categorias?.[0]?.categorias?.nombre || 'General';
+            return [
+              p.sku,
+              p.nombre,
+              p.marcas?.nombre || 'Genérica',
+              catName,
+              p.precio ? `$${Number(p.precio).toFixed(2)}` : 'A Cotizar',
+              includeDescriptions ? (p.descripcion || 'Sin descripción técnica.') : ''
+            ];
+          });
 
           // Render AutoTable
           (doc as any).autoTable({
@@ -223,9 +375,9 @@ export default function AdminCatalogos() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4 text-slate-400">
+      <div className="flex flex-col items-center justify-center py-40 gap-4 text-slate-400">
         <RefreshCcw className="w-8 h-8 animate-spin text-accent" />
-        <span className="text-[10px] font-black uppercase tracking-[0.3em]">Cargando Productos</span>
+        <span className="text-[10px] font-black uppercase tracking-[0.3em]">Cargando Creador de Catálogos...</span>
       </div>
     );
   }
@@ -234,31 +386,98 @@ export default function AdminCatalogos() {
   const allFilteredSelected = filtered.length > 0 && filtered.every(p => selectedProductIds.includes(p.id));
 
   return (
-    <div className="flex flex-col gap-10 max-w-7xl mx-auto w-full pb-24">
+    <div className="flex flex-col gap-10 max-w-7xl mx-auto w-full pb-24 text-left">
       
       {/* Header */}
-      <div className="flex justify-between items-center bg-white p-8 rounded-[2.5rem] border border-slate-50 shadow-sm">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-8 rounded-[2.5rem] border border-slate-50 shadow-sm gap-6">
         <div className="flex flex-col gap-1">
           <h1 className="text-4xl font-black font-outfit text-primary-950 uppercase tracking-tighter">Creador de Catálogos</h1>
-          <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mt-1">Selecciona los productos y expórtalos en PDF a tu gusto.</p>
+          <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mt-1">Crea y edita catálogos personalizados para exportar en PDF.</p>
         </div>
-        <button 
-          onClick={handleGeneratePDF}
-          disabled={generating || selectedProductIds.length === 0}
-          className="flex items-center gap-3 bg-accent text-white hover:bg-accent/90 px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-accent/20 transition-all disabled:opacity-50"
-        >
-          {generating ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-          Exportar PDF ({selectedProductIds.length})
-        </button>
+        <div className="flex gap-3">
+          <button 
+            onClick={handleCreateNewCatalog}
+            className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all"
+          >
+            <Plus className="w-4 h-4" /> Nuevo
+          </button>
+          
+          <button 
+            onClick={handleSaveCatalog}
+            disabled={saving}
+            className="flex items-center gap-2 bg-primary-950 text-white hover:bg-primary-950/90 px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary-950/20 transition-all disabled:opacity-50"
+          >
+            {saving ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            Guardar Catálogo
+          </button>
+
+          <button 
+            onClick={handleGeneratePDF}
+            disabled={generating || selectedProductIds.length === 0}
+            className="flex items-center gap-3 bg-accent text-white hover:bg-accent/90 px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-accent/20 transition-all disabled:opacity-50"
+          >
+            {generating ? <RefreshCcw className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            Exportar PDF ({selectedProductIds.length})
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* PANEL IZQUIERDO: PERSONALIZACIÓN */}
+        {/* PANEL IZQUIERDO: LISTA DE CATÁLOGOS Y OPCIONES */}
         <div className="lg:col-span-4 flex flex-col gap-6">
+          
+          {/* Listado de Catálogos Guardados */}
           <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col gap-6">
             <h2 className="text-sm font-black text-primary-950 uppercase tracking-widest flex items-center gap-2">
-              <Settings className="w-4 h-4 text-accent" /> Configuración PDF
+              <FolderOpen className="w-4 h-4 text-accent" /> Catálogos Guardados
+            </h2>
+            
+            <div className="space-y-3 max-h-60 overflow-y-auto custom-scrollbar">
+              {savedCatalogs.map(cat => {
+                const isActive = selectedCatalogId === cat.id;
+                return (
+                  <div 
+                    key={cat.id}
+                    onClick={() => handleSelectCatalog(cat)}
+                    className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer group ${
+                      isActive 
+                        ? 'bg-primary-950 text-white border-primary-950' 
+                        : 'bg-slate-50 hover:bg-slate-100 border-slate-50'
+                    }`}
+                  >
+                    <div className="text-left">
+                      <h4 className="text-xs font-bold uppercase truncate max-w-[180px]">{cat.titulo}</h4>
+                      <p className={`text-[8px] font-black uppercase tracking-widest ${isActive ? 'text-slate-300' : 'text-slate-400'}`}>
+                        {cat.catalogo_productos?.length || 0} Productos
+                      </p>
+                    </div>
+                    <button 
+                      onClick={(e) => handleDeleteCatalog(cat.id, e)}
+                      className={`p-2 rounded-xl transition-all ${
+                        isActive 
+                          ? 'text-slate-400 hover:text-red-400' 
+                          : 'text-slate-300 hover:text-red-500'
+                      }`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                );
+              })}
+
+              {savedCatalogs.length === 0 && (
+                <div className="text-slate-300 py-10 font-bold uppercase text-[9px] tracking-widest">
+                  No hay catálogos creados
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Configuración del Catálogo Activo */}
+          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col gap-6">
+            <h2 className="text-sm font-black text-primary-950 uppercase tracking-widest flex items-center gap-2">
+              <Settings className="w-4 h-4 text-accent" /> Datos de Plantilla
             </h2>
             
             <div className="space-y-4">
@@ -309,7 +528,7 @@ export default function AdminCatalogos() {
           </div>
         </div>
 
-        {/* PANEL DERECHO: BUSCADOR Y LISTA */}
+        {/* PANEL DERECHO: BUSCADOR Y SELECCIÓN DE PRODUCTOS */}
         <div className="lg:col-span-8 flex flex-col gap-6">
           <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col gap-6">
             
@@ -349,7 +568,7 @@ export default function AdminCatalogos() {
               </button>
               
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Seleccionados: {selectedProductIds.length} / {products.length}
+                Seleccionados en Catálogo: {selectedProductIds.length} / {products.length}
               </span>
             </div>
 
@@ -357,6 +576,7 @@ export default function AdminCatalogos() {
             <div className="space-y-3 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
               {filtered.map(p => {
                 const isSelected = selectedProductIds.includes(p.id);
+                const catName = p.producto_categorias?.[0]?.categorias?.nombre || 'General';
                 return (
                   <div 
                     key={p.id} 
@@ -370,13 +590,13 @@ export default function AdminCatalogos() {
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center p-1.5 shrink-0 border border-slate-100">
                         <img 
-                          src={p.imagen_url || '/placeholder-product.png'} 
+                          src={p.imagenes_urls?.[0] || p.imagen_url || '/placeholder-product.png'} 
                           alt={p.nombre} 
                           className="max-h-full max-w-full object-contain" 
                         />
                       </div>
                       <div className="text-left">
-                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">{p.sku}</span>
+                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">{p.sku} | {catName}</span>
                         <h4 className="text-xs font-bold text-primary-950 uppercase tracking-tight group-hover:text-accent transition-colors">{p.nombre}</h4>
                       </div>
                     </div>
