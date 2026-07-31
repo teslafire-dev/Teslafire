@@ -1,358 +1,584 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from "@/lib/supabase/client";
 import { Link } from "react-router-dom";
 import { 
   ArrowRight, 
-  ChevronRight, 
-  ShieldCheck, 
+  Wrench, 
+  Cpu, 
+  Package, 
   Truck, 
-  Clock, 
-  Headphones,
-  Play,
-  Zap,
-  CheckCircle2,
-  Box,
-  Globe,
-  Filter} from "lucide-react";
+  Phone, 
+  Mail, 
+  Instagram, 
+  MessageCircle,
+  Building,
+  Computer,
+  Database,
+  Printer,
+  ChevronRight,
+  TrendingUp,
+  MapPin,
+  Clock
+} from "lucide-react";
 import ProductCard from "@/components/productos/ProductCard";
 import { useTranslation } from '@/contexts/TranslationContext';
-import { Editable } from '@/components/admin/Editable';
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
+  const [offers, setOffers] = useState<any[]>([]);
   const [dbCategories, setDbCategories] = useState<any[]>([]);
   const [loadingFeatured, setLoadingFeatured] = useState(true);
+  const [loadingOffers, setLoadingOffers] = useState(true);
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
-  const [activeCategoryName, setActiveCategoryName] = useState<string>("Referentes");
+  const [activeCategoryName, setActiveCategoryName] = useState<string>("Todos");
   const { t, lang } = useTranslation();
   
   const productsSectionRef = useRef<HTMLDivElement>(null);
-  const { scrollY } = useScroll();
-  
-  const y2 = useTransform(scrollY, [0, 500], [0, -50]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    fetchData();
+    fetchInitialData();
   }, []);
+
+  const fetchInitialData = async () => {
+    try {
+      setLoadingFeatured(true);
+      setLoadingOffers(true);
+
+      // 1. Fetch Categories
+      const { data: categories } = await supabase
+        .from('categorias')
+        .select('*')
+        .order('orden', { ascending: true });
+      
+      if (categories) {
+        setDbCategories(categories);
+      }
+
+      // 2. Fetch Offers (is_offer = true)
+      const { data: offersData } = await supabase
+        .from('productos')
+        .select(`
+          *,
+          marcas(nombre),
+          producto_categorias(
+            categoria_id,
+            categorias(nombre, slug)
+          )
+        `)
+        .eq('is_offer', true)
+        .limit(6);
+      
+      if (offersData) {
+        setOffers(offersData);
+      }
+      setLoadingOffers(false);
+
+      // 3. Fetch Featured Products (is_new = true or general)
+      const { data: featuredData } = await supabase
+        .from('productos')
+        .select(`
+          *,
+          marcas(nombre),
+          producto_categorias(
+            categoria_id,
+            categorias(nombre, slug)
+          )
+        `)
+        .eq('is_new', true)
+        .limit(8);
+
+      if (featuredData) {
+        setFeaturedProducts(featuredData);
+      }
+      setLoadingFeatured(false);
+
+    } catch (err) {
+      console.error("❌ Home Fetch Error:", err);
+      setLoadingFeatured(false);
+      setLoadingOffers(false);
+    }
+  };
 
   const handleCategoryClick = async (cat: any) => {
     setActiveCategoryId(cat.id);
-    fetchData(cat.id, cat.nombre);
-    if (productsSectionRef.current) {
-      productsSectionRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  const fetchData = async (catId: string | null = null, catName: string | null = null) => {
+    setActiveCategoryName(cat.nombre);
+    setLoadingFeatured(true);
     try {
-      setLoadingFeatured(true);
-      if (catName) setActiveCategoryName(catName);
+      const { data: catProds } = await supabase
+        .from('productos')
+        .select(`
+          *,
+          marcas(nombre),
+          producto_categorias!inner(
+            categoria_id,
+            categorias(nombre, slug)
+          )
+        `)
+        .eq('producto_categorias.categoria_id', cat.id)
+        .limit(8);
       
-      if (dbCategories.length === 0) {
-        const { data: categories } = await supabase
-            .from('categorias')
-            .select('id, nombre, slug, imagen_url')
-            .is('parent_id', null)
-            .order('orden', { ascending: true });
-        if (categories) setDbCategories(categories);
+      if (catProds) {
+        setFeaturedProducts(catProds);
       }
-
-      const highlightedProdsMap = new Map();
-      if (!catId) {
-        const categoriesToFetch = dbCategories.length > 0 ? dbCategories : (await supabase.from('categorias').select('id').is('parent_id', null).order('orden')).data || [];
-        for (const cat of categoriesToFetch.slice(0, 8)) {
-          const { data: prod } = await supabase
-            .from('productos')
-            .select(`*, marcas(nombre), producto_categorias!inner(categoria_id, categorias(nombre, nombre_en))`)
-            .eq('producto_categorias.categoria_id', cat.id)
-            .limit(1)
-            .order('created_at', { ascending: false });
-          
-          if (prod && prod.length > 0) {
-            const item = prod[0];
-            if (!highlightedProdsMap.has(item.id)) {
-              highlightedProdsMap.set(item.id, item);
-            }
-          }
-        }
-      } else {
-        const { data: subCats } = await supabase.from('categorias').select('id').eq('parent_id', catId);
-        const targetIds = [catId, ...(subCats?.map(s => s.id) || [])];
-        const { data: prod } = await supabase
-          .from('productos')
-          .select(`*, marcas(nombre), producto_categorias!inner(categoria_id, categorias(nombre, nombre_en))`)
-          .in('producto_categorias.categoria_id', targetIds)
-          .limit(8)
-          .order('created_at', { ascending: false });
-        
-        if (prod) {
-          prod.forEach(item => {
-            if (!highlightedProdsMap.has(item.id)) {
-              highlightedProdsMap.set(item.id, item);
-            }
-          });
-        }
-      }
-      setFeaturedProducts(Array.from(highlightedProdsMap.values()));
     } catch (err) {
-      console.error("❌ Home Catch:", err);
+      console.error(err);
     } finally {
       setLoadingFeatured(false);
+      if (productsSectionRef.current) {
+        productsSectionRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   };
 
-  const getEmbedUrl = (url: string) => {
-    if (!url) return "https://www.youtube.com/embed/qim10BqdIgk?autoplay=0&mute=1&controls=1&showinfo=0&rel=0&modestbranding=1";
-    
-    // Si ya es un embed, lo dejamos casi igual pero aseguramos parámetros
-    if (url.includes('youtube.com/embed/')) {
-      const baseUrl = url.split('?')[0];
-      return `${baseUrl}?autoplay=0&mute=1&controls=1&showinfo=0&rel=0&modestbranding=1`;
-    }
+  const resetCategoryFilter = () => {
+    setActiveCategoryId(null);
+    setActiveCategoryName("Todos");
+    fetchInitialData();
+  };
 
-    // Extraer ID de formatos comunes
-    let videoId = '';
-    const watchMatch = url.match(/[?&]v=([^&#]+)/);
-    const shortMatch = url.match(/youtu\.be\/([^?&#]+)/);
-    
-    if (watchMatch) videoId = watchMatch[1];
-    else if (shortMatch) videoId = shortMatch[1];
-    else {
-      // Fallback si no detecta formato, intentar extraer última parte del path
-      const parts = url.split('/');
-      videoId = parts[parts.length - 1].split('?')[0];
-    }
-
-    return `https://www.youtube.com/embed/${videoId}?autoplay=0&mute=1&controls=1&showinfo=0&rel=0&modestbranding=1`;
+  const formatImageUrl = (url: string) => {
+    if (!url) return '/placeholder-product.png';
+    if (url.startsWith('http') || url.startsWith('/')) return url;
+    return `/${url}`;
   };
 
   return (
-    <div className="flex flex-col gap-12 md:gap-24 overflow-hidden dark:bg-slate-950 transition-colors duration-500 bg-grid-slate-900/[0.05] dark:bg-grid-white/[0.02] text-left">
+    <div className="flex flex-col gap-12 md:gap-24 overflow-hidden dark:bg-slate-950 transition-colors duration-500 text-left bg-slate-50/30">
       
-      {/* Hero Section - REDESIGNED FOR IMPACT & SPACE */}
-      <section className="relative min-h-[95vh] flex flex-col bg-primary overflow-hidden diagonal-cut pb-32">
+      {/* Hero Section */}
+      <section className="relative min-h-[90vh] flex flex-col justify-center items-center overflow-hidden pb-20 pt-28 bg-primary">
         <div className="absolute inset-0 z-0">
-          <motion.img 
-            style={{ y: y2 }}
-            src={t('home.hero.imagen_url')} 
-            alt={t('home.hero.tag')} 
-            className="w-full h-full object-cover brightness-[0.7] scale-110" 
+          <img 
+            src="/images/bg-1-1700x803.png" 
+            alt="Venemax Banner Background" 
+            className="w-full h-full object-cover brightness-[0.4]" 
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-primary-950/70 via-primary-950/30 to-transparent"></div>
-          
-          {/* Industrial Texture Layer - Dark Tactical Dots */}
-          <div className="absolute inset-0 industrial-dots-dark opacity-25"></div>
-
-          {/* Decorative Security Stripe (Light Blue) */}
-          <div className="absolute left-0 top-1/4 bottom-1/4 w-1.5 bg-blue-400 shadow-[0_0_20px_rgba(93,167,219,0.5)] z-20 rounded-r-full"></div>
-          
-          {/* Decorative Glows */}
-          <div className="absolute top-1/4 -left-20 w-[500px] h-[500px] bg-accent/10 rounded-full blur-[160px] animate-pulse"></div>
-          <div className="absolute top-1/2 -right-20 w-[400px] h-[400px] bg-sky-500/5 rounded-full blur-[140px] animate-pulse delay-700"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-950/40 to-transparent"></div>
+          {/* Decorative glows */}
+          <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-accent/20 rounded-full blur-[120px] animate-pulse"></div>
         </div>
 
-        <div className="flex-grow flex items-center relative z-10 pt-32 pb-12">
-          <div className="container mx-auto px-6">
-            <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+        <div className="container mx-auto px-6 relative z-10 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+            <motion.div 
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              className="lg:col-span-8 flex flex-col gap-6"
+            >
+              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/15 px-4 py-2 rounded-full w-fit">
+                <span className="w-2 h-2 rounded-full bg-accent animate-ping"></span>
+                <span className="text-white text-[10px] font-black uppercase tracking-[0.3em] font-outfit">Venemax Store</span>
+              </div>
               
-              {/* Left Side: Messaging & Actions (7 Columns) */}
-              <motion.div 
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="lg:col-span-7 flex flex-col gap-10"
-              >
-                <div className="flex flex-col gap-6">
-                  <div className="inline-flex items-center gap-2 bg-white/5 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-full w-fit">
-                    <span className="w-2 h-2 rounded-full bg-accent animate-ping"></span>
-                    <Editable keyName="home_hero_tag" className="text-accent text-[9px] font-black uppercase tracking-[0.4em] font-outfit">
-                      Dobell Service C.A.
-                    </Editable>
-                  </div>
-                  
-                  <Editable 
-                    keyName="home_hero_title" 
-                    as="h1" 
-                    className="text-5xl md:text-6xl lg:text-[4.5rem] font-black text-white leading-[1.1] tracking-tighter font-outfit uppercase italic drop-shadow-2xl" 
-                  >
-                    Protección Industrial de Élite
-                  </Editable>
-                  
-                  <Editable 
-                    keyName="home_hero_subtitle" 
-                    as="p" 
-                    className="text-lg md:text-xl text-slate-300 leading-relaxed font-medium tracking-wide max-w-xl border-l-4 border-accent pl-8 bg-gradient-to-r from-accent/5 to-transparent py-2 relative" 
-                  >
-                    Líderes en Venezuela suministrando soluciones certificadas de seguridad industrial para los sectores petrolero, minero y manufacturero con los más altos estándares mundiales.
-                    {/* Subtle X markers near subtitle */}
-                    <div className="absolute -bottom-10 right-0 grid grid-cols-2 gap-2 text-blue-400/20 font-black text-xs select-none">
-                      <span>X</span><span>X</span>
-                      <span>X</span><span>X</span>
-                    </div>
-                  </Editable>
-                </div>
+              <h1 className="text-6xl md:text-7xl lg:text-8xl font-black text-white leading-tight tracking-tighter uppercase italic font-outfit drop-shadow-2xl">
+                Venemax
+              </h1>
+              
+              <p className="text-lg md:text-2xl text-slate-200 leading-relaxed font-bold tracking-wide max-w-2xl border-l-4 border-accent pl-6 bg-gradient-to-r from-accent/10 to-transparent py-2">
+                Una marca sustentable inspirada en la tecnología. Venta al mayor y detal de equipos tecnológicos.
+              </p>
 
-                <div className="flex flex-col sm:flex-row gap-5">
-                   <Link to="/productos" className="group/btn flex items-center gap-4 bg-accent hover:brightness-110 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] transition-all duration-500 shadow-2xl shadow-accent/20 active:scale-95">
-                      {t('home.hero.cta.catalog') || 'Explorar Catálogo'}
-                      <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-2 transition-smooth" />
-                   </Link>
-                   <Link to="/nosotros" className="flex items-center justify-center bg-white/5 hover:bg-white/10 backdrop-blur-xl text-white border border-white/10 px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] transition-all duration-500 active:scale-95">
-                      {t('home.hero.cta.company') || 'Conocer Empresa'}
-                   </Link>
-                </div>
-              </motion.div>
+              <div className="flex flex-col sm:flex-row gap-5 mt-4">
+                <a 
+                  href="#productos" 
+                  className="group/btn flex items-center justify-center gap-4 bg-accent hover:bg-accent/90 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] transition-all duration-300 shadow-xl shadow-accent/20 active:scale-95"
+                >
+                  Ver Catálogo
+                  <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-2 transition-transform" />
+                </a>
+                <a 
+                  href="#contacto" 
+                  className="flex items-center justify-center bg-white/10 hover:bg-white/15 backdrop-blur-md text-white border border-white/10 px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] transition-all duration-300 active:scale-95"
+                >
+                  Contacto Directo
+                </a>
+              </div>
+            </motion.div>
 
-              {/* Right Side: Cinematic Video (5 Columns) */}
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 1, delay: 0.3 }}
-                className="lg:col-span-5 relative"
-              >
-                {/* Decorative 2x2 X group markers (perfect match with reference) */}
-                <div className="absolute -top-12 -right-12 grid grid-cols-2 gap-3 text-blue-400 opacity-40 font-black text-2xl select-none hidden lg:grid">
-                  <span>X</span><span>X</span>
-                  <span>X</span><span>X</span>
-                </div>
-                
-                <div className="relative group rounded-[3.5rem] overflow-hidden border border-white/10 shadow-[0_50px_100px_rgba(0,0,0,0.5)] bg-slate-900 group aspect-[4/3] lg:aspect-square xl:aspect-video text-left">
-                  <iframe 
-                    className="w-full h-full relative z-10 brightness-90 group-hover:brightness-100 transition-all duration-700 scale-105"
-                    src={getEmbedUrl(t('hero_video_url'))} 
-                    title="Dobell Hero Video"
-                    frameBorder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowFullScreen
-                  ></iframe>
-                </div>
-                
-                {/* Visual Weight Under the Video */}
-                <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-accent/20 blur-[100px] pointer-events-none"></div>
-              </motion.div>
-            </div>
+            {/* Parallax scene simulation */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1, delay: 0.2 }}
+              className="lg:col-span-4 relative hidden lg:block"
+            >
+              <div className="relative group rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl aspect-square bg-slate-900/60 backdrop-blur-xl flex items-center justify-center p-8">
+                <img 
+                  src="/images/parallax-item-1-563x532.png" 
+                  alt="Processors" 
+                  className="w-full h-auto object-contain animate-bounce" 
+                  style={{ animationDuration: '6s' }}
+                />
+              </div>
+            </motion.div>
           </div>
-        </div>
-
-        {/* Global Statistics Strip (Floating at bottom) */}
-        <div className="relative z-20 mt-6 container mx-auto px-6 mb-16">
-           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 bg-white/[0.03] backdrop-blur-[40px] border border-white/10 p-8 md:p-10 rounded-[3rem] shadow-3xl items-center text-center">
-              {[
-                { label: t('nosotros.stats.products') || 'En Inventario', value: "2,145", icon: Box },
-                { label: t('nosotros.stats.brands') || 'Marcas Aliadas', value: "54", icon: ShieldCheck },
-                { label: t('nosotros.stats.clients') || 'Clientes Satisfechos', value: "15k", icon: Headphones },
-                { label: "Soporte Técnico", value: "24/7", icon: Clock }
-              ].map((stat, i) => (
-                <div key={i} className="flex flex-col items-center gap-2 border-l first:border-0 border-white/10 grow group/stat hover:bg-white/5 transition-smooth py-2">
-                  <span className="text-3xl md:text-5xl font-black text-white font-outfit tracking-tighter group-hover:text-accent transition-all duration-500">{stat.value}</span>
-                  <div className="flex items-center gap-2 opacity-60">
-                    <stat.icon className="w-3 h-3 text-accent" />
-                    <span className="text-white text-[8px] font-black uppercase tracking-[0.3em]">{stat.label}</span>
-                  </div>
-                </div>
-              ))}
-           </div>
         </div>
       </section>
 
-      {/* Categories Grid - REFINED SELECTOR */}
-      <motion.section 
-        initial={{ opacity: 0, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.1 }}
-        className="container mx-auto px-6 py-12"
-      >
-        <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
-          <div className="flex flex-col gap-6">
-            <h2 className="text-5xl md:text-6xl font-black text-primary-950 dark:text-white uppercase tracking-tighter leading-none font-outfit">Explorar <span className="text-accent underline decoration-8 decoration-accent/10 underline-offset-4">Gamas</span></h2>
-            <p className="text-xl text-slate-500 dark:text-slate-400 font-medium tracking-wide max-w-lg">Haz clic en un área para ver sus equipos certificados.</p>
-          </div>
-          <button 
-            onClick={() => { setActiveCategoryId(null); fetchData(null, "Referentes"); }}
-            className={`flex items-center gap-4 px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] transition-all duration-500 ${!activeCategoryId ? 'bg-slate-100 text-slate-300 dark:bg-slate-900 pointer-events-none' : 'bg-primary-950 text-white shadow-2xl hover:bg-accent hover:translate-x-3'}`}
+      {/* Nosotros Section */}
+      <section className="container mx-auto px-6 py-12" id="nosotros">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="lg:col-span-6"
           >
-            {activeCategoryId ? 'Ver Todo el Inventario' : 'Catálogo Filtrable'}
-            <ArrowRight className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {dbCategories.map((cat) => (
-            <button key={cat.id} onClick={() => handleCategoryClick(cat)} className={`group relative h-72 rounded-[3.5rem] overflow-hidden shadow-2xl transition-all duration-700 ${activeCategoryId === cat.id ? 'ring-8 ring-accent/30 scale-95 shadow-accent/40' : 'hover:shadow-accent/20 hover:-translate-y-3'}`}>
-              <img src={cat.imagen_url || "https://images.unsplash.com/photo-1542282088-fe8426682b8f?w=800&q=80"} alt={cat.nombre} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-smooth duration-1000" />
-              <div className={`absolute inset-0 bg-gradient-to-t transition-opacity duration-700 ${activeCategoryId === cat.id ? 'from-accent/95 via-accent/40 to-transparent' : 'from-primary-950/95 via-primary-950/20 to-transparent group-hover:from-accent/60'}`}></div>
-              <div className="absolute bottom-8 left-10 right-10 text-left">
-                <span className={`text-[8px] font-black uppercase tracking-[0.3em] mb-2 block ${activeCategoryId === cat.id ? 'text-white' : 'text-accent'}`}>{activeCategoryId === cat.id ? 'SELECCIONADO' : 'ÁREA TÉCNICA'}</span>
-                <h3 className="text-2xl font-black text-white leading-tight uppercase tracking-tighter font-outfit">{cat.nombre}</h3>
-              </div>
-            </button>
-          ))}
-        </div>
-      </motion.section>
-
-      {/* Featured Products */}
-      <motion.section 
-        ref={productsSectionRef}
-        className="bg-slate-50 dark:bg-slate-950 pt-48 pb-32 -mt-16 diagonal-top shadow-inner relative z-10 border border-slate-100 dark:border-white/5 transition-colors duration-500 scroll-mt-28 overflow-hidden"
-      >
-        {/* Decorative Industrial Pattern background for this section */}
-        <div className="absolute inset-0 industrial-dots-dark opacity-10 pointer-events-none"></div>
-        <div className="absolute top-0 right-0 w-80 h-80 bg-accent/5 rounded-full blur-[120px]"></div>
-        <div className="container mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
-            <div className="flex flex-col gap-6">
-              <div className="inline-flex items-center gap-3 bg-primary-950 text-white px-5 py-2 rounded-xl w-fit">
-                <Zap className="w-4 h-4 text-accent fill-current animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-widest">{activeCategoryId ? `Enfoque en ${activeCategoryName}` : `Selección Dobell Service`}</span>
-              </div>
-              <h2 className="text-5xl md:text-6xl font-black text-primary-950 dark:text-white uppercase tracking-tighter leading-none font-outfit">{activeCategoryId ? activeCategoryName : 'Equipos'} <span className="text-accent underline decoration-8 decoration-accent/10 underline-offset-8 italic">Referentes</span></h2>
+            <div className="relative rounded-[3.5rem] overflow-hidden shadow-2xl border border-slate-100 dark:border-slate-800">
+              <img 
+                src="/images/home-1-570x703.png" 
+                alt="Nosotros Venemax" 
+                className="w-full h-auto object-cover hover:scale-105 transition-transform duration-700" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
             </div>
-            <Link to={activeCategoryId ? `/productos?categoria=${dbCategories.find(c => c.id === activeCategoryId)?.slug}` : "/productos"} className="bg-primary-950 dark:bg-accent text-white px-10 py-6 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-black transition-smooth shadow-2xl active:scale-95 flex items-center gap-4">
-               {activeCategoryId ? 'Ver Toda la Gama' : 'Explorar Todo el Arsenal'}
-               <ArrowRight className="w-5 h-5" />
-            </Link>
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="lg:col-span-6 flex flex-col gap-6"
+          >
+            <span className="text-accent text-xs font-black uppercase tracking-[0.3em] font-outfit">Nosotros</span>
+            <h2 className="text-5xl md:text-6xl font-black text-primary-950 dark:text-white uppercase tracking-tighter leading-none font-outfit">
+              Hacemos cosas <span className="text-accent italic underline decoration-8 decoration-accent/10 underline-offset-4">Increíbles</span>
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed text-base">
+              Venemax es una empresa dedicada a la distribución, servicio y venta de una amplia gama de productos dentro del campo tecnológico acompañado de un excelente equipo de expertos. Uno de nuestros objetivos es adaptarnos a cada tipo de negocio y brindarles todo el apoyo e ideas permitiéndoles que el diseño IT de cada tienda sea único en cuanto a tecnología se refiere.
+            </p>
+            <div className="bg-slate-100 dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200/50 dark:border-slate-800/50">
+              <p className="text-italic font-bold text-slate-700 dark:text-slate-300 font-outfit text-lg">
+                "La tecnología es mejor cuando reúne a la gente"
+              </p>
+            </div>
+            <a 
+              href="#contacto" 
+              className="bg-primary-950 hover:bg-accent text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest transition-all duration-300 w-fit active:scale-95 shadow-lg"
+            >
+              Conócenos
+            </a>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Servicios Section */}
+      <section className="bg-slate-100/50 dark:bg-slate-900/10 py-24 relative overflow-hidden" id="servicios">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+            
+            <div className="lg:col-span-7 flex flex-col gap-10">
+              <div className="flex flex-col gap-4">
+                <span className="text-accent text-xs font-black uppercase tracking-[0.3em] font-outfit">Servicios</span>
+                <h2 className="text-5xl md:text-6xl font-black text-primary-950 dark:text-white uppercase tracking-tighter leading-none font-outfit">
+                  Estamos <span className="text-accent italic">Preparados</span>
+                </h2>
+                <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-xl">
+                  Con más de 20 años de experiencia, ofrecemos a nuestros clientes el mejor soporte y consultoría tecnológica. Estas son algunas de las razones por las que nos eligen.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {[
+                  {
+                    title: "Mantenimiento de Dispositivos",
+                    desc: "Computadoras, Laptops, Impresoras, Servidores y más con soporte integral.",
+                    icon: Wrench
+                  },
+                  {
+                    title: "Soporte IT Especializado",
+                    desc: "Licencias, recuperación de datos, instalación de programas y sistemas operativos.",
+                    icon: Cpu
+                  },
+                  {
+                    title: "Productos de Calidad",
+                    desc: "Artículos nuevos de las mejores marcas globales y a los precios más competitivos.",
+                    icon: Package
+                  },
+                  {
+                    title: "Envíos Nacionales",
+                    desc: "Envíos garantizados con máxima seguridad para recibir tus productos intactos.",
+                    icon: Truck
+                  }
+                ].map((serv, index) => (
+                  <div 
+                    key={index}
+                    className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-4 hover:shadow-xl transition-all duration-300 group"
+                  >
+                    <div className="p-4 bg-accent/10 text-accent rounded-2xl w-fit group-hover:bg-accent group-hover:text-white transition-all duration-300">
+                      <serv.icon className="w-6 h-6 animate-pulse" />
+                    </div>
+                    <h3 className="text-lg font-black text-primary-950 dark:text-white uppercase tracking-tight font-outfit">{serv.title}</h3>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm font-medium leading-relaxed">{serv.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="lg:col-span-5 relative hidden lg:block">
+              <div className="rounded-[3.5rem] overflow-hidden shadow-2xl border border-slate-100 dark:border-slate-800">
+                <img 
+                  src="/images/home-2-636x480.png" 
+                  alt="Soporte y Reparación" 
+                  className="w-full h-auto object-cover hover:scale-105 transition-transform duration-700" 
+                />
+              </div>
+            </div>
+
           </div>
-          <div className="min-h-[400px] relative">
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="bg-primary-950 text-white py-20 relative overflow-hidden">
+        {/* Background texture */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,184,0,0.1),transparent)] pointer-events-none"></div>
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-12 text-center">
+            {[
+              { value: "50", label: "Empresas Apoyadas", desc: "Consultoría y Soluciones IT" },
+              { value: "1,500", label: "Equipos Reparados", desc: "Mantenimiento Técnico" },
+              { value: "12,000", label: "Equipos Vendidos", desc: "Laptops, Desktops y Componentes" },
+              { value: "500", label: "Servicios Empleados", desc: "Soporte e Instalaciones" }
+            ].map((stat, index) => (
+              <div key={index} className="flex flex-col gap-2">
+                <span className="text-5xl md:text-6xl font-black text-accent font-outfit tracking-tighter">+{stat.value}</span>
+                <span className="text-white text-xs font-black uppercase tracking-wider">{stat.label}</span>
+                <span className="text-slate-400 text-[10px] font-bold uppercase tracking-tight">{stat.desc}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Categorías / Productos Section */}
+      <section ref={productsSectionRef} className="container mx-auto px-6 py-12" id="productos">
+        <div className="flex flex-col gap-12">
+          <div className="flex flex-col md:flex-row justify-between items-end gap-6">
+            <div className="flex flex-col gap-4">
+              <span className="text-accent text-xs font-black uppercase tracking-[0.3em] font-outfit">Nuestros Equipos</span>
+              <h2 className="text-5xl md:text-6xl font-black text-primary-950 dark:text-white uppercase tracking-tighter leading-none font-outfit">
+                Gamas de <span className="text-accent italic underline decoration-8 decoration-accent/10 underline-offset-4">Productos</span>
+              </h2>
+            </div>
+            {activeCategoryId && (
+              <button 
+                onClick={resetCategoryFilter}
+                className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all"
+              >
+                Limpiar Filtros
+              </button>
+            )}
+          </div>
+
+          {/* Categorías Selector */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
+            {dbCategories.map((cat) => {
+              const Icon = cat.slug === 'laptops' ? Computer : 
+                          cat.slug === 'desktops' ? Building : 
+                          cat.slug === 'redes' ? TrendingUp : 
+                          cat.slug === 'impresoras' ? Printer : 
+                          cat.slug === 'servidores' ? Database : Package;
+              return (
+                <button 
+                  key={cat.id} 
+                  onClick={() => handleCategoryClick(cat)}
+                  className={`group flex flex-col items-center justify-center p-8 rounded-[2.5rem] border transition-all duration-300 ${
+                    activeCategoryId === cat.id 
+                      ? 'bg-accent border-accent text-black shadow-lg shadow-accent/20 scale-95' 
+                      : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:shadow-lg hover:-translate-y-2'
+                  }`}
+                >
+                  <div className={`p-4 rounded-2xl mb-4 transition-all ${activeCategoryId === cat.id ? 'bg-white text-black' : 'bg-slate-50 dark:bg-slate-800 text-accent group-hover:bg-accent group-hover:text-black'}`}>
+                    <Icon className="w-6 h-6" />
+                  </div>
+                  <span className="text-[11px] font-black uppercase tracking-wider text-center">{cat.nombre}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Grid de Productos Destacados/Nuevos */}
+          <div className="min-h-[400px] relative mt-6">
             <AnimatePresence mode="wait">
               {loadingFeatured ? (
-                <div className="absolute inset-0 flex items-center justify-center p-20">
-                   <div className="flex flex-col items-center gap-4 text-center">
-                      <div className="w-16 h-16 border-8 border-accent/20 border-t-accent rounded-full animate-spin"></div>
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest animate-pulse">Sincronizando Inventario...</span>
-                   </div>
+                <div className="absolute inset-0 flex items-center justify-center py-20">
+                  <div className="flex flex-col items-center gap-4 text-center">
+                    <div className="w-12 h-12 border-4 border-accent/20 border-t-accent rounded-full animate-spin"></div>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest animate-pulse">Buscando productos...</span>
+                  </div>
                 </div>
               ) : (
-                <motion.div key={activeCategoryId || 'all'} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-12">
+                <motion.div 
+                  key={activeCategoryId || 'all'}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
+                >
                   {featuredProducts.map((prod) => (
-                    <ProductCard key={prod.id} id={prod.id} name={(lang === 'EN' && prod.nombre_en) ? prod.nombre_en : prod.nombre} sku={prod.sku} slug={prod.slug || prod.id} category={prod.producto_categorias?.length > 0 ? (lang === 'EN' && prod.producto_categorias[0].categorias?.nombre_en) ? prod.producto_categorias[0].categorias?.nombre_en : prod.producto_categorias[0].categorias?.nombre : 'General'} price={prod.precio} moneda={prod.moneda} image={(prod.imagenes_urls && prod.imagenes_urls[0]) || prod.imagen_url || '/placeholder-product.png'} isNew={prod.is_new || false} isOffer={prod.is_offer || false} />
+                    <ProductCard 
+                      key={prod.id} 
+                      id={prod.id} 
+                      name={(lang === 'EN' && prod.nombre_en) ? prod.nombre_en : prod.nombre} 
+                      sku={prod.sku} 
+                      slug={prod.slug || prod.id} 
+                      category={prod.producto_categorias?.length > 0 ? (lang === 'EN' && prod.producto_categorias[0].categorias?.nombre_en) ? prod.producto_categorias[0].categorias?.nombre_en : prod.producto_categorias[0].categorias?.nombre : 'General'} 
+                      price={prod.precio} 
+                      moneda={prod.moneda} 
+                      image={formatImageUrl((prod.imagenes_urls && prod.imagenes_urls[0]) || prod.imagen_url)} 
+                      isNew={prod.is_new || false} 
+                      isOffer={prod.is_offer || false} 
+                    />
                   ))}
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
         </div>
-      </motion.section>
+      </section>
 
-      {/* Trust Markers */}
-      <motion.section initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="container mx-auto px-6 mb-48">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-1 bg-slate-900 border border-white/10 rounded-[5rem] overflow-hidden shadow-2xl">
-          {[
-            { icon: ShieldCheck, title: t('home.trust.cert.title'), desc: t('home.trust.cert.desc') },
-            { icon: Truck, title: t('home.trust.delivery.title'), desc: t('home.trust.delivery.desc') },
-            { icon: Clock, title: t('home.trust.stock.title'), desc: t('home.trust.stock.desc') },
-            { icon: Headphones, title: t('home.trust.support.title'), desc: t('home.trust.support.desc') }
-          ].map((item, i) => (
-            <div key={i} className="bg-slate-900/50 backdrop-blur-3xl p-16 flex flex-col gap-6 text-center items-center hover:bg-white/5 transition-all duration-700 group border-r border-white/5 last:border-0">
-              <div className="w-20 h-20 bg-white/5 rounded-[2rem] flex items-center justify-center shadow-inner group-hover:bg-accent/20 group-hover:rotate-[360deg] transition-all duration-1000">
-                <item.icon className="w-10 h-10 text-accent" />
+      {/* Ofertas Grid Section */}
+      <section className="bg-slate-100/50 dark:bg-slate-900/10 py-24" id="ofertas">
+        <div className="container mx-auto px-6">
+          <div className="flex flex-col items-center gap-4 text-center mb-16">
+            <span className="text-accent text-xs font-black uppercase tracking-[0.3em] font-outfit">Promociones Especiales</span>
+            <h2 className="text-5xl md:text-6xl font-black text-primary-950 dark:text-white uppercase tracking-tighter leading-none font-outfit">
+              Conoce nuestras <span className="text-accent italic underline decoration-8 decoration-accent/10 underline-offset-4">Ofertas</span>
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 font-medium max-w-md">
+              Adquiere los mejores dispositivos tecnológicos con precios promocionales directos a nuestro canal de ventas.
+            </p>
+          </div>
+
+          <div className="min-h-[300px] relative">
+            {loadingOffers ? (
+              <div className="flex items-center justify-center py-20">
+                <div className="w-10 h-10 border-4 border-accent/20 border-t-accent rounded-full animate-spin"></div>
               </div>
-              <h4 className="text-2xl font-black uppercase tracking-tighter font-outfit text-white italic">{item.title}</h4>
-              <p className="text-slate-500 text-sm font-medium leading-relaxed">{item.desc}</p>
-            </div>
-          ))}
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
+                {offers.map((prod) => (
+                  <div 
+                    key={prod.id} 
+                    className="bg-white dark:bg-slate-900 p-8 rounded-[3.5rem] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-6 relative group hover:shadow-2xl transition-all duration-300"
+                  >
+                    <div className="absolute top-4 right-4 bg-destructive text-white text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest">
+                      Oferta
+                    </div>
+                    
+                    <div className="aspect-[4/3] rounded-3xl overflow-hidden bg-slate-50 dark:bg-slate-800 p-4 border border-slate-100 dark:border-slate-700 flex items-center justify-center">
+                      <img 
+                        src={formatImageUrl(prod.imagen_url || (prod.imagenes_urls && prod.imagenes_urls[0]))} 
+                        alt={prod.nombre} 
+                        className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-500" 
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{prod.marcas?.nombre || 'General'}</span>
+                      <h3 className="text-lg font-black text-primary-950 dark:text-white uppercase tracking-tight truncate">{prod.nombre}</h3>
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="text-2xl font-black text-primary-950 dark:text-white">${prod.precio}</span>
+                        <a 
+                          href={`https://api.whatsapp.com/send?phone=584123419669&text=Hola!%20Estoy%20interesado%20en%20el%20producto:%20${encodeURIComponent(prod.nombre)}`} 
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-3 bg-green-500 hover:bg-green-600 text-white rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center"
+                          title="Comprar por WhatsApp"
+                        >
+                          <MessageCircle className="w-5 h-5" />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </motion.section>
+      </section>
+
+      {/* Marcas Banner */}
+      <section className="bg-primary py-12">
+        <div className="container mx-auto px-6 text-center">
+          <h3 className="text-xl md:text-2xl font-black uppercase text-white tracking-widest font-outfit">
+            Venta al mayor y detal de equipos tecnológicos
+          </h3>
+        </div>
+      </section>
+
+      {/* Contacto & Ubicación */}
+      <section className="container mx-auto px-6 py-12" id="contacto">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
+          
+          <div className="lg:col-span-4 flex flex-col gap-10">
+            <div className="flex flex-col gap-4">
+              <span className="text-accent text-xs font-black uppercase tracking-[0.3em] font-outfit">Contacto</span>
+              <h2 className="text-4xl font-black text-primary-950 dark:text-white uppercase tracking-tighter leading-none font-outfit">
+                Encuentra el <span className="text-accent italic">Plan Perfecto</span>
+              </h2>
+              <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                Puedes comunicarte con nosotros por este medio y tener más información sobre el producto deseado.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-8">
+              <div className="flex gap-6 items-start">
+                <div className="p-4 bg-accent/10 text-accent rounded-2xl shrink-0">
+                  <Phone className="w-6 h-6" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <h4 className="text-sm font-black text-primary-950 dark:text-white uppercase tracking-wider">Teléfono</h4>
+                  <a href="tel:+582418223844" className="text-slate-600 dark:text-slate-400 font-bold hover:text-accent transition-colors">+58 (241) 822.38.44</a>
+                </div>
+              </div>
+
+              <div className="flex gap-6 items-start">
+                <div className="p-4 bg-accent/10 text-accent rounded-2xl shrink-0">
+                  <Mail className="w-6 h-6" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <h4 className="text-sm font-black text-primary-950 dark:text-white uppercase tracking-wider">Correo</h4>
+                  <a href="mailto:venemax1@hotmail.com" className="text-slate-600 dark:text-slate-400 font-bold hover:text-accent transition-colors">venemax1@hotmail.com</a>
+                </div>
+              </div>
+
+              <div className="flex gap-6 items-start">
+                <div className="p-4 bg-accent/10 text-accent rounded-2xl shrink-0">
+                  <Instagram className="w-6 h-6" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <h4 className="text-sm font-black text-primary-950 dark:text-white uppercase tracking-wider">Redes Sociales</h4>
+                  <div className="flex gap-4">
+                    <a href="https://api.whatsapp.com/send?phone=584123419669" target="_blank" rel="noopener" className="text-slate-600 dark:text-slate-400 font-bold hover:text-accent transition-colors">WhatsApp</a>
+                    <a href="https://www.instagram.com/venemaxstore/" target="_blank" rel="noopener" className="text-slate-600 dark:text-slate-400 font-bold hover:text-accent transition-colors">Instagram</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-8">
+            <div className="rounded-[3.5rem] overflow-hidden shadow-2xl border border-slate-100 dark:border-slate-800 h-[450px]">
+              <iframe 
+                src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d125629.7214027614!2d-67.94263542171021!3d10.2673212041815!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0xe6ed8a9c781282e5!2sLa%20Gran%20tienda%20del%20Computador!5e0!3m2!1ses-419!2sve!4v1627133114252!5m2!1ses-419!2sve" 
+                width="100%" 
+                height="100%" 
+                style={{ border: 0 }} 
+                allowFullScreen={true} 
+                loading="lazy"
+                title="Venemax Google Maps Location"
+              ></iframe>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
     </div>
   );
 }

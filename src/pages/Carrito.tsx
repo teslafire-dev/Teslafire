@@ -157,7 +157,7 @@ export default function Carrito() {
       <div className="max-w-[1750px] mx-auto flex flex-col lg:flex-row min-h-screen pt-20">
         
         {/* COL 1: ITEMS REVIEW (LEFT) */}
-        <div className="flex-1 lg:flex-[1] px-6 md:px-12 py-12 bg-slate-50/50 dark:bg-slate-900/20 border-r border-slate-50 dark:border-slate-900 overflow-y-auto max-h-[calc(100vh-6rem)] custom-scrollbar">
+        <div className="flex-1 lg:flex-[1] px-6 md:px-12 py-12 bg-slate-50/50 dark:bg-slate-900/20 border-r border-slate-50 dark:border-slate-900 lg:overflow-y-auto lg:max-h-[calc(100vh-6rem)] custom-scrollbar">
            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="flex flex-col gap-10">
               <div>
                 <Link to="/productos" className="inline-flex items-center gap-2 text-slate-400 font-black uppercase text-[10px] tracking-[0.2em] hover:text-accent transition-colors mb-6 group">
@@ -277,7 +277,7 @@ export default function Carrito() {
                        <button 
                          onClick={handleSubmit(onSubmit)}
                          disabled={isSubmitting}
-                         className="w-full h-20 bg-[#FFB800] text-black rounded-2xl font-black uppercase text-sm tracking-[.2em] flex items-center justify-center gap-4 shadow-2xl hover:bg-[#FFD700] transition-all active:scale-95 group shadow-[0_15px_30px_-5px_rgba(255,184,0,0.3)] mt-2"
+                         className="w-full min-h-[4.5rem] py-4 px-6 bg-[#FFB800] text-black rounded-2xl font-black uppercase text-xs sm:text-sm tracking-[0.1em] sm:tracking-[0.2em] flex items-center justify-center gap-4 shadow-2xl hover:bg-[#FFD700] transition-all active:scale-95 group shadow-[0_15px_30px_-5px_rgba(255,184,0,0.3)] mt-2 text-center"
                        >
                          {isSubmitting ? (
                            <Loader2 className="w-8 h-8 animate-spin" />
