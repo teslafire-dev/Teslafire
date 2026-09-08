@@ -404,24 +404,64 @@ ALTER TABLE venta_vueltos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE kardex_movimientos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE turnos_caja ENABLE ROW LEVEL SECURITY;
 
--- Políticas de lectura pública para catálogos y monedas en la app
+-- Políticas de acceso RLS (100% Idempotentes con DROP previo)
+DROP POLICY IF EXISTS "Lectura pública de tiendas" ON tiendas;
 CREATE POLICY "Lectura pública de tiendas" ON tiendas FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Lectura pública de monedas" ON monedas;
 CREATE POLICY "Lectura pública de monedas" ON monedas FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Lectura pública de tasas" ON tasas_cambio;
 CREATE POLICY "Lectura pública de tasas" ON tasas_cambio FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Lectura pública de categorias" ON categorias;
 CREATE POLICY "Lectura pública de categorias" ON categorias FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Lectura pública de marcas" ON marcas;
 CREATE POLICY "Lectura pública de marcas" ON marcas FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Lectura pública de productos" ON productos;
 CREATE POLICY "Lectura pública de productos" ON productos FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Lectura pública de stock" ON producto_stock;
 CREATE POLICY "Lectura pública de stock" ON producto_stock FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Lectura de clientes" ON clientes;
 CREATE POLICY "Lectura de clientes" ON clientes FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Insertar clientes" ON clientes;
 CREATE POLICY "Insertar clientes" ON clientes FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Actualizar clientes" ON clientes;
 CREATE POLICY "Actualizar clientes" ON clientes FOR UPDATE USING (true);
+
+DROP POLICY IF EXISTS "Registrar ventas" ON ventas;
 CREATE POLICY "Registrar ventas" ON ventas FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Lectura de ventas" ON ventas;
 CREATE POLICY "Lectura de ventas" ON ventas FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Items de venta" ON venta_items;
 CREATE POLICY "Items de venta" ON venta_items FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Pagos de venta" ON venta_pagos;
 CREATE POLICY "Pagos de venta" ON venta_pagos FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Vueltos de venta" ON venta_vueltos;
 CREATE POLICY "Vueltos de venta" ON venta_vueltos FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Turnos de caja" ON turnos_caja;
 CREATE POLICY "Turnos de caja" ON turnos_caja FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Kardex movimientos" ON kardex_movimientos;
 CREATE POLICY "Kardex movimientos" ON kardex_movimientos FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Cuentas bancarias" ON cuentas_bancarias;
 CREATE POLICY "Cuentas bancarias" ON cuentas_bancarias FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Lectura pública de perfiles" ON perfiles;
 CREATE POLICY "Lectura pública de perfiles" ON perfiles FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Actualizar perfiles" ON perfiles;
 CREATE POLICY "Actualizar perfiles" ON perfiles FOR UPDATE USING (true);
+
