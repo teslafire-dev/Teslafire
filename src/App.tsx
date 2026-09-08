@@ -36,6 +36,7 @@ import Facturas from './pages/admin/Facturas';
 import Devoluciones from './pages/admin/Devoluciones';
 import CajaTurnos from './pages/admin/CajaTurnos';
 import ReportesVentas from './pages/admin/ReportesVentas';
+import ComprasDirectas from './pages/admin/ComprasDirectas';
 import AdminLayout from './components/admin/AdminLayout';
 import ModulePlaceholder from './components/admin/ModulePlaceholder';
 import Header from './components/layout/Header';
@@ -139,7 +140,7 @@ function AppContent() {
               <Route path="/admin/ventas/reportes" element={<ReportesVentas />} />
 
               {/* ── Módulos Compras ── */}
-              <Route path="/admin/compras/compra-directa" element={<ModulePlaceholder modulo="Compras" viewTitle="Compra Directa" description="Registro de facturas de compra inmediata a proveedores." primaryActionLabel="Registrar Compra" />} />
+              <Route path="/admin/compras/compra-directa" element={<ComprasDirectas />} />
               <Route path="/admin/compras/ordenes" element={<ModulePlaceholder modulo="Compras" viewTitle="Órdenes de Compra" description="Generación y control del ciclo de órdenes de compra." primaryActionLabel="Nueva Orden" />} />
               <Route path="/admin/compras/transito" element={<ModulePlaceholder modulo="Compras" viewTitle="Mercancía en Tránsito" description="Seguimiento de pedidos nacionales e internacionales en camino." />} />
               <Route path="/admin/compras/recepcion" element={<ModulePlaceholder modulo="Compras" viewTitle="Recepción en Almacén" description="Cotejo de compras contra órdenes y carga en Kardex." primaryActionLabel="Recepcionar Carga" />} />

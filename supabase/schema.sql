@@ -891,3 +891,64 @@ CREATE POLICY "Gestionar movimientos_caja" ON movimientos_caja FOR ALL USING (tr
 DROP POLICY IF EXISTS "Gestionar devoluciones" ON devoluciones;
 CREATE POLICY "Gestionar devoluciones" ON devoluciones FOR ALL USING (true) WITH CHECK (true);
 
+-- 20. PROVEEDORES
+CREATE TABLE IF NOT EXISTS proveedores (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nombre TEXT NOT NULL,
+    rif VARCHAR(30) UNIQUE,
+    telefono VARCHAR(50),
+    contacto TEXT,
+    email VARCHAR(100),
+    dias_credito INT DEFAULT 0,
+    activo BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 21. COMPRAS DIRECTAS Y ÓRDENES DE COMPRA
+CREATE TABLE IF NOT EXISTS compras (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    numero_doc VARCHAR(50) NOT NULL,
+    numero_control VARCHAR(50),
+    proveedor_id UUID REFERENCES proveedores(id),
+    proveedor_nombre TEXT,
+    deposito_id UUID REFERENCES tiendas(id),
+    deposito_nombre TEXT,
+    tipo_pago VARCHAR(20) DEFAULT 'CONTADO',
+    forma_pago VARCHAR(50) DEFAULT 'Efectivo (USD)',
+    cuenta_origen TEXT,
+    fecha_compra DATE DEFAULT CURRENT_DATE,
+    fecha_vencimiento DATE,
+    base_gravable NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    iva_monto NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    total NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    retener_iva BOOLEAN DEFAULT FALSE,
+    iva_retenido NUMERIC(14, 2) DEFAULT 0.00,
+    monto_a_pagar NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    observaciones TEXT,
+    estado VARCHAR(30) DEFAULT 'PAGADA',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS compra_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    compra_id UUID REFERENCES compras(id) ON DELETE CASCADE,
+    producto_id UUID REFERENCES productos(id),
+    producto_nombre TEXT NOT NULL,
+    producto_sku TEXT NOT NULL,
+    cantidad NUMERIC(12, 2) NOT NULL,
+    costo_unitario NUMERIC(14, 2) NOT NULL,
+    subtotal NUMERIC(14, 2) NOT NULL
+);
+
+ALTER TABLE proveedores ENABLE ROW LEVEL SECURITY;
+ALTER TABLE compras ENABLE ROW LEVEL SECURITY;
+ALTER TABLE compra_items ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Gestionar proveedores" ON proveedores;
+CREATE POLICY "Gestionar proveedores" ON proveedores FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Gestionar compras" ON compras;
+CREATE POLICY "Gestionar compras" ON compras FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Gestionar compra_items" ON compra_items;
+CREATE POLICY "Gestionar compra_items" ON compra_items FOR ALL USING (true) WITH CHECK (true);
