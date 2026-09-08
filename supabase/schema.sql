@@ -54,6 +54,46 @@ CREATE TABLE IF NOT EXISTS perfiles (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Trigger para crear perfil automáticamente cuando un usuario se registra en Supabase Auth
+-- El PRIMER usuario registrado en el sistema se convierte en 'admin' (Administrador Total) automáticamente
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+DECLARE
+    user_count INT;
+    default_role TEXT;
+    tienda_defecto UUID;
+BEGIN
+    SELECT COUNT(*) INTO user_count FROM public.perfiles;
+    SELECT id INTO tienda_defecto FROM public.tiendas WHERE es_principal = TRUE LIMIT 1;
+    
+    -- El primer usuario registrado se convierte en Administrador Total automáticamente
+    IF user_count = 0 THEN
+        default_role := 'admin';
+    ELSE
+        default_role := COALESCE(new.raw_user_meta_data->>'rol', 'cajero');
+    END IF;
+
+    INSERT INTO public.perfiles (id, email, nombre_completo, rol, tienda_id)
+    VALUES (
+        new.id,
+        new.email,
+        COALESCE(new.raw_user_meta_data->>'nombre_completo', split_part(new.email, '@', 1)),
+        default_role,
+        tienda_defecto
+    )
+    ON CONFLICT (id) DO UPDATE 
+    SET email = EXCLUDED.email,
+        nombre_completo = COALESCE(EXCLUDED.nombre_completo, perfiles.nombre_completo);
+        
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
 -- 4. CUENTAS BANCARIAS Y CAJAS
 CREATE TABLE IF NOT EXISTS cuentas_bancarias (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -383,3 +423,5 @@ CREATE POLICY "Vueltos de venta" ON venta_vueltos FOR ALL USING (true);
 CREATE POLICY "Turnos de caja" ON turnos_caja FOR ALL USING (true);
 CREATE POLICY "Kardex movimientos" ON kardex_movimientos FOR ALL USING (true);
 CREATE POLICY "Cuentas bancarias" ON cuentas_bancarias FOR SELECT USING (true);
+CREATE POLICY "Lectura pública de perfiles" ON perfiles FOR SELECT USING (true);
+CREATE POLICY "Actualizar perfiles" ON perfiles FOR UPDATE USING (true);
