@@ -1,7 +1,7 @@
 import { createContext, useContext } from "react";
 import { User } from "@supabase/supabase-js";
 
-export type Role = 'admin' | 'editor' | 'invitado';
+export type Role = 'admin' | 'gerente' | 'cajero' | 'almacenista' | 'contador' | 'editor' | 'invitado';
 
 export interface AuthContextType {
   user: User | null;
