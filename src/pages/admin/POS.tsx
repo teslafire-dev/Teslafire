@@ -88,7 +88,7 @@ export default function POSPage() {
   const filteredProducts = products.filter(p => {
     const q = searchQuery.toLowerCase().trim();
     if (!q) return true;
-    const hay = `${p.nombre || ''} ${p.codigo || ''} ${p.codigo_barra || ''}`.toLowerCase();
+    const hay = `${p.nombre || ''} ${p.sku || ''} ${p.codigo || ''} ${p.codigo_barra || ''}`.toLowerCase();
     return q.split(' ').every(term => hay.includes(term));
   });
 
