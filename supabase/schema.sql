@@ -57,7 +57,11 @@ CREATE TABLE IF NOT EXISTS perfiles (
 -- Trigger para crear perfil automáticamente cuando un usuario se registra en Supabase Auth
 -- El PRIMER usuario registrado en el sistema se convierte en 'admin' (Administrador Total) automáticamente
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
 DECLARE
     user_count INT;
     default_role TEXT;
@@ -66,20 +70,21 @@ BEGIN
     SELECT COUNT(*) INTO user_count FROM public.perfiles;
     SELECT id INTO tienda_defecto FROM public.tiendas WHERE es_principal = TRUE LIMIT 1;
     
-    -- El primer usuario registrado se convierte en Administrador Total automáticamente
+    -- Si es el primer perfil, se asigna como 'admin', los demás usan el rol enviado o 'cajero'
     IF user_count = 0 THEN
         default_role := 'admin';
     ELSE
         default_role := COALESCE(new.raw_user_meta_data->>'rol', 'cajero');
     END IF;
 
-    INSERT INTO public.perfiles (id, email, nombre_completo, rol, tienda_id)
+    INSERT INTO public.perfiles (id, email, nombre_completo, rol, tienda_id, activo)
     VALUES (
         new.id,
         new.email,
         COALESCE(new.raw_user_meta_data->>'nombre_completo', split_part(new.email, '@', 1)),
         default_role,
-        tienda_defecto
+        tienda_defecto,
+        true
     )
     ON CONFLICT (id) DO UPDATE 
     SET email = EXCLUDED.email,
@@ -87,12 +92,15 @@ BEGIN
         
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
+GRANT ALL ON TABLE public.perfiles TO postgres, anon, authenticated, service_role;
+
 
 -- 4. CUENTAS BANCARIAS Y CAJAS
 CREATE TABLE IF NOT EXISTS cuentas_bancarias (
