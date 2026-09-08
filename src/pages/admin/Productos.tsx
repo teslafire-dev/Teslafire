@@ -37,6 +37,7 @@ export default function AdminProductos() {
   const [viewMode, setViewMode] = useState<'list' | 'editor'>('list');
   const [editProduct, setEditProduct] = useState<any | null>(null);
   const [stockModalProduct, setStockModalProduct] = useState<any | null>(null);
+  const [selectedStockTiendaId, setSelectedStockTiendaId] = useState<string>('');
   const [adjustingStock, setAdjustingStock] = useState<number>(0);
   const [savingStock, setSavingStock] = useState(false);
 
@@ -110,7 +111,7 @@ export default function AdminProductos() {
     if (!stockModalProduct) return;
     setSavingStock(true);
     try {
-      const storeId = tiendasList[0]?.id;
+      const storeId = selectedStockTiendaId || tiendasList[0]?.id;
       if (!storeId) throw new Error("No hay tiendas registradas");
 
       const { error } = await supabase
@@ -124,12 +125,12 @@ export default function AdminProductos() {
         }, { onConflict: 'producto_id,tienda_id' });
 
       if (error) throw error;
-      toast.success("Stock actualizado exitosamente");
+      toast.success("Stock físico declarado correctamente");
       setStockModalProduct(null);
       fetchProducts();
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || "Error al actualizar stock");
+      toast.error(err.message || "Error al declarar stock");
     } finally {
       setSavingStock(false);
     }
@@ -512,20 +513,24 @@ export default function AdminProductos() {
                       <td className="py-3.5 px-6 text-right">
                         <div className="flex items-center justify-end gap-2">
                           
-                          {/* Botón Cubo Verde: Ajuste rápido de Stock */}
+                          {/* Botón Cubo Verde: Declarar Stock Físico */}
                           <button
                             type="button"
                             onClick={() => {
                               setStockModalProduct(prod);
-                              setAdjustingStock(stock);
+                              const current = prod.producto_stock?.[0]?.stock_actual ?? prod.stock ?? 0;
+                              setAdjustingStock(current);
+                              if (tiendasList.length > 0) {
+                                setSelectedStockTiendaId(tiendasList[0].id);
+                              }
                             }}
                             className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 flex items-center justify-center transition-all shadow-2xs"
-                            title="Ajustar Stock de almacén"
+                            title="Declarar Stock Físico"
                           >
                             <Box className="w-4 h-4" />
                           </button>
 
-                          {/* Botón Lápiz Gris: Editar Producto (Reutiliza el menú completo) */}
+                          {/* Botón Lápiz Gris: Editar Producto */}
                           <button
                             type="button"
                             onClick={() => {
@@ -548,62 +553,99 @@ export default function AdminProductos() {
         </div>
       </div>
 
-      {/* Modal Rápido de Stock (al pulsar el Cubo Verde) */}
+      {/* Modal Declarar Stock Físico (Fiel a la captura de pantalla) */}
       {stockModalProduct && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center">
-                  <Box className="w-4 h-4" />
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl animate-in zoom-in-95 duration-200 border border-gray-100">
+            {/* Header con icono de cubo verde, título y cerrar */}
+            <div className="flex items-start justify-between pb-3 border-b border-gray-100">
+              <div className="flex items-start gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
+                  <Box className="w-4 h-4 text-emerald-600" />
                 </div>
-                <h3 className="text-sm font-bold text-gray-900">Ajustar Stock Físico</h3>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900 leading-tight">
+                    Declarar Stock Físico
+                  </h3>
+                  <p className="text-xs text-gray-400 font-medium mt-0.5 line-clamp-1">
+                    {stockModalProduct.nombre}
+                  </p>
+                </div>
               </div>
               <button 
                 onClick={() => setStockModalProduct(null)} 
-                className="text-gray-400 hover:text-gray-600 p-1"
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg transition-colors -mr-1 -mt-1"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="mb-4">
-              <p className="text-xs font-bold text-gray-800 line-clamp-1">{stockModalProduct.nombre}</p>
-              <p className="text-[10px] text-gray-400 font-semibold mt-0.5">SKU: {stockModalProduct.sku}</p>
-            </div>
+            {/* Formulario */}
+            <div className="space-y-3.5 pt-4">
+              {/* Tienda / Almacén * */}
+              <div>
+                <label className="block text-xs font-bold text-gray-800 mb-1">
+                  Tienda / Almacén <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={selectedStockTiendaId}
+                    onChange={(e) => setSelectedStockTiendaId(e.target.value)}
+                    className="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-brand-500 bg-white cursor-pointer appearance-none pr-8 text-gray-800"
+                  >
+                    {tiendasList.length > 0 ? (
+                      tiendasList.map(t => (
+                        <option key={t.id} value={t.id}>{t.nombre}</option>
+                      ))
+                    ) : (
+                      <option value="default">Almacén Tesla Fire</option>
+                    )}
+                  </select>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
 
-            <div className="bg-gray-50 rounded-xl p-3 mb-4 text-center border border-gray-100">
-              <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Cantidad en almacén principal</span>
-              <div className="flex items-center justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setAdjustingStock(prev => Math.max(0, prev - 1))}
-                  className="w-8 h-8 rounded-lg bg-white border border-gray-200 font-bold text-gray-700 hover:bg-gray-100"
-                >
-                  -
-                </button>
-                <input
-                  type="number"
-                  min="0"
-                  value={adjustingStock}
-                  onChange={(e) => setAdjustingStock(parseInt(e.target.value) || 0)}
-                  className="w-20 text-center text-xl font-bold font-rajdhani py-1 px-2 rounded-lg border border-gray-300 bg-white"
-                />
-                <button
-                  type="button"
-                  onClick={() => setAdjustingStock(prev => prev + 1)}
-                  className="w-8 h-8 rounded-lg bg-white border border-gray-200 font-bold text-gray-700 hover:bg-gray-100"
-                >
-                  +
-                </button>
+              {/* Banner: Stock actual en este almacén */}
+              <div className="bg-[#eefbf4] border border-[#c8f1dc] rounded-xl px-3.5 py-2.5 flex items-center justify-between">
+                <span className="text-xs font-semibold text-emerald-800">
+                  Stock actual en este almacén:
+                </span>
+                <span className="text-sm font-bold text-emerald-900 font-rajdhani">
+                  {stockModalProduct.producto_stock?.[0]?.stock_actual ?? stockModalProduct.stock ?? 0}
+                </span>
+              </div>
+
+              {/* Cantidad Física en Stock * */}
+              <div>
+                <label className="block text-xs font-bold text-gray-800 mb-1">
+                  Cantidad Física en Stock <span className="text-red-500">*</span>
+                </label>
+                <div className="relative flex items-center">
+                  <input
+                    type="number"
+                    step="0.001"
+                    min="0"
+                    value={adjustingStock}
+                    onChange={(e) => setAdjustingStock(parseFloat(e.target.value) || 0)}
+                    className="w-full text-sm font-bold px-3 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 bg-white text-gray-900 font-rajdhani pr-16"
+                  />
+                  <span className="absolute right-3 text-xs font-semibold text-gray-400 pointer-events-none">
+                    unidades
+                  </span>
+                </div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2">
+            {/* Botones Inferiores: Cancelar y ✓ Aceptar */}
+            <div className="flex items-center justify-end gap-3 pt-5">
               <button
                 type="button"
                 onClick={() => setStockModalProduct(null)}
-                className="px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl"
+                className="px-3 py-2 text-xs font-bold text-gray-600 hover:text-gray-900 rounded-xl transition-colors"
               >
                 Cancelar
               </button>
@@ -611,16 +653,20 @@ export default function AdminProductos() {
                 type="button"
                 disabled={savingStock}
                 onClick={handleUpdateStock}
-                className="px-4 py-2 text-xs font-bold bg-[#343a40] hover:bg-[#23272b] text-white rounded-xl shadow flex items-center gap-1.5"
+                className="px-5 py-2 text-xs font-bold bg-[#009b63] hover:bg-[#008756] text-white rounded-xl shadow-xs transition-all flex items-center gap-1.5 disabled:opacity-50"
               >
-                {savingStock ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                Guardar Stock
+                {savingStock ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                ) : (
+                  <Check className="w-3.5 h-3.5 text-white" />
+                )}
+                <span>Aceptar</span>
               </button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }
+
