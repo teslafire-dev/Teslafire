@@ -625,3 +625,269 @@ INSERT INTO marcas (nombre) VALUES
 ('Genérico')
 ON CONFLICT (nombre) DO NOTHING;
 
+-- ====================================================================
+-- SOLICITUDES DE TRASLADO ENTRE TIENDAS Y ALMACENES
+-- ====================================================================
+CREATE TABLE IF NOT EXISTS solicitudes_traslado (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    referencia VARCHAR(30) UNIQUE NOT NULL,
+    origen_tienda_id UUID REFERENCES tiendas(id),
+    origen_nombre TEXT,
+    destino_tienda_id UUID REFERENCES tiendas(id),
+    destino_nombre TEXT,
+    estado VARCHAR(30) DEFAULT 'Pendiente' CHECK (estado IN ('Pendiente', 'En tránsito', 'Recibida', 'Cancelada')),
+    items_count INTEGER DEFAULT 0,
+    notas TEXT,
+    solicitado_por UUID REFERENCES auth.users(id),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS solicitud_traslado_items (
+    id BIGSERIAL PRIMARY KEY,
+    solicitud_id UUID REFERENCES solicitudes_traslado(id) ON DELETE CASCADE,
+    producto_id UUID REFERENCES productos(id),
+    sku TEXT,
+    nombre TEXT,
+    cantidad NUMERIC(12, 2) NOT NULL DEFAULT 1,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE solicitudes_traslado ENABLE ROW LEVEL SECURITY;
+ALTER TABLE solicitud_traslado_items ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Gestionar solicitudes_traslado" ON solicitudes_traslado;
+CREATE POLICY "Gestionar solicitudes_traslado" ON solicitudes_traslado FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Gestionar solicitud_traslado_items" ON solicitud_traslado_items;
+CREATE POLICY "Gestionar solicitud_traslado_items" ON solicitud_traslado_items FOR ALL USING (true) WITH CHECK (true);
+
+-- ====================================================================
+-- MOVIMIENTOS HISTÓRICOS DE TRASLADO ENTRE ALMACENES
+-- ====================================================================
+CREATE TABLE IF NOT EXISTS traslados_movimientos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    referencia VARCHAR(30) UNIQUE NOT NULL,
+    producto_id UUID REFERENCES productos(id),
+    producto_nombre TEXT,
+    producto_sku TEXT,
+    origen_tienda_id UUID REFERENCES tiendas(id),
+    origen_nombre TEXT,
+    destino_tienda_id UUID REFERENCES tiendas(id),
+    destino_nombre TEXT,
+    cantidad NUMERIC(12, 2) NOT NULL,
+    usuario_nombre TEXT DEFAULT 'Admin',
+    notas TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE traslados_movimientos ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Gestionar traslados_movimientos" ON traslados_movimientos;
+CREATE POLICY "Gestionar traslados_movimientos" ON traslados_movimientos FOR ALL USING (true) WITH CHECK (true);
+
+-- ====================================================================
+-- CONSUMOS INTERNOS (SALIDAS OPERATIVAS)
+-- ====================================================================
+CREATE TABLE IF NOT EXISTS consumos_internos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    referencia VARCHAR(30) UNIQUE NOT NULL,
+    producto_id UUID REFERENCES productos(id),
+    producto_nombre TEXT,
+    producto_sku TEXT,
+    tienda_id UUID REFERENCES tiendas(id),
+    tienda_nombre TEXT,
+    cantidad NUMERIC(12, 2) NOT NULL,
+    motivo TEXT NOT NULL,
+    notas TEXT,
+    usuario_nombre TEXT DEFAULT 'Admin',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE consumos_internos ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Gestionar consumos_internos" ON consumos_internos;
+CREATE POLICY "Gestionar consumos_internos" ON consumos_internos FOR ALL USING (true) WITH CHECK (true);
+
+-- ====================================================================
+-- AUDITORÍAS FÍSICAS DE INVENTARIO
+-- ====================================================================
+CREATE TABLE IF NOT EXISTS auditorias_inventario (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    referencia VARCHAR(30) UNIQUE NOT NULL,
+    nombre_sesion TEXT,
+    tienda_id UUID REFERENCES tiendas(id),
+    tienda_nombre TEXT,
+    total_items INT DEFAULT 0,
+    total_deficit NUMERIC(12, 2) DEFAULT 0,
+    total_exceso NUMERIC(12, 2) DEFAULT 0,
+    neto NUMERIC(12, 2) DEFAULT 0,
+    estado VARCHAR(30) DEFAULT 'Completada',
+    usuario_nombre TEXT DEFAULT 'Admin',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS auditoria_items (
+    id BIGSERIAL PRIMARY KEY,
+    auditoria_id UUID REFERENCES auditorias_inventario(id) ON DELETE CASCADE,
+    producto_id UUID REFERENCES productos(id),
+    producto_sku TEXT,
+    producto_nombre TEXT,
+    stock_sistema NUMERIC(12, 2) NOT NULL,
+    conteo_fisico NUMERIC(12, 2) NOT NULL,
+    diferencia NUMERIC(12, 2) NOT NULL
+);
+
+ALTER TABLE auditorias_inventario ENABLE ROW LEVEL SECURITY;
+ALTER TABLE auditoria_items ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Gestionar auditorias_inventario" ON auditorias_inventario;
+CREATE POLICY "Gestionar auditorias_inventario" ON auditorias_inventario FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Gestionar auditoria_items" ON auditoria_items;
+CREATE POLICY "Gestionar auditoria_items" ON auditoria_items FOR ALL USING (true) WITH CHECK (true);
+
+-- ====================================================================
+-- AJUSTES DE INVENTARIO
+-- ====================================================================
+CREATE TABLE IF NOT EXISTS ajustes_inventario (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    referencia VARCHAR(30) UNIQUE NOT NULL,
+    tienda_id UUID REFERENCES tiendas(id),
+    tienda_nombre TEXT,
+    tipo VARCHAR(20) DEFAULT 'Entrada',
+    motivo TEXT NOT NULL,
+    items_count INT DEFAULT 0,
+    neto NUMERIC(12, 2) DEFAULT 0,
+    aplicado_por TEXT DEFAULT 'Admin',
+    notas TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE ajustes_inventario ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Gestionar ajustes_inventario" ON ajustes_inventario;
+CREATE POLICY "Gestionar ajustes_inventario" ON ajustes_inventario FOR ALL USING (true) WITH CHECK (true);
+
+-- ====================================================================
+-- MOVIMIENTOS GENERALES DE INVENTARIO (ENTRADAS Y SALIDAS)
+-- ====================================================================
+CREATE TABLE IF NOT EXISTS movimientos_inventario (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    referencia VARCHAR(30) NOT NULL,
+    tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('Entrada', 'Salida')),
+    motivo TEXT NOT NULL,
+    producto_id UUID REFERENCES productos(id),
+    producto_nombre TEXT NOT NULL,
+    producto_sku TEXT NOT NULL,
+    tienda_id UUID REFERENCES tiendas(id),
+    tienda_nombre TEXT NOT NULL,
+    cantidad NUMERIC(12, 2) NOT NULL,
+    usuario_nombre TEXT DEFAULT 'Gerencia',
+    notas TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE movimientos_inventario ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Gestionar movimientos_inventario" ON movimientos_inventario;
+CREATE POLICY "Gestionar movimientos_inventario" ON movimientos_inventario FOR ALL USING (true) WITH CHECK (true);
+
+-- 15. EXTENSIÓN CLIENTES (DATOS VENEZUELA, JURÍDICOS Y CRÉDITO)
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS canal_venta VARCHAR(50) DEFAULT 'Detal';
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS estado VARCHAR(50);
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS ciudad VARCHAR(50);
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS categoria_cliente VARCHAR(30) DEFAULT 'REGULAR';
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS bloqueado BOOLEAN DEFAULT FALSE;
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS rif_empresa VARCHAR(30);
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS cedula_rif_socio VARCHAR(30);
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS registro_mercantil_nro VARCHAR(100);
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS registro_mercantil_url TEXT;
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS contacto_socio TEXT;
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS contacto_1 JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS contacto_2 JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE clientes ADD COLUMN IF NOT EXISTS referencias_proveedores JSONB DEFAULT '[]'::jsonb;
+
+-- 16. COTIZACIONES Y PRESUPUESTOS
+CREATE TABLE IF NOT EXISTS cotizaciones (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    numero VARCHAR(30) UNIQUE NOT NULL,
+    cliente_id UUID REFERENCES clientes(id),
+    cliente_nombre TEXT NOT NULL,
+    cliente_documento VARCHAR(30),
+    cliente_telefono VARCHAR(50),
+    vendedor_nombre TEXT DEFAULT 'Mostrador',
+    tienda_id UUID REFERENCES tiendas(id),
+    subtotal NUMERIC(14, 2) DEFAULT 0.00,
+    iva NUMERIC(14, 2) DEFAULT 0.00,
+    total NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    estado VARCHAR(30) DEFAULT 'Vigente',
+    documento_convertido TEXT,
+    fecha_validez DATE,
+    notas TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS cotizacion_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    cotizacion_id UUID REFERENCES cotizaciones(id) ON DELETE CASCADE,
+    producto_id UUID REFERENCES productos(id),
+    producto_nombre TEXT NOT NULL,
+    producto_sku TEXT NOT NULL,
+    cantidad NUMERIC(12, 2) NOT NULL,
+    precio_unitario NUMERIC(14, 2) NOT NULL,
+    subtotal NUMERIC(14, 2) NOT NULL
+);
+
+ALTER TABLE cotizaciones ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cotizacion_items ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Gestionar cotizaciones" ON cotizaciones;
+CREATE POLICY "Gestionar cotizaciones" ON cotizaciones FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Gestionar cotizacion_items" ON cotizacion_items;
+CREATE POLICY "Gestionar cotizacion_items" ON cotizacion_items FOR ALL USING (true) WITH CHECK (true);
+
+-- 17. NOTAS DE ENTREGA Y DESPACHO
+ALTER TABLE ventas ADD COLUMN IF NOT EXISTS estado_despacho VARCHAR(30) DEFAULT 'Despachado';
+ALTER TABLE ventas ADD COLUMN IF NOT EXISTS fecha_vencimiento DATE;
+
+-- 18. MOVIMIENTOS DE CAJA (INGRESOS Y EGRESOS MANUALES)
+CREATE TABLE IF NOT EXISTS movimientos_caja (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    turno_id UUID REFERENCES turnos_caja(id),
+    tienda_id UUID REFERENCES tiendas(id),
+    usuario_nombre TEXT DEFAULT 'Administrador',
+    tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('ingreso', 'egreso')),
+    instrumento VARCHAR(30) NOT NULL,
+    monto NUMERIC(14, 2) NOT NULL,
+    concepto TEXT NOT NULL,
+    tipo_caja VARCHAR(30) DEFAULT 'Factura Fiscal',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 19. DEVOLUCIONES Y NOTAS DE CRÉDITO
+CREATE TABLE IF NOT EXISTS devoluciones (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    numero_nota_credito VARCHAR(30) UNIQUE NOT NULL,
+    factura_numero VARCHAR(30) NOT NULL,
+    cliente_nombre TEXT NOT NULL,
+    cliente_documento VARCHAR(30),
+    items_count INT DEFAULT 1,
+    tipo_reembolso VARCHAR(30) DEFAULT 'Efectivo',
+    total NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+    usuario_nombre TEXT DEFAULT 'Administrador',
+    motivo TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE movimientos_caja ENABLE ROW LEVEL SECURITY;
+ALTER TABLE devoluciones ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Gestionar movimientos_caja" ON movimientos_caja;
+CREATE POLICY "Gestionar movimientos_caja" ON movimientos_caja FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Gestionar devoluciones" ON devoluciones;
+CREATE POLICY "Gestionar devoluciones" ON devoluciones FOR ALL USING (true) WITH CHECK (true);
+

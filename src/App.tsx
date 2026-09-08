@@ -20,6 +20,22 @@ import AdminMenus from './pages/admin/Menus';
 import AdminGaleria from './pages/admin/Galeria';
 import AdminCatalogos from './pages/admin/Catalogos';
 import POSPage from './pages/admin/POS';
+import SolicitudTraslado from './pages/admin/SolicitudTraslado';
+import SolicitudesRecibidas from './pages/admin/SolicitudesRecibidas';
+import AdminTraslados from './pages/admin/Traslados';
+import ConsumoInterno from './pages/admin/ConsumoInterno';
+import AuditoriaInventario from './pages/admin/AuditoriaInventario';
+import AjustesInventario from './pages/admin/AjustesInventario';
+import EntradasSalidas from './pages/admin/EntradasSalidas';
+import AlertaReposicion from './pages/admin/AlertaReposicion';
+import ReportesInventario from './pages/admin/ReportesInventario';
+import Clientes from './pages/admin/Clientes';
+import Cotizaciones from './pages/admin/Cotizaciones';
+import NotasEntrega from './pages/admin/NotasEntrega';
+import Facturas from './pages/admin/Facturas';
+import Devoluciones from './pages/admin/Devoluciones';
+import CajaTurnos from './pages/admin/CajaTurnos';
+import ReportesVentas from './pages/admin/ReportesVentas';
 import AdminLayout from './components/admin/AdminLayout';
 import ModulePlaceholder from './components/admin/ModulePlaceholder';
 import Header from './components/layout/Header';
@@ -102,25 +118,25 @@ function AppContent() {
               {/* ── Módulos Inventario ── */}
               <Route path="/admin/inventario/productos" element={<AdminProductos />} />
               <Route path="/admin/inventario/kardex" element={<ModulePlaceholder modulo="Inventario" viewTitle="Kardex / Buscador" description="Trazabilidad cronológica de movimientos de entrada, salida y saldos en tiempo real." />} />
-              <Route path="/admin/inventario/solicitud-traslado" element={<ModulePlaceholder modulo="Inventario" viewTitle="Solicitud de Traslado" description="Generar solicitudes de mercancía entre tiendas o almacenes centrales." primaryActionLabel="Nueva Solicitud" />} />
-              <Route path="/admin/inventario/solicitudes-recibidas" element={<ModulePlaceholder modulo="Inventario" viewTitle="Solicitudes Recibidas" description="Bandeja de pedidos de traslado pendientes por despachar." badge="2 pendientes" primaryActionLabel="Procesar Solicitud" />} />
-              <Route path="/admin/inventario/traslados" element={<ModulePlaceholder modulo="Inventario" viewTitle="Traslados" description="Histórico de traslados inter-sucursales y guías de remisión." primaryActionLabel="Nuevo Traslado" />} />
-              <Route path="/admin/inventario/consumo-interno" element={<ModulePlaceholder modulo="Inventario" viewTitle="Consumo Interno" description="Salidas de inventario para mantenimiento, operaciones o exhibición." primaryActionLabel="Registrar Consumo" />} />
-              <Route path="/admin/inventario/auditoria" element={<ModulePlaceholder modulo="Inventario" viewTitle="Auditoría Física" description="Tomas físicas de inventario y comparación contra existencias del sistema." primaryActionLabel="Iniciar Auditoría" />} />
-              <Route path="/admin/inventario/ajustes" element={<ModulePlaceholder modulo="Inventario" viewTitle="Ajustes de Inventario" description="Aprobación y registro de sobrantes o faltantes justificados." primaryActionLabel="Crear Ajuste" />} />
-              <Route path="/admin/inventario/movimientos" element={<ModulePlaceholder modulo="Inventario" viewTitle="Entradas / Salidas" description="Movimientos rápidos manuales de almacén." primaryActionLabel="Nuevo Movimiento" />} />
-              <Route path="/admin/inventario/reposicion" element={<ModulePlaceholder modulo="Inventario" viewTitle="Alerta de Reposición" description="Sugerencias automáticas de compra según puntos de reorden." primaryActionLabel="Generar Orden" />} />
-              <Route path="/admin/inventario/reportes" element={<ModulePlaceholder modulo="Inventario" viewTitle="Reportes de Inventario" description="Valoración de existencias, rotación y productos inmovilizados." />} />
+              <Route path="/admin/inventario/solicitud-traslado" element={<SolicitudTraslado />} />
+              <Route path="/admin/inventario/solicitudes-recibidas" element={<SolicitudesRecibidas />} />
+              <Route path="/admin/inventario/traslados" element={<AdminTraslados />} />
+              <Route path="/admin/inventario/consumo-interno" element={<ConsumoInterno />} />
+              <Route path="/admin/inventario/auditoria" element={<AuditoriaInventario />} />
+              <Route path="/admin/inventario/ajustes" element={<AjustesInventario />} />
+              <Route path="/admin/inventario/movimientos" element={<EntradasSalidas />} />
+              <Route path="/admin/inventario/reposicion" element={<AlertaReposicion />} />
+              <Route path="/admin/inventario/reportes" element={<ReportesInventario />} />
 
               {/* ── Módulos Ventas ── */}
               <Route path="/admin/ventas/pos" element={<POSPage />} />
-              <Route path="/admin/ventas/clientes" element={<AdminCRM />} />
-              <Route path="/admin/ventas/cotizacion" element={<ModulePlaceholder modulo="Ventas" viewTitle="Cotizaciones" description="Emisión y seguimiento de cotizaciones para clientes." primaryActionLabel="Nueva Cotización" />} />
-              <Route path="/admin/ventas/notas-entrega" element={<ModulePlaceholder modulo="Ventas" viewTitle="Notas de Entrega" description="Listado y control de despachos emitidos sin discriminación de IVA." primaryActionLabel="Emitir Nota" />} />
-              <Route path="/admin/ventas/facturas" element={<AdminOrdenes />} />
-              <Route path="/admin/ventas/devoluciones" element={<ModulePlaceholder modulo="Ventas" viewTitle="Devoluciones" description="Gestión de reembolsos y emisión de notas de crédito." primaryActionLabel="Procesar Devolución" />} />
-              <Route path="/admin/ventas/caja" element={<ModulePlaceholder modulo="Ventas" viewTitle="Caja y Turnos" description="Control de turnos, arqueos ciegos por moneda y cortes de caja." primaryActionLabel="Abrir Turno" />} />
-              <Route path="/admin/ventas/reportes" element={<ModulePlaceholder modulo="Ventas" viewTitle="Reportes de Ventas" description="Métricas de facturación por vendedor, tienda y canal." />} />
+              <Route path="/admin/ventas/clientes" element={<Clientes />} />
+              <Route path="/admin/ventas/cotizacion" element={<Cotizaciones />} />
+              <Route path="/admin/ventas/notas-entrega" element={<NotasEntrega />} />
+              <Route path="/admin/ventas/facturas" element={<Facturas />} />
+              <Route path="/admin/ventas/devoluciones" element={<Devoluciones />} />
+              <Route path="/admin/ventas/caja" element={<CajaTurnos />} />
+              <Route path="/admin/ventas/reportes" element={<ReportesVentas />} />
 
               {/* ── Módulos Compras ── */}
               <Route path="/admin/compras/compra-directa" element={<ModulePlaceholder modulo="Compras" viewTitle="Compra Directa" description="Registro de facturas de compra inmediata a proveedores." primaryActionLabel="Registrar Compra" />} />
