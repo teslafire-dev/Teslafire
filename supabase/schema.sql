@@ -2,7 +2,7 @@
 -- TESLA FIRE ERP & POS - ESQUEMA INTEGRAL DE BASE DE DATOS SUPABASE
 -- ====================================================================
 -- Ejecutar este script en el SQL Editor de tu proyecto Supabase:
--- https://supabase.com/dashboard/project/ynverplzpxsrsgdfaups/sql
+-- https://supabase.com/dashboard/project/yptwyaxocnobcrkfxrjc/sql
 -- ====================================================================
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
