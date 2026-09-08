@@ -289,6 +289,84 @@ CREATE TABLE IF NOT EXISTS turnos_caja (
     notas TEXT
 );
 
+-- 13. CONFIGURACIONES GENERALES Y CMS
+CREATE TABLE IF NOT EXISTS configuracion (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    clave TEXT UNIQUE NOT NULL,
+    valor TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS menus (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    titulo TEXT NOT NULL,
+    url TEXT NOT NULL,
+    location VARCHAR(50) DEFAULT 'header',
+    orden INT DEFAULT 0,
+    activo BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS ips_bloqueadas (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ip TEXT UNIQUE NOT NULL,
+    razon TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS actividad_usuarios (
+    id BIGSERIAL PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id),
+    email TEXT,
+    ip TEXT,
+    user_agent TEXT,
+    navegador TEXT,
+    os TEXT,
+    ruta TEXT,
+    pais TEXT,
+    ciudad TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Compatibilidad catálogo
+ALTER TABLE productos 
+ADD COLUMN IF NOT EXISTS is_offer BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS is_new BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS destacado BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS moneda TEXT DEFAULT 'USD';
+
+CREATE TABLE IF NOT EXISTS producto_categorias (
+    producto_id UUID REFERENCES productos(id) ON DELETE CASCADE,
+    categoria_id UUID REFERENCES categorias(id) ON DELETE CASCADE,
+    PRIMARY KEY (producto_id, categoria_id)
+);
+
+-- RLS para tablas complementarias
+ALTER TABLE configuracion ENABLE ROW LEVEL SECURITY;
+ALTER TABLE menus ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ips_bloqueadas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE actividad_usuarios ENABLE ROW LEVEL SECURITY;
+ALTER TABLE producto_categorias ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Lectura pública configuracion" ON configuracion;
+CREATE POLICY "Lectura pública configuracion" ON configuracion FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Lectura pública menus" ON menus;
+CREATE POLICY "Lectura pública menus" ON menus FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Lectura pública ips_bloqueadas" ON ips_bloqueadas;
+CREATE POLICY "Lectura pública ips_bloqueadas" ON ips_bloqueadas FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Insertar actividad_usuarios" ON actividad_usuarios;
+CREATE POLICY "Insertar actividad_usuarios" ON actividad_usuarios FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Lectura actividad_usuarios" ON actividad_usuarios;
+CREATE POLICY "Lectura actividad_usuarios" ON actividad_usuarios FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Lectura pública producto_categorias" ON producto_categorias;
+CREATE POLICY "Lectura pública producto_categorias" ON producto_categorias FOR ALL USING (true);
+
 -- ====================================================================
 -- DATOS INICIALES (SEEDS OBLIGATORIOS)
 -- ====================================================================
@@ -307,6 +385,13 @@ ON CONFLICT (codigo) DO UPDATE SET tasa_cambio = EXCLUDED.tasa_cambio;
 -- Tasa BCV inicial
 INSERT INTO tasas_cambio (moneda_codigo, tasa, fuente, fecha_vigencia)
 VALUES ('USD', 804.81, 'BCV', CURRENT_DATE);
+
+-- Configuraciones iniciales
+INSERT INTO configuracion (clave, valor) VALUES 
+('markup_bcv_usd', '0'),
+('markup_bcv_eur', '0'),
+('max_concurrent_visitors', '100')
+ON CONFLICT (clave) DO NOTHING;
 
 -- Cliente por defecto para ventas rápidas de mostrador
 INSERT INTO clientes (documento, nombre, direccion, telefono, email, limite_credito, saldo_favor)

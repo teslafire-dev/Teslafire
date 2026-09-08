@@ -51,35 +51,26 @@ export const CurrencyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setUsdMarkupSelected(markupUsd);
         setEurMarkupSelected(markupEur);
 
-        // 2. Obtener la tasa oficial del endpoint 
-        // Nota: En producción, esto debería apuntar al endpoint real.
-        // Aquí usamos el de Kreatickets como fallback (dado en el script del prompt)
-        const cacheTime = 3600000; // 1 hora
-        const cachedR = localStorage.getItem('bcv_rates');
-        let rates = { usd: 0, eur: 0 };
+        // 2. Obtener la tasa oficial desde Supabase o API pública libre de CORS
+        let rates = { usd: 804.81, eur: 875.20 };
+        try {
+          const { data: tasaDb } = await supabase
+            .from('tasas_cambio')
+            .select('tasa')
+            .order('created_at', { ascending: false })
+            .limit(1);
 
-        if (cachedR) {
-          const parsed = JSON.parse(cachedR);
-          if (Date.now() - parsed.timestamp < cacheTime) {
-            rates = parsed.value;
-          }
-        }
-
-        if (rates.usd === 0) {
-          try {
-            const resp = await fetch('https://kreatickets.com/pagomovil/obtener_bcv.php', { cache: 'no-store' });
+          if (tasaDb && tasaDb.length > 0 && tasaDb[0].tasa) {
+            rates.usd = parseFloat(tasaDb[0].tasa) || 804.81;
+          } else {
+            const resp = await fetch('https://ve.dolarapi.com/v1/dolares/oficial', { cache: 'no-store' });
             if (resp.ok) {
-              const data = await resp.json();
-              rates.usd = parseFloat(data.usd) || 0;
-              rates.eur = parseFloat(data.eur) || 0;
-              localStorage.setItem('bcv_rates', JSON.stringify({ value: rates, timestamp: Date.now() }));
+              const d = await resp.json();
+              if (d.promedio) rates.usd = parseFloat(d.promedio);
             }
-          } catch (e) {
-            console.error('Error fetching BCV API directly', e);
-            // Fallback rates en caso de fallo crítico API
-            rates.usd = 36.50; 
-            rates.eur = 39.40;
           }
+        } catch {
+          rates.usd = 804.81;
         }
 
         // 3. Aplicar el markup (tipo IVA o suma directa)
