@@ -334,7 +334,20 @@ ALTER TABLE productos
 ADD COLUMN IF NOT EXISTS is_offer BOOLEAN DEFAULT FALSE,
 ADD COLUMN IF NOT EXISTS is_new BOOLEAN DEFAULT FALSE,
 ADD COLUMN IF NOT EXISTS destacado BOOLEAN DEFAULT FALSE,
-ADD COLUMN IF NOT EXISTS moneda TEXT DEFAULT 'USD';
+ADD COLUMN IF NOT EXISTS moneda TEXT DEFAULT 'USD',
+ADD COLUMN IF NOT EXISTS precio_detal_bcv NUMERIC(14,2),
+ADD COLUMN IF NOT EXISTS precio_credito NUMERIC(14,2),
+ADD COLUMN IF NOT EXISTS tratamiento_iva VARCHAR(50) DEFAULT 'General — 16,00%',
+ADD COLUMN IF NOT EXISTS peso_kg NUMERIC(10,3) DEFAULT 0.000,
+ADD COLUMN IF NOT EXISTS dimensiones TEXT,
+ADD COLUMN IF NOT EXISTS ubicacion_almacen TEXT,
+ADD COLUMN IF NOT EXISTS clasificacion_origen VARCHAR(50) DEFAULT 'Fabricación Nacional',
+ADD COLUMN IF NOT EXISTS unidades_por_caja INT DEFAULT 1,
+ADD COLUMN IF NOT EXISTS garantia_meses INT DEFAULT 0,
+ADD COLUMN IF NOT EXISTS bloquear_mayor BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS proveedor_nombre TEXT,
+ADD COLUMN IF NOT EXISTS imagen_url TEXT;
+
 
 CREATE TABLE IF NOT EXISTS producto_categorias (
     producto_id UUID REFERENCES productos(id) ON DELETE CASCADE,
@@ -557,4 +570,58 @@ CREATE POLICY "Lectura pública de perfiles" ON perfiles FOR SELECT USING (true)
 
 DROP POLICY IF EXISTS "Actualizar perfiles" ON perfiles;
 CREATE POLICY "Actualizar perfiles" ON perfiles FOR UPDATE USING (true);
+
+-- Políticas de escritura para inventario y catálogo
+DROP POLICY IF EXISTS "Gestionar productos" ON productos;
+CREATE POLICY "Gestionar productos" ON productos FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Gestionar categorias" ON categorias;
+CREATE POLICY "Gestionar categorias" ON categorias FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Gestionar marcas" ON marcas;
+CREATE POLICY "Gestionar marcas" ON marcas FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Gestionar stock" ON producto_stock;
+CREATE POLICY "Gestionar stock" ON producto_stock FOR ALL USING (true) WITH CHECK (true);
+
+-- ====================================================================
+-- CAMPOS EXTENDIDOS TESLA FIRE PARA PRODUCTOS
+-- (Ejecutar en el SQL Editor de Supabase)
+-- ====================================================================
+ALTER TABLE productos ADD COLUMN IF NOT EXISTS precio_detal_bcv NUMERIC(14, 2);
+ALTER TABLE productos ADD COLUMN IF NOT EXISTS precio_credito NUMERIC(14, 2) DEFAULT 0.00;
+ALTER TABLE productos ADD COLUMN IF NOT EXISTS tratamiento_iva TEXT DEFAULT 'General — 16,00%';
+ALTER TABLE productos ADD COLUMN IF NOT EXISTS peso_kg NUMERIC(10, 3) DEFAULT 0.000;
+ALTER TABLE productos ADD COLUMN IF NOT EXISTS dimensiones TEXT;
+ALTER TABLE productos ADD COLUMN IF NOT EXISTS ubicacion_almacen TEXT;
+ALTER TABLE productos ADD COLUMN IF NOT EXISTS clasificacion_origen TEXT DEFAULT 'Fabricación Nacional';
+ALTER TABLE productos ADD COLUMN IF NOT EXISTS unidades_por_caja INTEGER DEFAULT 1;
+ALTER TABLE productos ADD COLUMN IF NOT EXISTS garantia_meses INTEGER DEFAULT 0;
+ALTER TABLE productos ADD COLUMN IF NOT EXISTS bloquear_mayor BOOLEAN DEFAULT FALSE;
+ALTER TABLE productos ADD COLUMN IF NOT EXISTS proveedor_nombre TEXT;
+ALTER TABLE productos ADD COLUMN IF NOT EXISTS imagen_url TEXT;
+
+-- ====================================================================
+-- CATEGORÍAS Y MARCAS OFICIALES TESLA FIRE
+-- ====================================================================
+INSERT INTO categorias (nombre, slug, descripcion) VALUES
+('Extintores PQS', 'extintores-pqs', 'Extintores de Polvo Químico Seco ABC/BC'),
+('Extintores CO2', 'extintores-co2', 'Extintores de Dióxido de Carbono'),
+('Extintores Especiales', 'extintores-especiales', 'Extintores Clase K, Acetato de Potasio, Agua Presurizada'),
+('Repuestos y Accesorios', 'repuestos-accesorios', 'Válvulas, manómetros, mangueras, soportes y precintos'),
+('Detección y Alarma', 'deteccion-alarma', 'Sensores de humo, térmicos, estaciones manuales, paneles'),
+('Señalización y Seguridad', 'senalizacion-seguridad', 'Señales fotoluminiscentes, botiquines, EPP'),
+('Servicios', 'servicios', 'Recargas, mantenimiento, inspección técnica y pruebas hidrostáticas')
+ON CONFLICT (nombre) DO NOTHING;
+
+INSERT INTO marcas (nombre) VALUES
+('Tesla Fire'),
+('Amerex'),
+('Kidde'),
+('Ansul'),
+('Buckeye'),
+('Badger'),
+('Bosch'),
+('Genérico')
+ON CONFLICT (nombre) DO NOTHING;
 

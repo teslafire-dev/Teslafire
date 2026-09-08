@@ -11,29 +11,25 @@ import {
   Eye,
   FileSpreadsheet,
   Loader2,
-  CheckCircle2,
-  AlertCircle,
   Package,
   DownloadCloud,
-  Tags,
   ArrowUp,
   ArrowDown
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { Link } from "react-router-dom";
-import { featuredProducts } from "@/data/mockData";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useSyncProducts } from "@/hooks/useSyncProducts";
 import { supabase } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
-import ProductModal from "@/components/admin/ProductModal";
+import ProductEditor from "@/components/admin/ProductEditor";
 
 export default function AdminProductos() {
   const [searchTerm, setSearchTerm] = useState("");
   const [dbProducts, setDbProducts] = useState<any[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'editor'>('list');
   const [editProduct, setEditProduct] = useState<any | null>(null);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: 'created_at', direction: 'desc' });
   const { canManageProducts, loading: authLoading } = useAuth();
@@ -137,12 +133,12 @@ export default function AdminProductos() {
     const exportData = dbProducts.map(p => ({
       sku: p.sku,
       nombre: p.nombre,
-      categoria: p.categorias?.nombre || 'Sin Categoría',
+      categoria: p.producto_categorias?.[0]?.categorias?.nombre || 'Sin Categoría',
       precio: p.precio,
       tipo_precio: p.tipo_precio,
-      stock: p.stock,
+      stock: p.stock ?? 0,
       marca: p.marcas?.nombre || 'Sin Marca',
-      estado: p.estado,
+      estado: p.activo ? 'ACTIVO' : 'INACTIVO',
       destacado: p.destacado ? 'SÍ' : 'NO'
     }));
 
@@ -155,8 +151,8 @@ export default function AdminProductos() {
 
   const getSortedProducts = () => {
     let filtered = dbProducts.filter(p => 
-      p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      p.sku.toLowerCase().includes(searchTerm.toLowerCase())
+      (p.nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+      (p.sku || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     if (sortConfig.key) {
@@ -189,12 +185,31 @@ export default function AdminProductos() {
       <p className="text-slate-500 font-medium max-w-md uppercase tracking-widest text-[10px]">No tiene permisos para gestionar el inventario industrial.</p>
     </div>
   );
+
+  // Vista de Edición / Creación Profesional Tesla Fire
+  if (viewMode === 'editor') {
+    return (
+      <ProductEditor 
+        product={editProduct} 
+        onBack={() => {
+          setViewMode('list');
+          setEditProduct(null);
+        }}
+        onSaved={() => {
+          setViewMode('list');
+          setEditProduct(null);
+          fetchProducts();
+        }}
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex justify-between items-center bg-white p-8 rounded-[2.5rem] border border-slate-50 shadow-sm">
         <div className="flex flex-col gap-1">
           <h1 className="text-5xl font-black font-outfit text-primary-950 uppercase tracking-tighter">Inventario Técnico</h1>
-          <p className="text-lg font-bold text-slate-400 tracking-tight">Gestión centralizada de 2,145 SKUs activos en el catálogo.</p>
+          <p className="text-lg font-bold text-slate-400 tracking-tight">Gestión centralizada de catálogo y fichas de productos.</p>
         </div>
         <div className="flex items-center gap-3">
           <input 
@@ -219,7 +234,7 @@ export default function AdminProductos() {
             {isSyncing ? 'Sincronizando...' : 'Importar'}
           </button>
           <button 
-            onClick={() => { setEditProduct(null); setIsModalOpen(true); }}
+            onClick={() => { setEditProduct(null); setViewMode('editor'); }}
             className="bg-primary-950 text-white font-extrabold uppercase text-[12px] tracking-wider px-8 py-4 rounded-2xl hover:bg-black transition-smooth shadow-2xl shadow-primary-950/20 active:scale-95 flex items-center gap-2"
           >
             <Plus className="w-5 h-5 text-accent" /> Nuevo SKU
@@ -346,16 +361,16 @@ export default function AdminProductos() {
                   </td>
                   <td className="px-5 py-4 text-center">
                     <span className="text-xl font-black text-primary-950 font-outfit tracking-tighter">
-                      {prod.tipo_precio === 'cotizacion' ? "A Cotizar" : `$${prod.precio.toFixed(2)}`}
+                      {prod.tipo_precio === 'cotizacion' ? "A Cotizar" : `$${(prod.precio || 0).toFixed(2)}`}
                     </span>
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex flex-col items-center gap-1.5">
-                       <span className={`text-[12px] font-black uppercase ${prod.stock > 10 ? 'text-green-600' : 'text-red-600'}`}>
-                         {prod.stock} Unid.
+                       <span className={`text-[12px] font-black uppercase ${(prod.stock || 0) > 10 ? 'text-green-600' : 'text-red-600'}`}>
+                         {prod.stock ?? 0} Unid.
                        </span>
                        <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden shadow-inner translate-y-2">
-                          <div className={`h-full ${prod.stock > 10 ? 'bg-green-500 w-3/4' : 'bg-red-500 w-1/4'}`}></div>
+                          <div className={`h-full ${(prod.stock || 0) > 10 ? 'bg-green-500 w-3/4' : 'bg-red-500 w-1/4'}`}></div>
                        </div>
                     </div>
                   </td>
@@ -364,7 +379,7 @@ export default function AdminProductos() {
                        <Link to={`/productos/${prod.slug || prod.id}`} target="_blank" className="p-2.5 text-slate-400 hover:text-accent transition-smooth bg-slate-50 rounded-xl active:scale-90 border border-transparent hover:border-slate-200" title="Ver Producto">
                           <Eye className="w-5 h-5" />
                        </Link>
-                       <button onClick={() => { setEditProduct(prod); setIsModalOpen(true); }} className="p-2.5 text-slate-400 hover:text-blue-600 transition-smooth bg-slate-50 rounded-xl active:scale-90 border border-transparent hover:border-slate-200" title="Editar SKU">
+                       <button onClick={() => { setEditProduct(prod); setViewMode('editor'); }} className="p-2.5 text-slate-400 hover:text-blue-600 transition-smooth bg-slate-50 rounded-xl active:scale-90 border border-transparent hover:border-slate-200" title="Editar SKU">
                           <Edit3 className="w-5 h-5" />
                        </button>
                        <button onClick={() => handleDelete(prod.id)} className="p-2.5 text-slate-400 hover:text-red-500 transition-smooth bg-slate-50 rounded-xl active:scale-90 border border-transparent hover:border-slate-200" title="Eliminar SKU">
@@ -419,14 +434,7 @@ export default function AdminProductos() {
            </div>
         </div>
       )}
-
-      {/* Product Creation Modal */}
-      <ProductModal 
-        isOpen={isModalOpen} 
-        onClose={() => { setIsModalOpen(false); setEditProduct(null); }} 
-        onSuccess={fetchProducts} 
-        editProduct={editProduct}
-      />
     </div>
   );
 }
+
