@@ -28,15 +28,9 @@ export default function ProtectedRoute() {
 
   // Si no hay usuario y no está cargando, redirigimos al login
   if (!user) {
-    // Guardamos la ubicación actual para volver después del login si es necesario
     return <Navigate to="/admin/login" state={{ from: location }} replace />;
   }
 
-  // Si es un invitado (cliente normal), prohibimos la entrada al admin y redirigimos a su perfil
-  if (role === 'invitado') {
-    return <Navigate to="/perfil" replace />;
-  }
-
-  // Si hay usuario con rol admin/editor, permitimos el acceso a las rutas hijas
+  // Usuario autenticado: acceso concedido al panel administrativo
   return <Outlet />;
 }
