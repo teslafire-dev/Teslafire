@@ -1026,3 +1026,107 @@ BEGIN
     RETURN 'FAC-' || LPAD(nextval('seq_factura_pos')::TEXT, 7, '0');
 END;
 $$ LANGUAGE plpgsql;
+
+-- ══════════════════════════════════════════════════
+-- 19. ORDENES (Tienda pública / carrito web)
+-- ══════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS ordenes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    localizador VARCHAR(20) UNIQUE NOT NULL,
+    cliente_nombre VARCHAR(200),
+    cliente_telefono VARCHAR(50),
+    cliente_email VARCHAR(200),
+    cliente_cedula VARCHAR(30),
+    mensaje TEXT,
+    productos JSONB DEFAULT '[]',
+    total NUMERIC(12,2) DEFAULT 0,
+    estado VARCHAR(30) DEFAULT 'pendiente',
+    notas_admin TEXT,
+    acepta_marketing BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE ordenes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Acceso ordenes" ON ordenes;
+CREATE POLICY "Acceso ordenes" ON ordenes FOR ALL USING (true) WITH CHECK (true);
+
+-- ══════════════════════════════════════════════════
+-- 20. PAGINAS (CMS de páginas dinámicas)
+-- ══════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS paginas (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    titulo VARCHAR(200) NOT NULL,
+    slug VARCHAR(200) UNIQUE NOT NULL,
+    widgets JSONB DEFAULT '[]',
+    estado VARCHAR(20) DEFAULT 'publicada',
+    password VARCHAR(100),
+    meta_titulo VARCHAR(200),
+    meta_descripcion TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE paginas ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Acceso paginas" ON paginas;
+CREATE POLICY "Acceso paginas" ON paginas FOR ALL USING (true) WITH CHECK (true);
+
+-- ══════════════════════════════════════════════════
+-- 21. CATALOGOS y CATALOGO_PRODUCTOS
+-- ══════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS catalogos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nombre VARCHAR(200) NOT NULL,
+    descripcion TEXT,
+    portada_url TEXT,
+    activo BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE catalogos ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Acceso catalogos" ON catalogos;
+CREATE POLICY "Acceso catalogos" ON catalogos FOR ALL USING (true) WITH CHECK (true);
+
+CREATE TABLE IF NOT EXISTS catalogo_productos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    catalogo_id UUID REFERENCES catalogos(id) ON DELETE CASCADE,
+    producto_id UUID REFERENCES productos(id) ON DELETE CASCADE,
+    orden INT DEFAULT 0
+);
+ALTER TABLE catalogo_productos ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Acceso catalogo_productos" ON catalogo_productos;
+CREATE POLICY "Acceso catalogo_productos" ON catalogo_productos FOR ALL USING (true) WITH CHECK (true);
+
+-- ══════════════════════════════════════════════════
+-- 22. CAMPANAS CRM (Marketing)
+-- ══════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS campanas (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nombre VARCHAR(200) NOT NULL,
+    asunto VARCHAR(300),
+    mensaje TEXT,
+    tipo VARCHAR(30) DEFAULT 'email',
+    estado VARCHAR(20) DEFAULT 'borrador',
+    fecha_envio TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE campanas ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Acceso campanas" ON campanas;
+CREATE POLICY "Acceso campanas" ON campanas FOR ALL USING (true) WITH CHECK (true);
+
+CREATE TABLE IF NOT EXISTS campana_destinatarios (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    campana_id UUID REFERENCES campanas(id) ON DELETE CASCADE,
+    cliente_id UUID REFERENCES clientes(id) ON DELETE CASCADE,
+    estado VARCHAR(20) DEFAULT 'pendiente',
+    enviado_at TIMESTAMPTZ
+);
+ALTER TABLE campana_destinatarios ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Acceso campana_destinatarios" ON campana_destinatarios;
+CREATE POLICY "Acceso campana_destinatarios" ON campana_destinatarios FOR ALL USING (true) WITH CHECK (true);
+
+-- Vista de compatibilidad para código que usa 'categories' en inglés
+CREATE OR REPLACE VIEW categories AS SELECT * FROM categorias;
+
+-- Storage Buckets (referencia documental - se crean desde el dashboard)
+-- Bucket: products (imágenes de productos - ProductModal, Galería)
+-- Bucket: assets   (logos y assets de marca - Configuración, SEO)
+-- Bucket: productos (imágenes del editor de productos)
+
