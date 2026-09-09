@@ -77,6 +77,7 @@ export default function AdminLayout() {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isDocModalOpen, setIsDocModalOpen] = useState(false);
+  const [solicitudesPendientes, setSolicitudesPendientes] = useState(0);
   const notifRef = useRef<HTMLDivElement>(null);
 
   const displayName = nombre_completo || user?.email?.split('@')[0] || 'Gerencia';
@@ -95,6 +96,31 @@ export default function AdminLayout() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Badge dinámico: contar solicitudes pendientes + suscripción Realtime
+  useEffect(() => {
+    const fetchPendientes = async () => {
+      const { count } = await supabase
+        .from('solicitudes_traslado')
+        .select('id', { count: 'exact', head: true })
+        .eq('estado', 'Pendiente');
+      setSolicitudesPendientes(count ?? 0);
+    };
+
+    fetchPendientes();
+
+    // Canal Realtime — se actualiza automáticamente sin refrescar
+    const channel = supabase
+      .channel('solicitudes-traslado-badge')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'solicitudes_traslado' },
+        () => fetchPendientes() // Recalcular al detectar cualquier cambio
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   // Cerrar notificaciones al hacer clic fuera
@@ -145,7 +171,7 @@ export default function AdminLayout() {
         { id: 'productos', name: 'Productos', path: '/admin/inventario/productos', icon: Package },
         { id: 'kardex', name: 'Kardex / Buscador', path: '/admin/inventario/kardex', icon: Search },
         { id: 'solicitud_traslado', name: 'Solicitud de Traslado', path: '/admin/inventario/solicitud-traslado', icon: FileText },
-        { id: 'solicitudes_recibidas', name: 'Solicitudes Recibidas', path: '/admin/inventario/solicitudes-recibidas', icon: Inbox, badge: '2', badgeColor: 'bg-red-500 animate-pulse' },
+        { id: 'solicitudes_recibidas', name: 'Solicitudes Recibidas', path: '/admin/inventario/solicitudes-recibidas', icon: Inbox, badge: solicitudesPendientes > 0 ? solicitudesPendientes : undefined, badgeColor: 'bg-red-500 animate-pulse' },
         { id: 'traslados', name: 'Traslados', path: '/admin/inventario/traslados', icon: Truck },
         { id: 'consumo_interno', name: 'Consumo Interno', path: '/admin/inventario/consumo-interno', icon: ArrowLeftRight },
         { id: 'auditoria', name: 'Auditoría Física', path: '/admin/inventario/auditoria', icon: ClipboardCheck },

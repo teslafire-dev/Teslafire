@@ -76,6 +76,7 @@ import Footer from './components/layout/Footer';
 import Nosotros from './pages/Nosotros';
 import Servicios from './pages/Servicios';
 import DynamicPage from './pages/DynamicPage';
+import LandingPage from './pages/LandingPage';
 import Perfil from './pages/perfil/Perfil';
 import Historial from './pages/perfil/Historial';
 import { Toaster } from 'react-hot-toast';
@@ -115,9 +116,13 @@ function AppContent() {
       <ScrollToTop />
       <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-500">
         <Routes>
-          {/* Public Context (with Header/Footer) */}
+          {/* Landing Page SaaS — Página Principal */}
+          <Route path="/" element={<LandingPage />} />
+
+          {/* Tiendas Públicas por Empresa (con Header/Footer) */}
           <Route element={<><Analytics /><Header /><main className="flex-grow"><NavigationWrapper /></main><Footer /></>}>
-            <Route path="/" element={<Home />} />
+            <Route path="/tienda" element={<Home />} />
+            <Route path="/tienda/:slug" element={<Home />} />
             <Route path="/productos" element={<Productos />} />
             <Route path="/productos/:slug" element={<ProductDetail />} />
             <Route path="/carrito" element={<Carrito />} />
@@ -127,7 +132,8 @@ function AppContent() {
             <Route path="/gracias/:localizador" element={<Gracias />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/perfil/historial" element={<Historial />} />
-            <Route path="/:slug" element={<DynamicPage />} />
+            <Route path="/software" element={<LandingPage />} />
+            <Route path="/:pageSlug" element={<DynamicPage />} />
           </Route>
 
           {/* Admin Context (Login) */}
