@@ -32,6 +32,7 @@ export default function ProductEditor({ product, onBack, onSaved }: ProductEdito
 
   // Estados de Imagen
   const [imageUrl, setImageUrl] = useState<string>(product?.imagen_url || product?.imagenes_urls?.[0] || '');
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [showUrlModal, setShowUrlModal] = useState(false);
   const [tempUrlInput, setTempUrlInput] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -119,17 +120,15 @@ export default function ProductEditor({ product, onBack, onSaved }: ProductEdito
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setImageUrl(event.target?.result as string);
-      toast.success('Imagen cargada localmente');
-    };
-    reader.readAsDataURL(file);
+    setImageFile(file);
+    setImageUrl(URL.createObjectURL(file)); // Preview instantáneo y súper liviano
+    toast.success('Imagen lista para subir');
   };
 
   const handleApplyUrl = () => {
     if (!tempUrlInput.trim()) return;
     setImageUrl(tempUrlInput.trim());
+    setImageFile(null); // Limpiamos el archivo si deciden usar URL
     setShowUrlModal(false);
     setTempUrlInput('');
     toast.success('Enlace de imagen asignado');
@@ -163,8 +162,30 @@ export default function ProductEditor({ product, onBack, onSaved }: ProductEdito
         updated_at: new Date().toISOString()
       };
 
-      if (imageUrl) {
-        payload.imagenes_urls = [imageUrl];
+      let finalImageUrl = imageUrl;
+
+      // Si hay un archivo físico, lo subimos al Storage de Supabase
+      if (imageFile) {
+        toast('Subiendo imagen al servidor...', { icon: '⏳' });
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('productos')
+          .upload(fileName, imageFile);
+          
+        if (uploadError) throw new Error('Error subiendo imagen: ' + uploadError.message);
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('productos')
+          .getPublicUrl(fileName);
+          
+        finalImageUrl = publicUrl;
+      }
+
+      if (finalImageUrl) {
+        payload.imagenes_urls = [finalImageUrl];
+        payload.imagen_url = finalImageUrl; // Por si acaso la base de datos usa esta en el futuro
       }
 
       if (form.categoria_id) {

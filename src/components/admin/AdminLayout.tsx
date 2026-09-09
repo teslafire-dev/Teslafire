@@ -74,7 +74,7 @@ export default function AdminLayout() {
   // Estados de interfaz
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<string | null>('inventario');
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isDocModalOpen, setIsDocModalOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);

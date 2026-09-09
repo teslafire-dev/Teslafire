@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { fileURLToPath } from 'url'
@@ -24,4 +25,10 @@ export default defineConfig({
     },
     chunkSizeWarningLimit: 1000, // Subimos el límite a 1MB para ser realistas con apps modernas
   },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+    css: true,
+  }
 })
