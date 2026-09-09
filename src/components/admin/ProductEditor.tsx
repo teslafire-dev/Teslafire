@@ -185,6 +185,7 @@ export default function ProductEditor({ product, onBack, onSaved }: ProductEdito
       payload.garantia_meses = Number(form.garantia_meses);
       payload.bloquear_mayor = form.bloquear_mayor;
       payload.proveedor_nombre = form.proveedor_nombre;
+      payload.aplica_iva = form.tratamiento_iva !== 'Exento — no grava';
 
       let error;
       if (isEditing) {

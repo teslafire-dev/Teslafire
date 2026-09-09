@@ -1,115 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Users, 
-  Plus, 
-  Search, 
-  ArrowLeft, 
-  Building, 
-  CreditCard, 
-  Lock, 
-  Tag, 
-  Phone, 
-  Mail, 
-  MapPin, 
-  FileText, 
-  Upload, 
-  Check, 
-  Loader2, 
-  Edit3, 
-  X,
-  FileCheck,
-  AlertCircle
-} from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
 
-interface ContactoItem {
-  cargo: string;
-  nombre: string;
-  telefono: string;
-}
-
-interface ReferenciaProveedor {
-  proveedor: string;
-  telefono: string;
-  archivo_nombre?: string;
-}
-
-interface Cliente {
+// ============================================================
+// Tipos y definición de datos
+// ============================================================
+export interface ClienteItem {
   id: string;
   nombre: string;
-  documento: string;
-  telefono: string;
-  email?: string;
+  documento: string; // V-..., J-...
+  telefono: string | null;
+  email: string | null;
   canal_venta: string;
-  estado?: string;
-  ciudad?: string;
-  direccion: string;
-  categoria_cliente: 'PLATINUM' | 'GOLD' | 'REGULAR';
+  estado: string | null;
+  ciudad: string | null;
+  direccion: string | null;
   limite_credito: number;
   dias_credito: number;
   saldo_favor: number;
-  bloqueado: boolean;
-  
-  // Datos Jurídicos
-  rif_empresa?: string;
-  cedula_rif_socio?: string;
-  registro_mercantil_nro?: string;
-  registro_mercantil_url?: string;
-  contacto_socio?: string;
-  contacto_1?: ContactoItem;
-  contacto_2?: ContactoItem;
-  referencias_proveedores?: ReferenciaProveedor[];
-  created_at?: string;
+  activo: boolean;
+  categoria_cliente: string;
 }
 
-const defaultClientesDemo: Cliente[] = [
-  {
-    id: 'cli-1',
-    nombre: 'Inversiones Alfa & Omega C.A.',
-    documento: 'J-40123456-7',
-    telefono: '0414-9876543',
-    email: 'contacto@alfaomega.com',
-    canal_venta: 'Mayor',
-    estado: 'Distrito Capital',
-    ciudad: 'Caracas',
-    direccion: 'Av. Francisco de Miranda, Edif. Centro Seguros, Piso 4, Ofic. 42',
-    categoria_cliente: 'PLATINUM',
-    limite_credito: 0,
-    dias_credito: 0,
-    saldo_favor: 0,
-    bloqueado: false,
-    rif_empresa: 'J-40123456-7',
-    cedula_rif_socio: 'V-12345678',
-    registro_mercantil_nro: 'Tomo 12-A, Folio 45',
-    contacto_socio: '0414-9876543 / socio@alfaomega.com',
-    contacto_1: { cargo: 'Gerente Compras', nombre: 'Carlos Mendoza', telefono: '0414-1112233' },
-    contacto_2: { cargo: 'Administración', nombre: 'Lucía Paredes', telefono: '0424-9988776' },
-    referencias_proveedores: [
-      { proveedor: 'Extintores Nacionales S.A.', telefono: '0212-2345678' },
-      { proveedor: 'Seguridad Industrial C.A.', telefono: '0212-9876543' },
-      { proveedor: 'Ferretería Central', telefono: '0212-5554321' }
-    ],
-    created_at: '2026-08-15T10:00:00Z'
-  },
-  {
-    id: 'cli-2',
-    nombre: 'María Fernanda Moya',
-    documento: 'V-18456789',
-    telefono: '0414-1234567',
-    email: 'mfmoya@ejemplo.com',
-    canal_venta: 'Detal',
-    estado: 'Miranda',
-    ciudad: 'Guatire',
-    direccion: 'Urb. Valle Arriba, Calle 3, Casa #14',
-    categoria_cliente: 'REGULAR',
-    limite_credito: 0,
-    dias_credito: 0,
-    saldo_favor: 0,
-    bloqueado: false,
-    created_at: '2026-09-01T14:30:00Z'
-  }
-];
+const CANALES: Record<string, [string, string]> = {
+  detal: ['Detal', 'bg-sky-50 text-sky-700'],
+  mayor: ['Mayor', 'bg-brand-50 text-brand-700'],
+  corporativo: ['Corporativo', 'bg-amber-50 text-amber-700'],
+  instalador: ['Instalador', 'bg-emerald-50 text-emerald-700']
+};
 
 const estadosVenezuela = [
   'Amazonas', 'Anzoátegui', 'Apure', 'Aragua', 'Barinas', 'Bolívar',
@@ -121,552 +39,504 @@ const estadosVenezuela = [
 
 export default function Clientes() {
   const [view, setView] = useState<'list' | 'form'>('list');
-  const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-
-  // Búsqueda
   const [busqueda, setBusqueda] = useState('');
+  
+  const [resultados, setResultados] = useState<ClienteItem[]>([]);
+  const [cargando, setCargando] = useState(false);
+  const [clienteSeleccionado, setClienteSeleccionado] = useState<ClienteItem | null>(null);
+  const [modalEstadoCuenta, setModalEstadoCuenta] = useState<ClienteItem | null>(null);
 
-  // Formulario
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [nombre, setNombre] = useState('');
-  const [documento, setDocumento] = useState('');
-  const [telefono, setTelefono] = useState('');
-  const [email, setEmail] = useState('');
-  const [canalVenta, setCanalVenta] = useState('Detal');
-  const [estado, setEstado] = useState('');
-  const [ciudad, setCiudad] = useState('');
-  const [direccion, setDireccion] = useState('');
+  // Stats
+  const [stats, setStats] = useState({ total: 0, conCredito: 0, inactivos: 0 });
 
-  // Jurídicos
-  const [rifEmpresa, setRifEmpresa] = useState('');
-  const [cedulaRifSocio, setCedulaRifSocio] = useState('');
-  const [registroMercantilNro, setRegistroMercantilNro] = useState('');
-  const [registroMercantilFile, setRegistroMercantilFile] = useState<string>('');
-  const [contactoSocio, setContactoSocio] = useState('');
+  // Formulario simple
+  const [formNombre, setFormNombre] = useState('');
+  const [formDoc, setFormDoc] = useState('');
+  const [formTel, setFormTel] = useState('');
+  const [formEmail, setFormEmail] = useState('');
+  const [formCanal, setFormCanal] = useState('Detal');
+  const [formEstado, setFormEstado] = useState('');
+  const [formCiudad, setFormCiudad] = useState('');
+  const [formDireccion, setFormDireccion] = useState('');
+  const [formLimiteCredito, setFormLimiteCredito] = useState('0');
+  const [formDiasCredito, setFormDiasCredito] = useState('0');
 
-  // Contactos adicionales
-  const [contacto1, setContacto1] = useState<ContactoItem>({ cargo: '', nombre: '', telefono: '' });
-  const [contacto2, setContacto2] = useState<ContactoItem>({ cargo: '', nombre: '', telefono: '' });
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Referencias a crédito
-  const [ref1, setRef1] = useState<ReferenciaProveedor>({ proveedor: '', telefono: '', archivo_nombre: '' });
-  const [ref2, setRef2] = useState<ReferenciaProveedor>({ proveedor: '', telefono: '', archivo_nombre: '' });
-  const [ref3, setRef3] = useState<ReferenciaProveedor>({ proveedor: '', telefono: '', archivo_nombre: '' });
+  const MIN_LETRAS = 2;
 
+  // Cargar estadísticas iniciales
   useEffect(() => {
-    fetchClientes();
+    const fetchStats = async () => {
+      const { count: total } = await supabase.from('clientes').select('*', { count: 'exact', head: true });
+      const { count: credit } = await supabase.from('clientes').select('*', { count: 'exact', head: true }).gt('limite_credito', 0);
+      const { count: inact } = await supabase.from('clientes').select('*', { count: 'exact', head: true }).eq('activo', false);
+      
+      setStats({
+        total: total || 0,
+        conCredito: credit || 0,
+        inactivos: inact || 0
+      });
+    };
+    fetchStats();
   }, []);
 
-  const fetchClientes = async () => {
-    setLoading(true);
-    try {
+  // Buscador
+  useEffect(() => {
+    const q = busqueda.trim();
+    if (q.length < MIN_LETRAS) {
+      setResultados([]);
+      return;
+    }
+
+    const fetchResultados = async () => {
+      setCargando(true);
       const { data, error } = await supabase
         .from('clientes')
         .select('*')
-        .order('created_at', { ascending: false });
-
-      if (!error && data && data.length > 0) {
-        setClientes(data as any);
-      } else {
-        const local = localStorage.getItem('teslafire_directorio_clientes');
-        if (local) {
-          setClientes(JSON.parse(local));
-        } else {
-          setClientes(defaultClientesDemo);
-          localStorage.setItem('teslafire_directorio_clientes', JSON.stringify(defaultClientesDemo));
-        }
+        .or(`nombre.ilike.%${q}%,documento.ilike.%${q}%,telefono.ilike.%${q}%`)
+        .limit(20);
+      
+      if (!error && data) {
+        setResultados(data as ClienteItem[]);
       }
-    } catch (err) {
-      const local = localStorage.getItem('teslafire_directorio_clientes');
-      setClientes(local ? JSON.parse(local) : defaultClientesDemo);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleNuevoCliente = () => {
-    setEditingId(null);
-    setNombre('');
-    setDocumento('');
-    setTelefono('');
-    setEmail('');
-    setCanalVenta('Detal');
-    setEstado('');
-    setCiudad('');
-    setDireccion('');
-
-    setRifEmpresa('');
-    setCedulaRifSocio('');
-    setRegistroMercantilNro('');
-    setRegistroMercantilFile('');
-    setContactoSocio('');
-
-    setContacto1({ cargo: '', nombre: '', telefono: '' });
-    setContacto2({ cargo: '', nombre: '', telefono: '' });
-
-    setRef1({ proveedor: '', telefono: '', archivo_nombre: '' });
-    setRef2({ proveedor: '', telefono: '', archivo_nombre: '' });
-    setRef3({ proveedor: '', telefono: '', archivo_nombre: '' });
-
-    setView('form');
-  };
-
-  const handleEditarCliente = (cli: Cliente) => {
-    setEditingId(cli.id);
-    setNombre(cli.nombre);
-    setDocumento(cli.documento);
-    setTelefono(cli.telefono);
-    setEmail(cli.email || '');
-    setCanalVenta(cli.canal_venta || 'Detal');
-    setEstado(cli.estado || '');
-    setCiudad(cli.ciudad || '');
-    setDireccion(cli.direccion || '');
-
-    setRifEmpresa(cli.rif_empresa || '');
-    setCedulaRifSocio(cli.cedula_rif_socio || '');
-    setRegistroMercantilNro(cli.registro_mercantil_nro || '');
-    setRegistroMercantilFile(cli.registro_mercantil_url || '');
-    setContactoSocio(cli.contacto_socio || '');
-
-    setContacto1(cli.contacto_1 || { cargo: '', nombre: '', telefono: '' });
-    setContacto2(cli.contacto_2 || { cargo: '', nombre: '', telefono: '' });
-
-    const refs = cli.referencias_proveedores || [];
-    setRef1(refs[0] || { proveedor: '', telefono: '', archivo_nombre: '' });
-    setRef2(refs[1] || { proveedor: '', telefono: '', archivo_nombre: '' });
-    setRef3(refs[2] || { proveedor: '', telefono: '', archivo_nombre: '' });
-
-    setView('form');
-  };
-
-  const handleGuardar = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!nombre.trim()) {
-      toast.error('El nombre o razón social es obligatorio');
-      return;
-    }
-    if (!documento.trim()) {
-      toast.error('La cédula o RIF es obligatorio');
-      return;
-    }
-    if (!telefono.trim()) {
-      toast.error('El número de teléfono es obligatorio');
-      return;
-    }
-    if (!direccion.trim()) {
-      toast.error('La dirección completa es obligatoria');
-      return;
-    }
-
-    // Verificar cédula duplicada
-    const docNormalizado = documento.trim().toUpperCase();
-    const existe = clientes.find(c => c.documento.toUpperCase() === docNormalizado && c.id !== editingId);
-    if (existe) {
-      toast.error('Ya existe un cliente registrado con esa misma Cédula / RIF');
-      return;
-    }
-
-    setSaving(true);
-    const clientePayload: Cliente = {
-      id: editingId || crypto.randomUUID(),
-      nombre: nombre.trim(),
-      documento: docNormalizado,
-      telefono: telefono.trim(),
-      email: email.trim() || undefined,
-      canal_venta: canalVenta,
-      estado: estado || undefined,
-      ciudad: ciudad.trim() || undefined,
-      direccion: direccion.trim(),
-      categoria_cliente: canalVenta === 'Mayor' ? 'PLATINUM' : 'REGULAR',
-      limite_credito: 0,
-      dias_credito: 0,
-      saldo_favor: 0,
-      bloqueado: false,
-
-      rif_empresa: rifEmpresa.trim() || undefined,
-      cedula_rif_socio: cedulaRifSocio.trim() || undefined,
-      registro_mercantil_nro: registroMercantilNro.trim() || undefined,
-      registro_mercantil_url: registroMercantilFile || undefined,
-      contacto_socio: contactoSocio.trim() || undefined,
-      contacto_1: contacto1,
-      contacto_2: contacto2,
-      referencias_proveedores: [ref1, ref2, ref3].filter(r => r.proveedor.trim() !== '')
+      setCargando(false);
     };
 
-    try {
-      const { error } = await supabase
-        .from('clientes')
-        .upsert(clientePayload);
+    const debounceFn = setTimeout(fetchResultados, 350);
+    return () => clearTimeout(debounceFn);
+  }, [busqueda]);
 
-      if (error) {
-        console.warn('Upsert en Supabase falló o no existen columnas nuevas, guardando localmente:', error.message);
-      }
-
-      let updatedList: Cliente[];
-      if (editingId) {
-        updatedList = clientes.map(c => c.id === editingId ? { ...c, ...clientePayload } : c);
-      } else {
-        updatedList = [clientePayload, ...clientes];
-      }
-
-      setClientes(updatedList);
-      localStorage.setItem('teslafire_directorio_clientes', JSON.stringify(updatedList));
-
-      toast.success(editingId ? 'Cliente actualizado exitosamente' : 'Cliente registrado con éxito');
-      setView('list');
-    } catch (err) {
-      console.error(err);
-      toast.error('Error al procesar cliente');
-    } finally {
-      setSaving(false);
-    }
+  const handleNuevoCliente = () => {
+    setClienteSeleccionado(null);
+    setFormNombre(busqueda.trim());
+    setFormDoc('');
+    setFormTel('');
+    setFormEmail('');
+    setFormCanal('Detal');
+    setFormEstado('');
+    setFormCiudad('');
+    setFormDireccion('');
+    setFormLimiteCredito('0');
+    setFormDiasCredito('0');
+    setView('form');
   };
 
-  // KPIs
-  const totalClientes = clientes.length;
-  const conCredito = clientes.filter(c => (c.limite_credito || 0) > 0).length;
-  const bloqueados = clientes.filter(c => c.bloqueado).length;
-  const platinumCount = clientes.filter(c => c.categoria_cliente === 'PLATINUM').length;
+  const handleVerFicha = (cli: ClienteItem) => {
+    setClienteSeleccionado(cli);
+    setFormNombre(cli.nombre || '');
+    setFormDoc(cli.documento || '');
+    setFormTel(cli.telefono || '');
+    setFormEmail(cli.email || '');
+    setFormCanal(cli.canal_venta || 'Detal');
+    setFormEstado(cli.estado || '');
+    setFormCiudad(cli.ciudad || '');
+    setFormDireccion(cli.direccion || '');
+    setFormLimiteCredito((cli.limite_credito || 0).toString());
+    setFormDiasCredito((cli.dias_credito || 0).toString());
+    setView('form');
+  };
 
-  // Filtrado por búsqueda
-  const resultados = clientes.filter(c => {
-    if (!busqueda.trim()) return false;
-    const q = busqueda.toLowerCase();
-    const matchNom = c.nombre.toLowerCase().includes(q);
-    const matchDoc = c.documento.toLowerCase().includes(q);
-    const matchTel = c.telefono.toLowerCase().includes(q);
-    return matchNom || matchDoc || matchTel;
-  });
+  const handleGuardarForm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    
+    const payload = {
+      nombre: formNombre.trim(),
+      documento: formDoc.trim(),
+      telefono: formTel.trim(),
+      email: formEmail.trim(),
+      canal_venta: formCanal,
+      estado: formEstado,
+      ciudad: formCiudad.trim(),
+      direccion: formDireccion.trim(),
+      limite_credito: parseFloat(formLimiteCredito) || 0,
+      dias_credito: parseInt(formDiasCredito) || 0
+    };
+
+    if (clienteSeleccionado) {
+      const { error } = await supabase
+        .from('clientes')
+        .update(payload)
+        .eq('id', clienteSeleccionado.id);
+        
+      if (error) {
+        toast.error('Error al actualizar: ' + error.message);
+      } else {
+        toast.success('Cliente actualizado correctamente');
+        setView('list');
+        // Refresh local if it matches search
+        if (busqueda.trim().length >= MIN_LETRAS) {
+          setBusqueda(busqueda + ' '); // trigger re-fetch hack
+          setTimeout(() => setBusqueda(busqueda.trim()), 100);
+        }
+      }
+    } else {
+      const { error } = await supabase
+        .from('clientes')
+        .insert([payload]);
+        
+      if (error) {
+        toast.error('Error al crear: ' + error.message);
+      } else {
+        toast.success('Cliente registrado correctamente');
+        setView('list');
+        setStats(prev => ({...prev, total: prev.total + 1}));
+      }
+    }
+    
+    setIsSaving(false);
+  };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc]/70 pb-16 animate-in fade-in duration-200 font-sans">
+    <div className="w-full font-sans animate-in fade-in zoom-in-95 duration-300">
       
       {/* ══════════════════════════════════════════════════
-          VISTA 1: DIRECTORIO DE CLIENTES (LISTA Y BÚSQUEDA)
+          VISTA 1: DIRECTORIO DE CLIENTES
       ══════════════════════════════════════════════════ */}
       {view === 'list' && (
-        <div className="space-y-6">
+        <div className="p-4 md:p-6">
           
           {/* Encabezado */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4 mb-4 md:mb-5">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+              <h2 className="text-xl md:text-2xl font-bold text-gray-800">
                 Directorio de Clientes
-              </h1>
-              <p className="text-xs sm:text-sm text-gray-500 font-medium mt-0.5">
+              </h2>
+              <p className="text-[11px] md:text-sm text-gray-500 mt-0.5">
                 Busca por nombre, cédula/RIF o teléfono.
               </p>
             </div>
-
-            {/* Botón + Nuevo Cliente */}
-            <button
-              type="button"
-              onClick={handleNuevoCliente}
-              className="flex items-center gap-2 px-4 py-2.5 bg-[#343a40] hover:bg-[#23272b] text-white rounded-xl text-xs sm:text-sm font-bold shadow-xs transition-all shrink-0 cursor-pointer"
-            >
-              <Plus className="w-4 h-4 text-white" />
-              <span>+ Nuevo Cliente</span>
-            </button>
-          </div>
-
-          {/* Fila de Píldoras / KPIs */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* 1. Total clientes */}
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-200/90 rounded-xl text-xs font-semibold text-gray-700 shadow-2xs">
-              <Users className="w-3.5 h-3.5 text-gray-600" />
-              <span>{totalClientes} clientes</span>
-            </div>
-
-            {/* 2. Con crédito */}
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200/80 rounded-xl text-xs font-bold text-emerald-700 shadow-2xs">
-              <CreditCard className="w-3.5 h-3.5 text-emerald-600" />
-              <span>{conCredito} con crédito</span>
-            </div>
-
-            {/* 3. Bloqueados */}
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-red-50 border border-red-200/80 rounded-xl text-xs font-bold text-red-700 shadow-2xs">
-              <Lock className="w-3.5 h-3.5 text-red-600" />
-              <span>{bloqueados} bloqueados</span>
-            </div>
-
-            {/* 4. Platinum */}
-            <div className="flex items-center gap-1.5 px-3.5 py-1 bg-sky-50 border border-sky-200/80 rounded-xl text-xs font-bold text-sky-700 shadow-2xs">
-              <Tag className="w-3.5 h-3.5 text-sky-600" />
-              <span>{platinumCount} PLATINUM</span>
+            <div>
+              <button
+                type="button"
+                onClick={handleNuevoCliente}
+                className="w-full md:w-auto bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-xl text-sm md:text-base font-semibold shadow-lg shadow-brand-500/30 transition-all text-center cursor-pointer"
+              >
+                + Nuevo Cliente
+              </button>
             </div>
           </div>
 
-          {/* Barra de Búsqueda Grande */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400 stroke-[2.2]" />
-            </div>
+          {/* KPIs */}
+          <div className="flex flex-wrap gap-2 mb-4 md:mb-5">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs md:text-sm font-semibold bg-brand-50 text-brand-700">
+              👥 {stats.total} clientes
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs md:text-sm font-semibold bg-emerald-50 text-emerald-700">
+              💳 {stats.conCredito} con crédito
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs md:text-sm font-semibold bg-red-50 text-red-600">
+              🔒 {stats.inactivos} inactivos
+            </span>
+          </div>
+
+          {/* Buscador */}
+          <div className="relative mb-4 md:mb-5">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg md:text-xl pointer-events-none">
+              🔍
+            </span>
             <input
               type="text"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
+              autoComplete="off"
+              autoFocus
               placeholder="Buscar por nombre, cédula/RIF o teléfono..."
-              className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200/90 rounded-2xl text-xs sm:text-sm font-medium text-gray-800 placeholder:text-gray-400 shadow-xs focus:outline-none focus:border-brand-500 transition-all"
+              className="w-full border-2 border-gray-200 rounded-2xl pl-12 pr-10 py-3 md:py-3.5 text-sm md:text-base focus:outline-none focus:border-brand-500 transition-colors bg-white text-gray-800"
             />
             {busqueda && (
               <button
+                type="button"
                 onClick={() => setBusqueda('')}
-                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 px-1.5 text-lg cursor-pointer"
               >
-                <X className="w-4 h-4" />
+                ✕
               </button>
             )}
           </div>
 
-          {/* Tarjeta Principal de Contenido */}
-          <div className="bg-white rounded-2xl border border-gray-200/80 shadow-xs min-h-[300px] flex flex-col justify-center">
-            
-            {/* Estado Vacío (como en la captura cuando no hay texto escrito) */}
-            {!busqueda.trim() ? (
-              <div className="py-20 px-4 text-center">
-                <div className="w-14 h-14 mx-auto mb-3.5 bg-sky-50 text-sky-500 rounded-2xl flex items-center justify-center shadow-2xs">
-                  <Search className="w-7 h-7 stroke-[2.2]" />
+          {/* Zona de resultados */}
+          <div id="cli-resultados">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 w-full overflow-hidden">
+              
+              {/* Estado Inicial */}
+              {!busqueda.trim() && (
+                <div className="p-10 md:p-16 text-center text-gray-400">
+                  <div className="text-5xl mb-3">🔍</div>
+                  <p className="text-sm md:text-base font-medium text-gray-500">
+                    Escribe para buscar un cliente
+                  </p>
+                  <p className="text-xs md:text-sm mt-1">
+                    Por nombre, cédula/RIF o número de teléfono.
+                  </p>
                 </div>
-                <h3 className="text-sm font-bold text-gray-800 mb-1">
-                  Escribe para buscar un cliente
-                </h3>
-                <p className="text-xs text-gray-400 font-medium">
-                  Por nombre, cédula/RIF o número de teléfono.
-                </p>
+              )}
 
-                {/* Opción rápida para explorar todos */}
-                <div className="mt-6">
+              {/* Estado Búsqueda corta */}
+              {busqueda.trim().length > 0 && busqueda.trim().length < MIN_LETRAS && (
+                <div className="p-8 md:p-12 text-center text-gray-400">
+                  <div className="text-3xl mb-2">⌨️</div>
+                  <p className="text-xs md:text-sm">
+                    Escribe al menos {MIN_LETRAS} letras o números para buscar.
+                  </p>
+                </div>
+              )}
+
+              {/* Estado Cargando */}
+              {cargando && (
+                <div className="p-10 text-center text-gray-400">
+                  <div className="inline-block w-6 h-6 border-2 border-gray-200 border-t-brand-500 rounded-full animate-spin"></div>
+                  <p className="text-xs md:text-sm mt-3">Buscando...</p>
+                </div>
+              )}
+
+              {/* Estado Vacío */}
+              {busqueda.trim().length >= MIN_LETRAS && !cargando && resultados.length === 0 && (
+                <div className="p-10 md:p-14 text-center text-gray-400">
+                  <div className="text-4xl mb-2">👤</div>
+                  <p className="text-sm text-gray-500 mb-1">
+                    Ningún cliente coincide con <b>{busqueda}</b>.
+                  </p>
+                  <p className="text-xs mb-4">
+                    Revisa el documento o prueba con parte del nombre.
+                  </p>
                   <button
                     type="button"
-                    onClick={() => setBusqueda(' ')}
-                    className="text-xs text-brand-600 font-bold hover:underline cursor-pointer"
+                    onClick={handleNuevoCliente}
+                    className="text-brand-600 hover:text-brand-700 font-semibold text-sm cursor-pointer"
                   >
-                    Ver todos los clientes registrados ({clientes.length})
+                    + Registrar este cliente
                   </button>
                 </div>
-              </div>
-            ) : resultados.length === 0 ? (
-              <div className="py-20 px-4 text-center">
-                <AlertCircle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <h3 className="text-sm font-bold text-gray-700 mb-1">
-                  No se encontraron resultados
-                </h3>
-                <p className="text-xs text-gray-400">
-                  No hay ningún cliente que coincida con "{busqueda}".
-                </p>
-                <button
-                  onClick={handleNuevoCliente}
-                  className="mt-4 px-4 py-2 bg-[#343a40] text-white text-xs font-bold rounded-xl shadow-xs"
-                >
-                  Registrar este cliente ahora
-                </button>
-              </div>
-            ) : (
-              /* Lista de Clientes Encontrados */
-              <div className="p-5 divide-y divide-gray-100">
-                <div className="text-xs text-gray-400 font-medium pb-3 flex items-center justify-between">
-                  <span>Resultados de búsqueda: {resultados.length} cliente(s)</span>
-                  <span className="text-[11px]">Click en editar para ver ficha completa</span>
-                </div>
+              )}
 
-                {resultados.map((cli) => (
-                  <div 
-                    key={cli.id}
-                    className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-gray-50/70 p-3 rounded-xl transition-all"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-bold text-gray-900">
-                          {cli.nombre}
-                        </h4>
-                        {cli.categoria_cliente === 'PLATINUM' && (
-                          <span className="text-[10px] font-black px-2 py-0.5 rounded bg-sky-100 text-sky-800 tracking-wider">
-                            PLATINUM
-                          </span>
-                        )}
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-600">
-                          Canal: {cli.canal_venta}
-                        </span>
-                        {cli.bloqueado && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">
-                            Bloqueado
-                          </span>
-                        )}
-                      </div>
+              {/* Tabla de Resultados */}
+              {busqueda.trim().length >= MIN_LETRAS && !cargando && resultados.length > 0 && (
+                <div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs md:text-sm table-fixed">
+                      <thead className="bg-gray-50 border-b border-gray-100 text-gray-500">
+                        <tr>
+                          <th className="p-3 md:p-4 font-semibold w-[42%]">Cliente</th>
+                          <th className="p-3 md:p-4 font-semibold w-[26%] hidden md:table-cell">Canal / Crédito</th>
+                          <th className="p-3 md:p-4 font-semibold w-[20%]">Contacto</th>
+                          <th className="p-3 md:p-4 font-semibold w-[12%] text-right">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {resultados.map((c) => {
+                          const telWa = String(c.telefono || '').replace(/\D+/g, '');
+                          const canalKey = (c.canal_venta || 'detal').toLowerCase();
+                          const canal = CANALES[canalKey] || [(c.canal_venta || '—'), 'bg-gray-100 text-gray-600'];
+                          const cupo = c.limite_credito || 0;
+                          const clasif = c.categoria_cliente || 'REGULAR';
+                          const clasifClass = clasif === 'PLATINUM'
+                            ? 'bg-sky-100 text-sky-800 border-sky-200'
+                            : clasif === 'GOLD'
+                            ? 'bg-amber-100 text-amber-800 border-amber-200'
+                            : 'bg-gray-100 text-gray-700 border-gray-200';
 
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 font-medium">
-                        <span className="font-mono text-gray-700 font-semibold">{cli.documento}</span>
-                        <span>·</span>
-                        <span className="flex items-center gap-1">
-                          <Phone className="w-3 h-3 text-gray-400" />
-                          {cli.telefono}
-                        </span>
-                        {cli.email && (
-                          <>
-                            <span>·</span>
-                            <span className="flex items-center gap-1">
-                              <Mail className="w-3 h-3 text-gray-400" />
-                              {cli.email}
-                            </span>
-                          </>
-                        )}
-                        {cli.ciudad && (
-                          <>
-                            <span>·</span>
-                            <span className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3 text-gray-400" />
-                              {cli.ciudad}, {cli.estado}
-                            </span>
-                          </>
-                        )}
-                      </div>
+                          return (
+                            <tr
+                              key={c.id}
+                              onClick={() => handleVerFicha(c)}
+                              className="align-top hover:bg-gray-50/60 transition-colors cursor-pointer"
+                            >
+                              <td className="p-3 md:p-4">
+                                <div className="font-medium text-gray-800 break-words">
+                                  {c.nombre}
+                                  {!c.activo && (
+                                    <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-600 align-middle">
+                                      Inactivo
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-gray-500 font-mono text-[11px] md:text-xs mt-0.5">
+                                  {c.documento || '—'}
+                                </div>
+                                <span className={`md:hidden inline-block mt-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${canal[1]}`}>
+                                  {canal[0]}
+                                </span>
+                              </td>
 
-                      <div className="text-xs text-gray-400 truncate max-w-xl">
-                        {cli.direccion}
-                      </div>
-                    </div>
+                              <td className="p-3 md:p-4 hidden md:table-cell">
+                                <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${canal[1]}`}>
+                                  {canal[0]}
+                                </span>
+                                <div className={`text-[11px] mt-1 ${cupo > 0 ? 'text-emerald-600' : 'text-gray-400'}`}>
+                                  {cupo > 0 ? `💳 $${cupo.toFixed(2)} · ${c.dias_credito || 0} días` : 'Sin crédito'}
+                                </div>
+                                <span className={`inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${clasifClass}`}>
+                                  🏷️ {clasif}
+                                </span>
+                              </td>
 
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => handleEditarCliente(cli)}
-                        className="px-3.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Edit3 className="w-3.5 h-3.5 text-gray-600" />
-                        <span>Editar</span>
-                      </button>
-                    </div>
+                              <td className="p-3 md:p-4 text-gray-600 break-words">
+                                {c.telefono ? (
+                                  <a
+                                    href={`https://wa.me/${telWa}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="inline-flex items-center gap-1 text-emerald-600 hover:text-emerald-800 font-medium"
+                                  >
+                                    <span>📱</span>
+                                    <span>{c.telefono}</span>
+                                  </a>
+                                ) : (
+                                  <span className="text-gray-300">—</span>
+                                )}
+                              </td>
+
+                              <td className="p-3 md:p-4 text-right">
+                                <div className="flex items-center justify-end gap-2 md:gap-3">
+                                  <button
+                                    type="button"
+                                    title="Estado de cuenta"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setModalEstadoCuenta(c);
+                                    }}
+                                    className="text-emerald-600 hover:text-emerald-800 font-semibold transition-colors cursor-pointer inline-flex items-center"
+                                  >
+                                    <span>📑</span>
+                                    <span className="hidden md:inline ml-1">Estado</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    title="Ver ficha"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleVerFicha(c);
+                                    }}
+                                    className="text-brand-500 hover:text-brand-700 font-semibold transition-colors cursor-pointer inline-flex items-center"
+                                  >
+                                    <span>👁️</span>
+                                    <span className="hidden md:inline ml-1">Ficha</span>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
-                ))}
-              </div>
-            )}
 
+                  <div className="px-4 py-2 border-t border-gray-50 text-[11px] text-gray-400 text-center">
+                    {resultados.length} {resultados.length === 1 ? 'cliente encontrado' : 'clientes encontrados'}
+                  </div>
+                </div>
+              )}
+
+            </div>
           </div>
 
         </div>
       )}
 
       {/* ══════════════════════════════════════════════════
-          VISTA 2: FORMULARIO REGISTRAR / EDITAR CLIENTE
+          VISTA 2: ESTRUCTURA FORMULARIO REGISTRAR / FICHA
       ══════════════════════════════════════════════════ */}
       {view === 'form' && (
-        <div className="max-w-5xl mx-auto space-y-6">
-          
-          {/* Encabezado Formulario */}
+        <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
-              {editingId ? 'Editar Cliente' : 'Registrar Nuevo Cliente'}
-            </h1>
-            
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800">
+              {clienteSeleccionado ? 'Ficha de Cliente' : 'Registrar Nuevo Cliente'}
+            </h2>
             <button
               type="button"
               onClick={() => setView('list')}
-              className="px-4 py-2 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl shadow-2xs transition-all cursor-pointer"
+              className="px-4 py-2 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
             >
-              Volver
+              Volver al Buscador
             </button>
           </div>
 
-          <form onSubmit={handleGuardar} className="space-y-6">
-            
-            {/* ── SECCIÓN 1: DATOS BÁSICOS ── */}
-            <div className="bg-white rounded-2xl p-6 sm:p-8 border border-gray-200/80 shadow-xs space-y-4">
-              
-              {/* Nombre y Apellido / Razón Social */}
+          <form onSubmit={handleGuardarForm} className="space-y-6">
+            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4">
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                <label className="block text-xs font-bold text-gray-700 mb-1">
                   Nombre y Apellido / Razón Social <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
+                  value={formNombre}
+                  onChange={(e) => setFormNombre(e.target.value)}
                   placeholder="Ej: María Fernanda Moya"
-                  className="w-full text-xs font-medium px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-brand-500 bg-white placeholder:text-gray-400"
+                  className="w-full text-sm font-medium px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-brand-500 bg-white placeholder:text-gray-400"
                 />
               </div>
 
-              {/* Grid: Cédula / RIF + Teléfono */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
                     Cédula / RIF <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
-                    value={documento}
-                    onChange={(e) => setDocumento(e.target.value)}
-                    placeholder="V-0000000"
-                    className="w-full text-xs font-medium px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-brand-500 bg-white placeholder:text-gray-400"
+                    value={formDoc}
+                    onChange={(e) => setFormDoc(e.target.value)}
+                    placeholder="V-00000000"
+                    className="w-full text-sm font-medium px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-brand-500 bg-white placeholder:text-gray-400"
                   />
                 </div>
-
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
                     Teléfono <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
-                    value={telefono}
-                    onChange={(e) => setTelefono(e.target.value)}
+                    value={formTel}
+                    onChange={(e) => setFormTel(e.target.value)}
                     placeholder="0414-1234567"
-                    className="w-full text-xs font-medium px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-brand-500 bg-white placeholder:text-gray-400"
+                    className="w-full text-sm font-medium px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-brand-500 bg-white placeholder:text-gray-400"
                   />
                 </div>
               </div>
 
-              {/* Mensaje de ayuda legal */}
-              <p className="text-[11px] text-gray-400 font-medium -mt-1">
-                Nombre, cédula y teléfono son obligatorios. No se puede registrar dos veces la misma cédula.
-              </p>
-
-              {/* Email */}
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                <label className="block text-xs font-bold text-gray-700 mb-1">
                   Email
                 </label>
                 <input
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={formEmail}
+                  onChange={(e) => setFormEmail(e.target.value)}
                   placeholder="correo@ejemplo.com"
-                  className="w-full text-xs font-medium px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-brand-500 bg-white placeholder:text-gray-400"
+                  className="w-full text-sm font-medium px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-brand-500 bg-white placeholder:text-gray-400"
                 />
               </div>
 
-              {/* Canal de Venta */}
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                <label className="block text-xs font-bold text-gray-700 mb-1">
                   Canal de Venta
                 </label>
                 <select
-                  value={canalVenta}
-                  onChange={(e) => setCanalVenta(e.target.value)}
-                  className="w-full text-xs font-medium px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-brand-500 bg-white text-gray-700 cursor-pointer"
+                  value={formCanal}
+                  onChange={(e) => setFormCanal(e.target.value)}
+                  className="w-full text-sm font-medium px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-brand-500 bg-white text-gray-700 cursor-pointer"
                 >
                   <option value="Detal">Detal</option>
                   <option value="Mayor">Mayor</option>
-                  <option value="Corporativo / Empresa">Corporativo / Empresa</option>
-                  <option value="Gobierno">Gobierno</option>
+                  <option value="Corporativo">Corporativo</option>
+                  <option value="Instalador">Instalador</option>
                 </select>
               </div>
 
-              {/* Grid: Estado + Ciudad */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
                     Estado
                   </label>
                   <select
-                    value={estado}
-                    onChange={(e) => setEstado(e.target.value)}
-                    className="w-full text-xs font-medium px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-brand-500 bg-white text-gray-700 cursor-pointer"
+                    value={formEstado}
+                    onChange={(e) => setFormEstado(e.target.value)}
+                    className="w-full text-sm font-medium px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-brand-500 bg-white text-gray-700 cursor-pointer"
                   >
                     <option value="">— Seleccionar —</option>
                     {estadosVenezuela.map(est => (
@@ -674,345 +544,158 @@ export default function Clientes() {
                     ))}
                   </select>
                 </div>
-
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
                     Ciudad
                   </label>
                   <input
                     type="text"
-                    value={ciudad}
-                    onChange={(e) => setCiudad(e.target.value)}
+                    value={formCiudad}
+                    onChange={(e) => setFormCiudad(e.target.value)}
                     placeholder="Ciudad"
-                    className="w-full text-xs font-medium px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-brand-500 bg-white placeholder:text-gray-400"
+                    className="w-full text-sm font-medium px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-brand-500 bg-white placeholder:text-gray-400"
                   />
                 </div>
               </div>
 
-              {/* Dirección */}
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                  Dirección <span className="text-red-500">*</span>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  Dirección
                 </label>
                 <textarea
                   rows={2}
-                  required
-                  value={direccion}
-                  onChange={(e) => setDireccion(e.target.value)}
+                  value={formDireccion}
+                  onChange={(e) => setFormDireccion(e.target.value)}
                   placeholder="Dirección completa"
-                  className="w-full text-xs font-medium px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-brand-500 bg-white placeholder:text-gray-400 resize-none"
+                  className="w-full text-sm font-medium px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-brand-500 bg-white placeholder:text-gray-400 resize-none"
                 />
               </div>
-
             </div>
 
-            {/* ── SECCIÓN 2: DATOS JURÍDICOS Y CRÉDITO ── */}
-            <div className="bg-white rounded-2xl p-6 sm:p-8 border border-gray-200/80 shadow-xs space-y-4">
-              
-              {/* Título de la sección */}
+            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm space-y-4">
               <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-                <span className="text-base" role="img" aria-label="bank">🏛️</span>
-                <h2 className="text-sm font-bold text-gray-900">
-                  Datos Jurídicos y Crédito
-                </h2>
+                <span className="text-base">💳</span>
+                <h3 className="text-sm font-bold text-gray-900">
+                  Condiciones Comerciales
+                </h3>
               </div>
 
-              {/* Grid: RIF de la empresa + Cédula - RIF socio */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                    RIF de la empresa
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    Límite de Crédito (USD)
                   </label>
                   <input
-                    type="text"
-                    value={rifEmpresa}
-                    onChange={(e) => setRifEmpresa(e.target.value)}
-                    placeholder="J-00000000-0"
-                    className="w-full text-xs font-medium px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-brand-500 bg-white placeholder:text-gray-400"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formLimiteCredito}
+                    onChange={(e) => setFormLimiteCredito(e.target.value)}
+                    className="w-full text-sm font-bold text-emerald-600 px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-brand-500 bg-white"
                   />
                 </div>
-
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                    Cédula – RIF socio
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    Días de Crédito
                   </label>
                   <input
-                    type="text"
-                    value={cedulaRifSocio}
-                    onChange={(e) => setCedulaRifSocio(e.target.value)}
-                    placeholder="V-0000000"
-                    className="w-full text-xs font-medium px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-brand-500 bg-white placeholder:text-gray-400"
+                    type="number"
+                    min="0"
+                    value={formDiasCredito}
+                    onChange={(e) => setFormDiasCredito(e.target.value)}
+                    className="w-full text-sm font-medium px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-brand-500 bg-white"
                   />
                 </div>
               </div>
 
-              {/* Grid: Nº Registro mercantil + Archivo PDF */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                    Nº Registro mercantil
-                  </label>
-                  <input
-                    type="text"
-                    value={registroMercantilNro}
-                    onChange={(e) => setRegistroMercantilNro(e.target.value)}
-                    placeholder="Nº / Tomo / Folio"
-                    className="w-full text-xs font-medium px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-brand-500 bg-white placeholder:text-gray-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                    Registro mercantil (PDF)
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <label className="px-3.5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-xl cursor-pointer border border-gray-200/80 transition-all shrink-0">
-                      Seleccionar archivo
-                      <input
-                        type="file"
-                        accept=".pdf"
-                        className="hidden"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) setRegistroMercantilFile(f.name);
-                        }}
-                      />
-                    </label>
-                    <span className="text-xs text-gray-400 truncate">
-                      {registroMercantilFile || 'Ningún archivo seleccionado'}
-                    </span>
-                  </div>
-                </div>
+              <div className="flex items-center justify-end gap-3 pt-4 mt-2 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setView('list')}
+                  className="px-5 py-2.5 bg-white hover:bg-gray-50 border-2 border-gray-200 text-gray-700 text-sm font-bold rounded-xl transition-all cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold rounded-xl shadow-lg transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {isSaving ? 'Guardando...' : 'Guardar Cliente'}
+                </button>
               </div>
+            </div>
+          </form>
+        </div>
+      )}
 
-              {/* Contacto del socio */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                  Contacto del socio
-                </label>
-                <input
-                  type="text"
-                  value={contactoSocio}
-                  onChange={(e) => setContactoSocio(e.target.value)}
-                  placeholder="Teléfono / correo del socio"
-                  className="w-full text-xs font-medium px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-brand-500 bg-white placeholder:text-gray-400"
-                />
+      {/* ══════════════════════════════════════════════════
+          MODAL ESTADO DE CUENTA RÁPIDO
+      ══════════════════════════════════════════════════ */}
+      {modalEstadoCuenta && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">📑</span>
+                <h3 className="text-base font-bold text-gray-800">
+                  Estado de Cuenta
+                </h3>
               </div>
-
-              {/* CONTACTO 1 */}
-              <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-                  CONTACTO 1
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <input
-                    type="text"
-                    value={contacto1.cargo}
-                    onChange={(e) => setContacto1({ ...contacto1, cargo: e.target.value })}
-                    placeholder="Cargo"
-                    className="w-full text-xs font-medium px-4 py-2 rounded-xl border border-gray-200 bg-white placeholder:text-gray-400"
-                  />
-                  <input
-                    type="text"
-                    value={contacto1.nombre}
-                    onChange={(e) => setContacto1({ ...contacto1, nombre: e.target.value })}
-                    placeholder="Nombre"
-                    className="w-full text-xs font-medium px-4 py-2 rounded-xl border border-gray-200 bg-white placeholder:text-gray-400"
-                  />
-                  <input
-                    type="text"
-                    value={contacto1.telefono}
-                    onChange={(e) => setContacto1({ ...contacto1, telefono: e.target.value })}
-                    placeholder="Teléfono"
-                    className="w-full text-xs font-medium px-4 py-2 rounded-xl border border-gray-200 bg-white placeholder:text-gray-400"
-                  />
-                </div>
-              </div>
-
-              {/* CONTACTO 2 */}
-              <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-                  CONTACTO 2
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <input
-                    type="text"
-                    value={contacto2.cargo}
-                    onChange={(e) => setContacto2({ ...contacto2, cargo: e.target.value })}
-                    placeholder="Cargo"
-                    className="w-full text-xs font-medium px-4 py-2 rounded-xl border border-gray-200 bg-white placeholder:text-gray-400"
-                  />
-                  <input
-                    type="text"
-                    value={contacto2.nombre}
-                    onChange={(e) => setContacto2({ ...contacto2, nombre: e.target.value })}
-                    placeholder="Nombre"
-                    className="w-full text-xs font-medium px-4 py-2 rounded-xl border border-gray-200 bg-white placeholder:text-gray-400"
-                  />
-                  <input
-                    type="text"
-                    value={contacto2.telefono}
-                    onChange={(e) => setContacto2({ ...contacto2, telefono: e.target.value })}
-                    placeholder="Teléfono"
-                    className="w-full text-xs font-medium px-4 py-2 rounded-xl border border-gray-200 bg-white placeholder:text-gray-400"
-                  />
-                </div>
-              </div>
-
-              {/* 3 REFERENCIAS DE PROVEEDORES A CRÉDITO */}
-              <div className="space-y-2.5 pt-2">
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                  3 REFERENCIAS DE PROVEEDORES A CRÉDITO
-                </label>
-
-                {/* Referencia #1 */}
-                <div className="grid grid-cols-12 gap-2 items-center">
-                  <span className="col-span-1 text-xs font-bold text-gray-400 text-center">#1</span>
-                  <div className="col-span-4">
-                    <input
-                      type="text"
-                      value={ref1.proveedor}
-                      onChange={(e) => setRef1({ ...ref1, proveedor: e.target.value })}
-                      placeholder="Proveedor"
-                      className="w-full text-xs font-medium px-3.5 py-2 rounded-xl border border-gray-200 bg-white placeholder:text-gray-400"
-                    />
-                  </div>
-                  <div className="col-span-3">
-                    <input
-                      type="text"
-                      value={ref1.telefono}
-                      onChange={(e) => setRef1({ ...ref1, telefono: e.target.value })}
-                      placeholder="Teléfono"
-                      className="w-full text-xs font-medium px-3.5 py-2 rounded-xl border border-gray-200 bg-white placeholder:text-gray-400"
-                    />
-                  </div>
-                  <div className="col-span-4 flex items-center gap-1.5">
-                    <label className="px-2.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-[11px] font-semibold rounded-xl cursor-pointer border border-gray-200/80 transition-all shrink-0">
-                      Seleccionar archivo
-                      <input
-                        type="file"
-                        className="hidden"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) setRef1({ ...ref1, archivo_nombre: f.name });
-                        }}
-                      />
-                    </label>
-                    <span className="text-[11px] text-gray-400 truncate">
-                      {ref1.archivo_nombre || 'Ningún archivo seleccionado'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Referencia #2 */}
-                <div className="grid grid-cols-12 gap-2 items-center">
-                  <span className="col-span-1 text-xs font-bold text-gray-400 text-center">#2</span>
-                  <div className="col-span-4">
-                    <input
-                      type="text"
-                      value={ref2.proveedor}
-                      onChange={(e) => setRef2({ ...ref2, proveedor: e.target.value })}
-                      placeholder="Proveedor"
-                      className="w-full text-xs font-medium px-3.5 py-2 rounded-xl border border-gray-200 bg-white placeholder:text-gray-400"
-                    />
-                  </div>
-                  <div className="col-span-3">
-                    <input
-                      type="text"
-                      value={ref2.telefono}
-                      onChange={(e) => setRef2({ ...ref2, telefono: e.target.value })}
-                      placeholder="Teléfono"
-                      className="w-full text-xs font-medium px-3.5 py-2 rounded-xl border border-gray-200 bg-white placeholder:text-gray-400"
-                    />
-                  </div>
-                  <div className="col-span-4 flex items-center gap-1.5">
-                    <label className="px-2.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-[11px] font-semibold rounded-xl cursor-pointer border border-gray-200/80 transition-all shrink-0">
-                      Seleccionar archivo
-                      <input
-                        type="file"
-                        className="hidden"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) setRef2({ ...ref2, archivo_nombre: f.name });
-                        }}
-                      />
-                    </label>
-                    <span className="text-[11px] text-gray-400 truncate">
-                      {ref2.archivo_nombre || 'Ningún archivo seleccionado'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Referencia #3 */}
-                <div className="grid grid-cols-12 gap-2 items-center">
-                  <span className="col-span-1 text-xs font-bold text-gray-400 text-center">#3</span>
-                  <div className="col-span-4">
-                    <input
-                      type="text"
-                      value={ref3.proveedor}
-                      onChange={(e) => setRef3({ ...ref3, proveedor: e.target.value })}
-                      placeholder="Proveedor"
-                      className="w-full text-xs font-medium px-3.5 py-2 rounded-xl border border-gray-200 bg-white placeholder:text-gray-400"
-                    />
-                  </div>
-                  <div className="col-span-3">
-                    <input
-                      type="text"
-                      value={ref3.telefono}
-                      onChange={(e) => setRef3({ ...ref3, telefono: e.target.value })}
-                      placeholder="Teléfono"
-                      className="w-full text-xs font-medium px-3.5 py-2 rounded-xl border border-gray-200 bg-white placeholder:text-gray-400"
-                    />
-                  </div>
-                  <div className="col-span-4 flex items-center gap-1.5">
-                    <label className="px-2.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-[11px] font-semibold rounded-xl cursor-pointer border border-gray-200/80 transition-all shrink-0">
-                      Seleccionar archivo
-                      <input
-                        type="file"
-                        className="hidden"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) setRef3({ ...ref3, archivo_nombre: f.name });
-                        }}
-                      />
-                    </label>
-                    <span className="text-[11px] text-gray-400 truncate">
-                      {ref3.archivo_nombre || 'Ningún archivo seleccionado'}
-                    </span>
-                  </div>
-                </div>
-
-              </div>
-
+              <button
+                onClick={() => setModalEstadoCuenta(null)}
+                className="text-gray-400 hover:text-red-500 p-1 rounded-lg transition-colors cursor-pointer"
+              >
+                ✕
+              </button>
             </div>
 
-            {/* ── BOTONES DE ACCIÓN FINAL ── */}
-            <div className="flex items-center justify-end gap-3 pt-2">
+            <div className="space-y-2">
+              <p className="text-sm font-bold text-gray-800">
+                {modalEstadoCuenta.nombre}
+              </p>
+              <p className="text-xs text-gray-500 font-mono">
+                {modalEstadoCuenta.documento || 'Sin identificación'}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <div className="p-3 bg-gray-50 border border-gray-100 rounded-xl">
+                <span className="block text-[11px] text-gray-500 font-bold uppercase">Límite Crédito</span>
+                <span className="text-base font-black text-gray-800">
+                  ${(modalEstadoCuenta.limite_credito || 0).toFixed(2)}
+                </span>
+              </div>
+              <div className="p-3 bg-gray-50 border border-gray-100 rounded-xl">
+                <span className="block text-[11px] text-gray-500 font-bold uppercase">Días Crédito</span>
+                <span className="text-base font-black text-gray-800">
+                  {modalEstadoCuenta.dias_credito || 0}
+                </span>
+              </div>
+              <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl">
+                <span className="block text-[11px] text-emerald-600 font-bold uppercase">Billetera / Favor</span>
+                <span className="text-base font-black text-emerald-700">
+                  ${(modalEstadoCuenta.saldo_favor || 0).toFixed(2)}
+                </span>
+              </div>
+              <div className="p-3 bg-red-50 border border-red-100 rounded-xl">
+                <span className="block text-[11px] text-red-600 font-bold uppercase">Deuda Actual</span>
+                <span className="text-base font-black text-red-700">
+                  $0.00
+                </span>
+              </div>
+            </div>
+
+            <div className="pt-3 flex justify-end">
               <button
                 type="button"
-                onClick={() => setView('list')}
-                className="px-5 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                onClick={() => setModalEstadoCuenta(null)}
+                className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold rounded-xl transition-all cursor-pointer"
               >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={saving}
-                className="px-6 py-2.5 bg-[#343a40] hover:bg-[#23272b] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin text-white" />
-                    <span>Guardando...</span>
-                  </>
-                ) : (
-                  <span>Guardar Cliente</span>
-                )}
+                Cerrar
               </button>
             </div>
-
-          </form>
-
+          </div>
         </div>
       )}
 

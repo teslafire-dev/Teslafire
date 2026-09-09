@@ -952,3 +952,17 @@ CREATE POLICY "Gestionar compras" ON compras FOR ALL USING (true) WITH CHECK (tr
 
 DROP POLICY IF EXISTS "Gestionar compra_items" ON compra_items;
 CREATE POLICY "Gestionar compra_items" ON compra_items FOR ALL USING (true) WITH CHECK (true);
+
+-- 15. Columnas Extendidas para Productos (Vista 100%)
+ALTER TABLE productos
+ADD COLUMN IF NOT EXISTS precio_detal_bcv NUMERIC(14, 2),
+ADD COLUMN IF NOT EXISTS precio_credito NUMERIC(14, 2),
+ADD COLUMN IF NOT EXISTS tratamiento_iva VARCHAR(100) DEFAULT 'General — 16,00%',
+ADD COLUMN IF NOT EXISTS peso_kg NUMERIC(10, 3) DEFAULT 0.000,
+ADD COLUMN IF NOT EXISTS dimensiones VARCHAR(100),
+ADD COLUMN IF NOT EXISTS ubicacion_almacen VARCHAR(100),
+ADD COLUMN IF NOT EXISTS clasificacion_origen VARCHAR(100) DEFAULT 'Fabricación Nacional',
+ADD COLUMN IF NOT EXISTS unidades_por_caja INTEGER DEFAULT 1,
+ADD COLUMN IF NOT EXISTS garantia_meses INTEGER DEFAULT 0,
+ADD COLUMN IF NOT EXISTS bloquear_mayor BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS proveedor_nombre VARCHAR(150);
