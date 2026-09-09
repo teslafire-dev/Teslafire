@@ -1,7 +1,0 @@
-sku,nombre,categoria,precio,stock,descripcion,fabricante,imagen_url,is_new,is_offer
-GU-101,Guantes de Nitrilo Industrial,Protección Manual,12.50,500,Guante azul de alta sensibilidad táctil para manejo químico.,Ansell,https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=800,true,false
-BO-202,Bota de Seguridad Punta de Acero,Calzado,45.99,120,Bota de cuero reforzada con suela antideslizante.,Caterpillar,https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800,false,true
-CA-303,Casco de Seguridad Naranja,Protección Craneal,18.00,85,Casco de polietileno de alta densidad con suspensión.,MSA,https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800,false,false
-LE-404,Lentes de Protección UV,Protección Ocular,5.50,200,Lentes de policarbonato con recubrimiento anti-empañante.,3M,https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800,true,true
-AR-505,Arnés de Seguridad 4 Puntos,Trabajo en Altura,89.00,30,Arnés ergonómico para detención de caídas.,Peltor,https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800,false,false
-MA-606,Mascarilla N95 Filtrante,Protección Respiratoria,2.50,1500,Mascarilla descartable con válvula de exhalación.,Honeywell,https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800,false,false

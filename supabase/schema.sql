@@ -966,3 +966,63 @@ ADD COLUMN IF NOT EXISTS unidades_por_caja INTEGER DEFAULT 1,
 ADD COLUMN IF NOT EXISTS garantia_meses INTEGER DEFAULT 0,
 ADD COLUMN IF NOT EXISTS bloquear_mayor BOOLEAN DEFAULT false,
 ADD COLUMN IF NOT EXISTS proveedor_nombre VARCHAR(150);
+
+-- 16. Tablas de Seguridad y Auditoría
+CREATE TABLE IF NOT EXISTS ips_bloqueadas (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ip VARCHAR(45) UNIQUE NOT NULL,
+    razon TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    expires_at TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS actividad_usuarios (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    accion VARCHAR(100) NOT NULL,
+    detalles TEXT,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Políticas para Seguridad
+ALTER TABLE ips_bloqueadas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE actividad_usuarios ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Gestionar ips_bloqueadas" ON ips_bloqueadas;
+CREATE POLICY "Gestionar ips_bloqueadas" ON ips_bloqueadas FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Gestionar actividad_usuarios" ON actividad_usuarios;
+CREATE POLICY "Gestionar actividad_usuarios" ON actividad_usuarios FOR ALL USING (true) WITH CHECK (true);
+
+-- 17. Configuración Global
+CREATE TABLE IF NOT EXISTS configuracion (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    clave VARCHAR(100) UNIQUE NOT NULL,
+    valor TEXT NOT NULL,
+    descripcion TEXT,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE configuracion ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Gestionar configuracion" ON configuracion;
+CREATE POLICY "Gestionar configuracion" ON configuracion FOR ALL USING (true) WITH CHECK (true);
+
+-- Insertar configuración por defecto
+INSERT INTO configuracion (clave, valor, descripcion) 
+VALUES 
+('porcentaje_iva', '16.00', 'Porcentaje de IVA general aplicable en el sistema'),
+('brecha_paralelo_bcv', '1.2301', 'Factor de conversión para cálculo de Detal BCV')
+ON CONFLICT (clave) DO NOTHING;
+
+-- 18. Secuencias y Funciones
+-- Secuencia para Número de Control de Facturas (Ej: FAC-0000014)
+CREATE SEQUENCE IF NOT EXISTS seq_factura_pos START 1;
+
+CREATE OR REPLACE FUNCTION generar_numero_factura()
+RETURNS VARCHAR AS $$
+BEGIN
+    RETURN 'FAC-' || LPAD(nextval('seq_factura_pos')::TEXT, 7, '0');
+END;
+$$ LANGUAGE plpgsql;

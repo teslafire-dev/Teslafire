@@ -28,6 +28,7 @@ export default function ProductEditor({ product, onBack, onSaved }: ProductEdito
   const [saving, setSaving] = useState(false);
   const [categorias, setCategorias] = useState<any[]>([]);
   const [marcas, setMarcas] = useState<any[]>([]);
+  const [factorParalelaBcv, setFactorParalelaBcv] = useState(1.2301);
 
   // Estados de Imagen
   const [imageUrl, setImageUrl] = useState<string>(product?.imagen_url || product?.imagenes_urls?.[0] || '');
@@ -68,8 +69,7 @@ export default function ProductEditor({ product, onBack, onSaved }: ProductEdito
     bloquear_mayor: Boolean(product?.bloquear_mayor)
   });
 
-  // Factor de cálculo automático Detal BCV (Divisas * factor)
-  const factorParalelaBcv = 1.2301;
+  // Factor de cálculo automático Detal BCV (Divisas * factor) (Ahora dinámico)
 
   useEffect(() => {
     fetchAuxData();
@@ -77,12 +77,14 @@ export default function ProductEditor({ product, onBack, onSaved }: ProductEdito
 
   const fetchAuxData = async () => {
     try {
-      const [{ data: cats }, { data: marks }] = await Promise.all([
+      const [{ data: cats }, { data: marks }, { data: config }] = await Promise.all([
         supabase.from('categorias').select('id, nombre, slug').order('nombre'),
-        supabase.from('marcas').select('id, nombre').order('nombre')
+        supabase.from('marcas').select('id, nombre').order('nombre'),
+        supabase.from('configuracion').select('valor').eq('clave', 'brecha_paralelo_bcv').single()
       ]);
       if (cats) setCategorias(cats);
       if (marks) setMarcas(marks);
+      if (config && config.valor) setFactorParalelaBcv(parseFloat(config.valor));
     } catch (err) {
       console.error('Error fetching aux data:', err);
     }
@@ -505,13 +507,6 @@ export default function ProductEditor({ product, onBack, onSaved }: ProductEdito
                   className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-brand-500 bg-white"
                 >
                   <option value="">-- Sin grupo --</option>
-                  <option value="ext_pqs">Extintores PQS</option>
-                  <option value="ext_co2">Extintores CO2</option>
-                  <option value="ext_esp">Extintores Especiales</option>
-                  <option value="repuestos">Repuestos y Accesorios</option>
-                  <option value="deteccion">Detección y Alarma</option>
-                  <option value="senalizacion">Señalización y Seguridad</option>
-                  <option value="servicios">Servicios</option>
                   {categorias.map(c => (
                     <option key={c.id} value={c.id}>{c.nombre}</option>
                   ))}
@@ -541,14 +536,6 @@ export default function ProductEditor({ product, onBack, onSaved }: ProductEdito
                   className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:border-brand-500 bg-white"
                 >
                   <option value="">-- Sin marca --</option>
-                  <option value="Tesla Fire">Tesla Fire</option>
-                  <option value="Amerex">Amerex</option>
-                  <option value="Kidde">Kidde</option>
-                  <option value="Ansul">Ansul</option>
-                  <option value="Buckeye">Buckeye</option>
-                  <option value="Badger">Badger</option>
-                  <option value="Bosch">Bosch</option>
-                  <option value="Genérico">Genérico</option>
                   {marcas.map(m => (
                     <option key={m.id} value={m.nombre}>{m.nombre}</option>
                   ))}
