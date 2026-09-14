@@ -161,14 +161,21 @@ export default function LandingPage() {
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-white/60">
             <a href="#modulos" className="hover:text-white transition-colors">Módulos</a>
+            <Link to="/portal" className="text-cyan-400 hover:text-cyan-300 font-bold transition-colors">Portal B2B</Link>
             <a href="#precios" className="hover:text-white transition-colors">Precios</a>
             <a href="#testimonios" className="hover:text-white transition-colors">Testimonios</a>
             <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
           </div>
           <div className="flex items-center gap-3">
+            <Link
+              to="/portal"
+              className="text-xs font-bold text-cyan-400 hover:text-cyan-300 transition-colors px-3 py-1.5 border border-cyan-400/30 rounded-xl hidden sm:inline-block"
+            >
+              Portal B2B
+            </Link>
             {user ? (
               <Link
-                to={isAdmin ? '/admin' : '/catalogo'}
+                to={isAdmin ? '/admin' : '/portal/dashboard'}
                 className="text-sm font-bold text-cyan-400 hover:text-cyan-300 transition-colors px-4 py-2 border border-cyan-400/30 rounded-xl"
               >
                 Ir al Panel
@@ -196,7 +203,7 @@ export default function LandingPage() {
         <div className="relative z-10 max-w-6xl mx-auto px-6 text-center">
           <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-2 text-xs font-bold text-cyan-400 uppercase tracking-widest mb-8">
             <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
-            Sistema ERP/POS en la Nube · Multi-Moneda · Venezuela & Latinoamérica
+            Sistema ERP/POS en la Nube · Multi-Moneda · Portal B2B Mayorista
           </div>
 
           <h1 className="text-5xl md:text-7xl font-black leading-[1.05] tracking-tight mb-6">
@@ -207,14 +214,14 @@ export default function LandingPage() {
           </h1>
 
           <p className="text-lg md:text-xl text-white/50 font-medium max-w-2xl mx-auto mb-10 leading-relaxed">
-            Inventario, Facturación Fiscal, Punto de Venta, Contabilidad, CRM y más. 
+            Inventario, Facturación Fiscal, Punto de Venta, Contabilidad, CRM y Portal Mayorista B2B. 
             Todo integrado. Todo en tiempo real. Sin servidores que mantener.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-            <a href="#precios" className="flex items-center gap-2 bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-black px-8 py-4 rounded-2xl text-base transition-all shadow-2xl shadow-cyan-500/30 hover:shadow-cyan-400/40 hover:-translate-y-0.5">
-              Ver Planes y Precios <ArrowRight size={18} strokeWidth={3} />
-            </a>
+            <Link to="/portal" className="flex items-center gap-2 bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-black px-8 py-4 rounded-2xl text-base transition-all shadow-2xl shadow-cyan-500/30 hover:shadow-cyan-400/40 hover:-translate-y-0.5">
+              Acceder al Portal B2B <ArrowRight size={18} strokeWidth={3} />
+            </Link>
             <Link to="/tienda/tesla-fire" className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold px-8 py-4 rounded-2xl text-base transition-all">
               Ver Demo en Vivo <ArrowUpRight size={18} />
             </Link>

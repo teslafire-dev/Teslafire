@@ -78,6 +78,7 @@ export default function AdminLayout() {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isDocModalOpen, setIsDocModalOpen] = useState(false);
   const [solicitudesPendientes, setSolicitudesPendientes] = useState(0);
+  const [pedidosB2BPendientes, setPedidosB2BPendientes] = useState(0);
   const notifRef = useRef<HTMLDivElement>(null);
 
   const displayName = nombre_completo || user?.email?.split('@')[0] || 'Gerencia';
@@ -106,6 +107,16 @@ export default function AdminLayout() {
         .select('id', { count: 'exact', head: true })
         .eq('estado', 'Pendiente');
       setSolicitudesPendientes(count ?? 0);
+
+      try {
+        const { count: b2bCount } = await supabase
+          .from('pedidos_b2b')
+          .select('id', { count: 'exact', head: true })
+          .eq('estado', 'PENDIENTE');
+        setPedidosB2BPendientes(b2bCount ?? 0);
+      } catch (e) {
+        // Table may not exist yet
+      }
     };
 
     fetchPendientes();
@@ -116,7 +127,12 @@ export default function AdminLayout() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'solicitudes_traslado' },
-        () => fetchPendientes() // Recalcular al detectar cualquier cambio
+        () => fetchPendientes()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'pedidos_b2b' },
+        () => fetchPendientes()
       )
       .subscribe();
 
@@ -187,6 +203,7 @@ export default function AdminLayout() {
       icon: ShoppingBag,
       subitems: [
         { id: 'clientes', name: 'Clientes', path: '/admin/ventas/clientes', icon: Users },
+        { id: 'pedidos_b2b', name: 'Pedidos B2B', path: '/admin/ventas/pedidos-b2b', icon: Building2, badge: pedidosB2BPendientes > 0 ? pedidosB2BPendientes : undefined, badgeColor: 'bg-amber-500 font-black' },
         { id: 'cotizacion', name: 'Cotización', path: '/admin/ventas/cotizacion', icon: FileText },
         { 
           id: 'emitir_venta', 

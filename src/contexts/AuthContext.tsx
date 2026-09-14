@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { AuthContext, Role } from "./AuthContextCore";
+import { AuthContext, Role, ClienteB2BData } from "./AuthContextCore";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authState, setAuthState] = useState<{
     user: User | null;
     role: Role | null;
     loading: boolean;
+    clienteData: ClienteB2BData | null;
     canManageProducts: boolean;
     canManageUsers: boolean;
     canManageSettings: boolean;
@@ -19,6 +20,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user: null,
     role: null,
     loading: true,
+    clienteData: null,
     canManageProducts: false,
     canManageUsers: false,
     canManageSettings: false,
@@ -40,22 +42,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
          console.warn("AuthContext: error executing maybeSingle()", error);
       }
       
-      const role = (profile?.rol as Role) ?? 'invitado';
+      let cliente: ClienteB2BData | null = null;
+      try {
+        const { data: clientRecord } = await supabase
+          .from('clientes')
+          .select('*')
+          .eq('user_id', userId)
+          .maybeSingle();
+        if (clientRecord) {
+          cliente = clientRecord as ClienteB2BData;
+        }
+      } catch (err) {
+        // Table or column might not have user_id yet
+      }
+
+      const role = (profile?.rol as Role) ?? (cliente ? 'cliente_b2b' : 'invitado');
       
       return {
         role,
+        cliente,
         can_manage_products: profile?.can_manage_products ?? (role === 'admin' || role === 'editor'),
         can_manage_users: profile?.can_manage_users ?? (role === 'admin'),
         can_manage_settings: profile?.can_manage_settings ?? (role === 'admin'),
         can_manage_orders: profile?.can_manage_orders ?? (role === 'admin' || role === 'editor'),
-        nombre_completo: profile?.nombre_completo ?? null,
+        nombre_completo: profile?.nombre_completo ?? cliente?.nombre ?? null,
         apellido: profile?.apellido ?? null,
-        telefono: profile?.telefono ?? null
+        telefono: profile?.telefono ?? cliente?.telefono ?? null
       };
     } catch (error) {
       console.error("AuthContext: Error crítico al obtener el perfil:", error);
       return {
         role: 'invitado' as Role,
+        cliente: null,
         can_manage_products: false,
         can_manage_users: false,
         can_manage_settings: false,
@@ -83,6 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           user: null, 
           role: null, 
           loading: false, 
+          clienteData: null,
           canManageProducts: false, 
           canManageUsers: false, 
           canManageSettings: false, 
@@ -100,6 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           user: session.user,
           role: profileData.role,
           loading: false,
+          clienteData: profileData.cliente,
           canManageProducts: profileData.can_manage_products,
           canManageUsers: profileData.can_manage_users,
           canManageSettings: profileData.can_manage_settings,
@@ -136,12 +156,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     ...authState,
     isAdmin: authState.role === 'admin',
     isEditor: authState.role === 'admin' || authState.role === 'editor',
+    isB2B: authState.role === 'cliente_b2b',
     refreshProfile: async () => {
       if (authState.user) {
         const profileData = await getProfileData(authState.user.id);
         setAuthState(prev => ({
           ...prev,
           role: profileData.role,
+          clienteData: profileData.cliente,
           canManageProducts: profileData.can_manage_products,
           canManageUsers: profileData.can_manage_users,
           canManageSettings: profileData.can_manage_settings,

@@ -240,7 +240,7 @@ export default function Header() {
                              to={child.url}
                              className="px-6 py-4 hover:bg-slate-50 dark:hover:bg-white/5 rounded-2xl text-slate-500 hover:text-accent transition-all text-xs font-black uppercase tracking-tighter"
                            >
-                              {(lang === 'EN' && child.label_en) ? child.label_en : child.label}
+                              {child.label}
                            </Link>
                         ))}
                       </div>
@@ -273,7 +273,15 @@ export default function Header() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          {/* Botón Acceso Portal B2B */}
+          <Link 
+            to="/portal"
+            className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-500 dark:text-cyan-400 border border-cyan-500/30 text-[10px] font-black uppercase tracking-wider transition-all"
+          >
+            <span>Portal B2B</span>
+          </Link>
+
           <div className="relative">
               <Link to="/carrito" className={`p-3 rounded-2xl transition-smooth flex items-center justify-center relative ${totalItems > 0 ? 'bg-accent text-white' : 'bg-slate-100 text-slate-400'}`}>
                 <ShoppingCart className="w-6 h-6" />
@@ -289,6 +297,7 @@ export default function Header() {
               <AnimatePresence>
                 {isUserMenuOpen && (
                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute top-full right-0 mt-4 w-64 bg-white rounded-3xl shadow-2xl border border-slate-50 p-2 z-[100]">
+                    <Link to="/portal" className="block px-4 py-3 text-[10px] font-black uppercase text-cyan-600 hover:bg-cyan-50 rounded-xl">Portal B2B / Empresa</Link>
                     <Link to="/perfil" className="block px-4 py-3 text-[10px] font-black uppercase text-slate-600 hover:bg-slate-50">Perfil</Link>
                     {isAdmin && <Link to="/admin" className="block px-4 py-3 text-[10px] font-black uppercase text-accent hover:bg-accent/5">Panel Admin</Link>}
                     <button onClick={handleLogout} className="w-full text-left px-4 py-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50">Salir</button>

@@ -79,6 +79,14 @@ import DynamicPage from './pages/DynamicPage';
 import LandingPage from './pages/LandingPage';
 import Perfil from './pages/perfil/Perfil';
 import Historial from './pages/perfil/Historial';
+// ── Módulo B2B / Mayoristas ──
+import PortalLogin from './pages/portal/PortalLogin';
+import PortalLayout from './pages/portal/PortalLayout';
+import PortalDashboard from './pages/portal/PortalDashboard';
+import PortalCatalogo from './pages/portal/PortalCatalogo';
+import PortalPedidos from './pages/portal/PortalPedidos';
+import PortalFacturas from './pages/portal/PortalFacturas';
+import PedidosB2B from './pages/admin/PedidosB2B';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import { TranslationProvider } from './contexts/TranslationContext';
@@ -136,6 +144,16 @@ function AppContent() {
             <Route path="/:pageSlug" element={<DynamicPage />} />
           </Route>
 
+          {/* Portal B2B / Mayoristas */}
+          <Route path="/portal/login" element={<PortalLogin />} />
+          <Route path="/portal" element={<PortalLayout />}>
+            <Route index element={<Navigate to="/portal/dashboard" replace />} />
+            <Route path="dashboard" element={<PortalDashboard />} />
+            <Route path="catalogo" element={<PortalCatalogo />} />
+            <Route path="pedidos" element={<PortalPedidos />} />
+            <Route path="facturas" element={<PortalFacturas />} />
+          </Route>
+
           {/* Admin Context (Login) */}
           <Route path="/admin/login" element={<Login />} />
 
@@ -170,6 +188,7 @@ function AppContent() {
               {/* ── Módulos Ventas ── */}
               <Route path="/admin/ventas/pos" element={<POSPage />} />
               <Route path="/admin/ventas/clientes" element={<Clientes />} />
+              <Route path="/admin/ventas/pedidos-b2b" element={<PedidosB2B />} />
               <Route path="/admin/ventas/cotizacion" element={<Cotizaciones />} />
               <Route path="/admin/ventas/notas-entrega" element={<NotasEntrega />} />
               <Route path="/admin/ventas/facturas" element={<Facturas />} />

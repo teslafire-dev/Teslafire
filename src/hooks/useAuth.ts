@@ -10,6 +10,8 @@ export function useAuth() {
     loading: context.loading, 
     isAdmin: context.isAdmin, 
     isEditor: context.isEditor,
+    isB2B: context.isB2B,
+    clienteData: context.clienteData,
     canManageProducts: context.canManageProducts,
     canManageUsers: context.canManageUsers,
     canManageSettings: context.canManageSettings,

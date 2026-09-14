@@ -19,7 +19,7 @@ export default function ProtectedRoute() {
             Verificando Credenciales
           </span>
           <span className="text-[8px] font-medium uppercase tracking-[0.2em] text-slate-500">
-            Acceso Seguro Dobell Industrial
+            Acceso Seguro Tesla Fire
           </span>
         </div>
       </div>
