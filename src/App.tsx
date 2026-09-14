@@ -268,8 +268,6 @@ function AppContent() {
   );
 }
 
-import { WisingWinProvider } from './contexts/WisingWinContext';
-import WisingWinToggle from './components/admin/WisingWinToggle';
 import { SystemModalsProvider } from './contexts/SystemModalsContext';
 import SystemModalsRoot from './components/admin/modals/SystemModalsRoot';
 
@@ -277,19 +275,16 @@ function App() {
   return (
     <HelmetProvider>
     <AuthProvider>
-    <WisingWinProvider>
     <TranslationProvider>
       <CurrencyProvider>
         <SystemModalsProvider>
           <Router>
             <AppContent />
-            <WisingWinToggle />
             <SystemModalsRoot />
           </Router>
         </SystemModalsProvider>
       </CurrencyProvider>
     </TranslationProvider>
-    </WisingWinProvider>
     </AuthProvider>
     </HelmetProvider>
   );

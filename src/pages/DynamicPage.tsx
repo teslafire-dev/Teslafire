@@ -28,13 +28,11 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { useWisingWin } from '@/contexts/WisingWinContext';
 
 export default function DynamicPage() {
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
-  const { isActive: isWisingActive } = useWisingWin();
-  const isEditMode = searchParams.get('edit') === 'true' || isWisingActive;
+  const isEditMode = searchParams.get('edit') === 'true';
   const { user, canManageSettings } = useAuth();
   
   const [page, setPage] = useState<any>(null);

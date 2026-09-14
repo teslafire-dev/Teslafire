@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useWisingWin } from './WisingWinContext';
 
 type Language = 'ES' | 'EN';
 
@@ -510,41 +509,10 @@ const hexToHsl = (hex: string): string => {
 };
 
 export function TranslationProvider({ children }: { children: React.ReactNode }) {
-  const { dbConfig: configs, loading: loadingConfig } = useWisingWin();
   const [lang, setLangState] = useState<Language>(() => {
      const saved = localStorage.getItem('app_lang');
      return (saved === 'EN' || saved === 'ES') ? saved : 'ES';
   });
-
-  useEffect(() => {
-    if (configs && Object.keys(configs).length > 0) {
-      const root = document.documentElement;
-      const isDark = root.classList.contains('dark');
-
-      const applyColor = (key: string, cssVar: string) => {
-        const item = configs[key];
-        const val = (item && typeof item === 'object') ? item.color : item;
-        if (val && typeof val === 'string' && val.startsWith('#')) {
-          root.style.setProperty(cssVar, hexToHsl(val));
-        }
-      };
-
-      if (!isDark) {
-        applyColor('color_primario', '--primary');
-        applyColor('color_acento', '--accent');
-        applyColor('color_botones_bg', '--button-bg');
-        applyColor('color_body_bg', '--background');
-      } else {
-        applyColor('color_primario_dark', '--primary');
-        applyColor('color_acento_dark', '--accent');
-        applyColor('color_botones_bg_dark', '--button-bg');
-        applyColor('color_body_bg_dark', '--background');
-      }
-      
-      applyColor('color_acento', '--accent-dynamic'); 
-      applyColor('color_botones_bg', '--button-bg-dynamic');
-    }
-  }, [configs]);
 
   const setLang = (newLang: Language) => {
     setLangState(newLang);
@@ -552,37 +520,8 @@ export function TranslationProvider({ children }: { children: React.ReactNode })
   };
 
   const t = (key: string) => {
-    if (!configs) return (translations[lang] as any)[key] || key;
-
-    const cleanKey = key.includes('.') ? key.replace(/\./g, '_') : key;
-    const langPrefix = lang.toLowerCase();
-    const dbKey = `${langPrefix}_${cleanKey}`;
-
-    const configItem = configs[dbKey] || configs[key];
-    if (configItem) {
-      if (typeof configItem === 'object' && configItem.text !== undefined) {
-        return configItem.text;
-      }
-      return configItem;
-    }
-
     return (translations[lang] as any)[key] || key;
   };
-
-  if (loadingConfig) {
-    return (
-      <div className="fixed inset-0 bg-primary-950 flex flex-col items-center justify-center z-[200]">
-         <div className="w-24 h-24 bg-accent/20 rounded-[2.5rem] flex items-center justify-center relative mb-8">
-            <div className="absolute inset-0 border-4 border-accent/20 border-t-accent rounded-[2.5rem] animate-spin"></div>
-            <div className="text-4xl font-black text-accent font-outfit">D</div>
-         </div>
-         <div className="flex flex-col items-center gap-2 animate-pulse">
-            <span className="text-white text-xs font-black uppercase tracking-[0.6em] text-center ml-2">Sincronizando</span>
-            <span className="text-slate-500 text-[9px] font-medium uppercase tracking-[0.3em]">Catálogo Industrial v2.0</span>
-         </div>
-      </div>
-    );
-  }
 
   return (
     <TranslationContext.Provider value={{ lang, setLang, t }}>
