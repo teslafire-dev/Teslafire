@@ -1,5 +1,5 @@
 import { Link, useNavigate, NavLink, useLocation } from "react-router-dom";
-import { Search, ShoppingCart, User, Menu, X, LogOut, Sun, Moon, Languages, ExternalLink, ChevronDown } from "lucide-react";
+import { Search, ShoppingCart, User, Menu, X, LogOut, Sun, Moon, ExternalLink, ChevronDown } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Editable } from "../admin/Editable";
 import { supabase } from "@/lib/supabase/client";
@@ -8,7 +8,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCartStore } from "@/lib/store/cartStore";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTranslation } from "@/contexts/TranslationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 
 export default function Header() {
@@ -19,17 +18,12 @@ export default function Header() {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const { lang, setLang, t } = useTranslation();
   const { usdRate, eurRate } = useCurrency();
   const { user, isAdmin, role, nombre_completo } = useAuth();
   const navigate = useNavigate();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMiniCartOpen, setIsMiniCartOpen] = useState(false);
-  const [onlineCount, setOnlineCount] = useState(1);
-  const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
-  const [isLiveDropdownOpen, setIsLiveDropdownOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
-  const liveRef = useRef<HTMLDivElement>(null);
   const { items: cartItems, removeItem, updateQuantity, clearCart } = useCartStore();
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -94,14 +88,10 @@ export default function Header() {
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
     document.documentElement.classList.toggle('dark');
-    toast.success(t(isDarkMode ? 'toast.theme.light' : 'toast.theme.dark'), {
+    toast.success(isDarkMode ? 'Modo claro activado' : 'Modo oscuro activado', {
       icon: isDarkMode ? '☀️' : '🌙',
       style: { borderRadius: '1rem', background: '#0F172A', color: '#fff' }
     });
-  };
-
-  const toggleLanguage = () => {
-    setLang(lang === 'ES' ? 'EN' : 'ES');
   };
 
   const handleLogout = async () => {
@@ -129,13 +119,10 @@ export default function Header() {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setIsUserMenuOpen(false);
       }
-      if (liveRef.current && !liveRef.current.contains(event.target as Node)) {
-        setIsLiveDropdownOpen(false);
-      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [userMenuRef, liveRef]);
+  }, [userMenuRef]);
 
   useEffect(() => {
     const controlNavbar = () => {
@@ -180,112 +167,7 @@ export default function Header() {
     children: dynamicMenus.filter(child => child.parent_id === parent.id)
   }));
 
-  // Presence Tracking
-  useEffect(() => {
-    let visitorId = localStorage.getItem('dobell_visitor_id');
-    if (!visitorId) {
-      visitorId = Math.random().toString(36).substring(2) + Date.now().toString(36);
-      localStorage.setItem('dobell_visitor_id', visitorId);
-    }
 
-    let userIp = '0.0.0.0';
-    
-    const fetchIp = async () => {
-      const services = [
-        'https://api.ipify.org?format=json',
-        'https://api64.ipify.org?format=json',
-        'https://ipapi.co/json/'
-      ];
-      
-      for (const service of services) {
-        try {
-          const res = await fetch(service, { timeout: 2000 } as any);
-          const data = await res.json();
-          const foundIp = data.ip || data.query;
-          if (foundIp && foundIp !== '0.0.0.0') {
-            userIp = foundIp;
-            break;
-          }
-        } catch (e) {
-          continue;
-        }
-      }
-    };
-
-    const setupPresence = async () => {
-      await fetchIp();
-      
-      const channel = supabase.channel('online-users', {
-        config: {
-          presence: {
-            key: user?.id || visitorId!,
-          },
-        },
-      });
-
-      channel
-        .on('presence', { event: 'sync' }, () => {
-          const state = channel.presenceState();
-          const allPresences = Object.values(state).flat() as any[];
-          
-          const uniqueUsersMap = new Map();
-          allPresences.forEach(curr => {
-            const identity = curr.ip && curr.ip !== '0.0.0.0' ? curr.ip : (curr.visitor_id || curr.email);
-            if (!uniqueUsersMap.has(identity)) {
-              uniqueUsersMap.set(identity, curr);
-            }
-          });
-
-          const uniqueUsers = Array.from(uniqueUsersMap.values());
-          setOnlineUsers(uniqueUsers);
-          setOnlineCount(uniqueUsers.length || 1);
-          
-          if (uniqueUsers.length > 1) {
-            checkAndUpdatePeak(uniqueUsers.length);
-          }
-        })
-        .subscribe(async (status) => {
-          if (status === 'SUBSCRIBED') {
-            await channel.track({
-              online_at: new Date().toISOString(),
-              email: user?.email || 'Visitante',
-              ip: userIp,
-              visitor_id: visitorId
-            });
-          }
-        });
-
-      return channel;
-    };
-
-    const channelPromise = setupPresence();
-
-    return () => {
-      channelPromise.then(channel => {
-        if (channel) channel.unsubscribe();
-      });
-    };
-  }, [user]);
-
-  const checkAndUpdatePeak = async (current: number) => {
-    try {
-      const { data } = await supabase
-        .from('configuracion')
-        .select('valor')
-        .eq('clave', 'max_concurrent_visitors')
-        .single();
-      
-      const peak = parseInt(data?.valor || '0');
-      if (current > peak) {
-        await supabase
-          .from('configuracion')
-          .update({ valor: current.toString() })
-          .eq('clave', 'max_concurrent_visitors');
-      }
-    } catch (e) {
-      // Ignore errors in background tracking
-    }
-  };
 
   return (
     <header className={`fixed top-0 z-50 w-full transition-all duration-500 ease-in-out ${
@@ -337,7 +219,7 @@ export default function Header() {
                   }
                 >
                   <Editable keyName={`menu_label_${item.id}`} className="pointer-events-none">
-                    {(lang === 'EN' && item.label_en) ? item.label_en : item.label}
+                    {item.label}
                   </Editable>
                   {hasChildren && <ChevronDown className={`w-3 h-3 transition-transform ${activeDropdown === item.id ? 'rotate-180' : ''}`} />}
                 </NavLink>
@@ -378,30 +260,15 @@ export default function Header() {
               type="text" 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t('search.placeholder')}
+              placeholder="Buscar productos..."
               className="w-full bg-slate-100/50 dark:bg-slate-800/50 border border-transparent rounded-2xl py-2.5 pl-11 pr-4 text-xs font-bold focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-accent outline-none transition-smooth shadow-inner dark:text-slate-100 uppercase tracking-wider"
             />
           </div>
           
           <div className="flex items-center gap-1.5 p-1 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
-             {/* Admin Live Count */}
-            {isAdmin && (
-              <div className="relative" ref={liveRef}>
-                <button onClick={() => setIsLiveDropdownOpen(!isLiveDropdownOpen)} className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-smooth ${isLiveDropdownOpen ? 'bg-primary-950 text-white' : 'bg-white dark:bg-slate-900'}`}>
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                  </span>
-                  <span className="text-[9px] font-black uppercase">{onlineCount}</span>
-                </button>
-              </div>
-            )}
             
             <button onClick={toggleDarkMode} className="p-2.5 rounded-xl text-slate-400 hover:text-accent transition-smooth">
               {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-            <button onClick={toggleLanguage} className="flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-accent font-black uppercase text-[9px]">
-               <Languages className="w-4 h-4" /> {lang}
             </button>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import {
   Package, ShoppingCart, FileText, BarChart3, Users, Building2,
   CreditCard, Wallet, ArrowRight, CheckCircle, ChevronDown,
@@ -129,6 +130,7 @@ const testimonios = [
 export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [scrolled, setScrolled] = useState(false);
+  const { user, isAdmin } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -164,9 +166,18 @@ export default function LandingPage() {
             <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/admin/login" className="text-sm font-bold text-white/60 hover:text-white transition-colors px-4 py-2">
-              Iniciar Sesión
-            </Link>
+            {user ? (
+              <Link
+                to={isAdmin ? '/admin' : '/catalogo'}
+                className="text-sm font-bold text-cyan-400 hover:text-cyan-300 transition-colors px-4 py-2 border border-cyan-400/30 rounded-xl"
+              >
+                Ir al Panel
+              </Link>
+            ) : (
+              <Link to="/admin/login" className="text-sm font-bold text-white/60 hover:text-white transition-colors px-4 py-2">
+                Iniciar Sesión
+              </Link>
+            )}
             <a href="#precios" className="bg-cyan-400 hover:bg-cyan-300 text-black text-sm font-black px-5 py-2.5 rounded-xl transition-colors">
               Empieza Gratis
             </a>
