@@ -29,7 +29,7 @@ export function useSecurity() {
           .from('ips_bloqueadas')
           .select('ip, razon')
           .eq('ip', ip)
-          .single();
+          .maybeSingle();
 
         if (blocked) {
           setIsBlocked(true);
@@ -51,8 +51,8 @@ export function useSecurity() {
         else if (ua.includes("Android")) os = "Android";
         else if (ua.includes("iPhone")) os = "iOS";
 
-        // 4. Guardar actividad
-        await supabase.from('actividad_usuarios').insert({
+        // 4. Guardar actividad (Comentado temporalmente por error 400 - esquema de DB faltante)
+        /* await supabase.from('actividad_usuarios').insert({
           user_id: user?.id || null,
           email: user?.email || 'Visitante Anónimo',
           ip: ip,
@@ -61,7 +61,7 @@ export function useSecurity() {
           sistema_operativo: os,
           dispositivo: /Mobi|Android/i.test(ua) ? 'Mobile' : 'Desktop',
           pagina_visitada: location.pathname
-        });
+        }); */
 
         // Registrar timestamp para evitar duplicados inmediatos
         sessionStorage.setItem(lastLogKey, now.toString());

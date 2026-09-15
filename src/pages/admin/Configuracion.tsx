@@ -307,7 +307,7 @@ export default function Configuracion() {
   };
 
   return (
-    <div className="flex flex-col gap-10 max-w-7xl mx-auto w-full pb-24">
+    <div className="space-y-6 animate-in fade-in duration-300 pb-24">
       <div className="flex flex-col gap-2">
         <h1 className="text-4xl font-black text-primary-950 uppercase tracking-tighter leading-none">Mi Configuración</h1>
         <p className="text-slate-500 font-medium tracking-wide">Control centralizado de la plataforma industrial.</p>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { ERP_MODULES } from '@/config/erpModules';
 import { Lock } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function AppLauncher() {
   const { user, role, modulos_activos, empresa_nombre } = useAuth();
@@ -32,6 +33,8 @@ export default function AppLauncher() {
               onClick={() => {
                 if (canAccess) {
                   navigate(modulo.basePath);
+                } else {
+                  toast.error("No tienes acceso a este módulo. Verifica tus permisos o suscripción.");
                 }
               }}
               className={`relative overflow-hidden group p-8 rounded-3xl text-left transition-all duration-300 ${

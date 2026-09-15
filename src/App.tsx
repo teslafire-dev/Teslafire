@@ -273,12 +273,14 @@ function AppContent() {
   );
 }
 
+import { ConfigProvider } from './contexts/ConfigContext';
 import { SystemModalsProvider } from './contexts/SystemModalsContext';
 import SystemModalsRoot from './components/admin/modals/SystemModalsRoot';
 
 function App() {
   return (
     <HelmetProvider>
+    <ConfigProvider>
     <AuthProvider>
     <TranslationProvider>
       <CurrencyProvider>
@@ -291,6 +293,7 @@ function App() {
       </CurrencyProvider>
     </TranslationProvider>
     </AuthProvider>
+    </ConfigProvider>
     </HelmetProvider>
   );
 }

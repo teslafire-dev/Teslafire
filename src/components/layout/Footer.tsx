@@ -1,11 +1,13 @@
 import { Link } from "react-router-dom";
-import { Mail, Phone, MapPin, Instagram, Youtube, ShieldCheck } from "lucide-react";
+import { Mail, Phone, MapPin, Instagram, Youtube, ShieldCheck, Facebook } from "lucide-react";
 import { useTranslation } from "@/contexts/TranslationContext";
 import { Editable } from "../admin/Editable";
+import { useConfig } from "@/contexts/ConfigContext";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const { t } = useTranslation();
+  const { config } = useConfig();
 
   return (
     <footer className="bg-primary-950 text-white pt-16 pb-8 md:pt-32 md:pb-20 relative overflow-hidden">
@@ -29,8 +31,9 @@ export default function Footer() {
             </div>
             <div className="flex items-center gap-4">
               {[
-                { icon: Instagram, url: "https://www.instagram.com/venemaxstore/" }
-              ].map((social, i) => (
+                { icon: Instagram, url: config.social_instagram || "https://www.instagram.com/venemaxstore/" },
+                { icon: Facebook, url: config.social_facebook || "#" }
+              ].filter(s => s.url && s.url !== '#').map((social, i) => (
                 <a 
                   key={i} 
                   href={social.url} 
@@ -102,23 +105,23 @@ export default function Footer() {
                   <MapPin className="w-5 h-5 text-accent" />
                 </div>
                 <div className="text-sm text-slate-400 leading-relaxed group-hover:text-white transition-smooth cursor-default">
-                  <Editable keyName="footer_address">Av. Andrés Eloy Blanco. C. C. La Asuncion. Sector Santa Cecilia. Valencia, Venezuela</Editable>
+                  <Editable keyName="footer_address">{config.direccion || "Av. Andrés Eloy Blanco. C. C. La Asuncion. Sector Santa Cecilia. Valencia, Venezuela"}</Editable>
                 </div>
               </div>
-              <div className="flex items-center gap-4 group cursor-pointer" onClick={() => window.open(`tel:+582418223844`, '_self')}>
+              <div className="flex items-center gap-4 group cursor-pointer" onClick={() => window.open(`tel:${config.telefono_whatsapp || '+582418223844'}`, '_self')}>
                 <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-accent transition-smooth">
                   <Phone className="w-5 h-5 text-accent group-hover:text-white" />
                 </div>
                 <span className="text-sm text-slate-400 group-hover:text-white transition-smooth">
-                  <Editable keyName="footer_phone">+58 (241) 822.38.44</Editable>
+                  <Editable keyName="footer_phone">{config.telefono_whatsapp || "+58 (241) 822.38.44"}</Editable>
                 </span>
               </div>
-              <div className="flex items-center gap-4 group cursor-pointer" onClick={() => window.open(`mailto:venemax1@hotmail.com`, '_self')}>
+              <div className="flex items-center gap-4 group cursor-pointer" onClick={() => window.open(`mailto:${config.email_contacto || 'venemax1@hotmail.com'}`, '_self')}>
                 <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-accent transition-smooth">
                   <Mail className="w-5 h-5 text-accent group-hover:text-white" />
                 </div>
                 <span className="text-sm text-slate-400 group-hover:text-white transition-smooth">
-                  <Editable keyName="footer_email">venemax1@hotmail.com</Editable>
+                  <Editable keyName="footer_email">{config.email_contacto || "venemax1@hotmail.com"}</Editable>
                 </span>
               </div>
             </div>

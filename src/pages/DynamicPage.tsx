@@ -30,7 +30,7 @@ import toast from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function DynamicPage() {
-  const { slug } = useParams();
+  const { pageSlug } = useParams();
   const [searchParams] = useSearchParams();
   const isEditMode = searchParams.get('edit') === 'true';
   const { user, canManageSettings } = useAuth();
@@ -45,15 +45,19 @@ export default function DynamicPage() {
 
   useEffect(() => {
     fetchPage();
-  }, [slug]);
+  }, [pageSlug]);
 
   const fetchPage = async () => {
     setLoading(true);
+    if (!pageSlug) {
+      setLoading(false);
+      return;
+    }
     const { data, error } = await supabase
       .from('paginas')
       .select('*')
-      .eq('slug', slug)
-      .single();
+      .eq('slug', pageSlug)
+      .maybeSingle();
 
     if (!error && data) {
       const widgetsWithIds = (data.widgets || []).map((w: any) => ({

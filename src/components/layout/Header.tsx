@@ -9,11 +9,12 @@ import { useCartStore } from "@/lib/store/cartStore";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { useConfig } from "@/contexts/ConfigContext";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [config, setConfig] = useState<any>({});
+  const { config } = useConfig();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -137,17 +138,6 @@ export default function Header() {
   const [dynamicMenus, setDynamicMenus] = useState<any[]>([]);
 
   useEffect(() => {
-    async function fetchConfig() {
-      const { data } = await supabase.from('configuracion').select('*');
-      if (data) {
-        const configMap = data.reduce((acc: any, item: any) => {
-          acc[item.clave] = item.valor;
-          return acc;
-        }, {});
-        setConfig(configMap);
-      }
-    }
-
     async function fetchMenus() {
       const { data } = await supabase
         .from('menus')
@@ -157,7 +147,6 @@ export default function Header() {
       if (data) setDynamicMenus(data);
     }
 
-    fetchConfig();
     fetchMenus();
   }, []);
 

@@ -292,6 +292,7 @@ export default function AdminLayout() {
       icon: Settings,
       subitems: [
         { id: 'empresa', name: 'Datos Empresa', path: '/admin/configuracion/empresa', icon: Building2 },
+        { id: 'usuarios', name: 'Gestión de Usuarios', path: '/admin/usuarios', icon: Users },
         { id: 'categorias', name: 'Gestión de Grupos', path: '/admin/configuracion/categorias', icon: Layers },
         { id: 'marcas', name: 'Gestión de Marcas', path: '/admin/configuracion/marcas', icon: Tags },
         { id: 'monedas', name: 'Monedas', path: '/admin/configuracion/monedas', icon: Coins },
@@ -334,7 +335,7 @@ export default function AdminLayout() {
     pathname.startsWith('/admin/fiscal') ||
     pathname.startsWith('/admin/finanzas')
   ) activeModuleSections = ['cxc', 'cxp', 'bancos', 'contabilidad'];
-  else if (pathname.startsWith('/admin/configuracion') || pathname.startsWith('/admin/administracion')) activeModuleSections = ['configuracion', 'administracion'];
+  else if (pathname.startsWith('/admin/configuracion') || pathname.startsWith('/admin/administracion') || pathname.startsWith('/admin/usuarios')) activeModuleSections = ['configuracion', 'administracion'];
   else if (pathname.startsWith('/admin/dashboard') || pathname.startsWith('/admin/analiticas')) activeModuleSections = ['analiticas'];
 
   const sections = allSections.filter(sec => activeModuleSections.includes(sec.id));
