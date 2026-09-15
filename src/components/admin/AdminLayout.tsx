@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
+import { Link, useLocation, useNavigate, Outlet, Navigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Package, 
@@ -178,7 +178,7 @@ export default function AdminLayout() {
   // ══════════════════════════════════════════════════════
   // DEFINICIÓN DE MENÚS Y SUBMÓDULOS DE TESLA FIRE
   // ══════════════════════════════════════════════════════
-  const sections: NavSection[] = [
+  const allSections: NavSection[] = [
     {
       id: 'inventario',
       name: 'Inventario',
@@ -310,8 +310,39 @@ export default function AdminLayout() {
         { id: 'existencia_inventario', name: 'Existencia Inventario', path: '/admin/analiticas/existencia', icon: Boxes },
         { id: 'top_productos', name: 'Top Productos', path: '/admin/analiticas/top-productos', icon: TrendingUp },
       ]
+    },
+    {
+      id: 'analiticas',
+      name: 'Analíticas',
+      icon: TrendingUp,
+      subitems: [
+        { id: 'dashboard', name: 'Dashboard Principal', path: '/admin/dashboard', icon: LayoutDashboard },
+        { id: 'reporte_general', name: 'Reporte General', path: '/admin/analiticas/general', icon: BarChart3 }
+      ]
     }
   ];
+
+  // 1. Determinar el módulo actual según la URL
+  let activeModuleSections: string[] = [];
+  if (pathname.startsWith('/admin/ventas')) activeModuleSections = ['ventas'];
+  else if (pathname.startsWith('/admin/inventario')) activeModuleSections = ['inventario'];
+  else if (pathname.startsWith('/admin/compras')) activeModuleSections = ['compras'];
+  else if (
+    pathname.startsWith('/admin/cxc') || 
+    pathname.startsWith('/admin/cxp') || 
+    pathname.startsWith('/admin/bancos') || 
+    pathname.startsWith('/admin/fiscal') ||
+    pathname.startsWith('/admin/finanzas')
+  ) activeModuleSections = ['cxc', 'cxp', 'bancos', 'contabilidad'];
+  else if (pathname.startsWith('/admin/configuracion') || pathname.startsWith('/admin/administracion')) activeModuleSections = ['configuracion', 'administracion'];
+  else if (pathname.startsWith('/admin/dashboard') || pathname.startsWith('/admin/analiticas')) activeModuleSections = ['analiticas'];
+
+  const sections = allSections.filter(sec => activeModuleSections.includes(sec.id));
+
+  // Redirect to launcher if not in a module and not on launcher itself
+  if (sections.length === 0 && pathname !== '/admin' && pathname !== '/admin/superadmin') {
+     // No hacemos nada para no romper rutas huérfanas, pero se podría redirigir
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-900">
@@ -339,6 +370,17 @@ export default function AdminLayout() {
             className="lg:hidden text-gray-400 hover:text-gray-600 p-1"
           >
             <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Botón Volver a las Apps */}
+        <div className="px-4 my-4">
+          <button 
+            onClick={() => navigate('/admin')}
+            className="w-full flex items-center justify-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 p-3 rounded-xl font-bold transition-colors"
+          >
+            <LayoutDashboard className="w-5 h-5" />
+            {!sidebarCollapsed && <span>Mis Apps</span>}
           </button>
         </div>
 

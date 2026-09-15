@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
-import Home from './pages/Home';
 import Productos from './pages/Productos';
 import ProductDetail from './pages/ProductDetail';
 import Carrito from './pages/Carrito';
@@ -15,7 +14,8 @@ import AdminUsuarios from './pages/admin/Usuarios';
 import AdminCategorias from './pages/admin/Categorias';
 import AdminConfiguracion from './pages/admin/Configuracion';
 import AdminSEO from './pages/admin/SEO';
-import AdminCRM from './pages/admin/CRM';
+import SuperAdmin from './pages/admin/SuperAdmin';
+
 import AdminMenus from './pages/admin/Menus';
 import AdminGaleria from './pages/admin/Galeria';
 import AdminCatalogos from './pages/admin/Catalogos';
@@ -38,6 +38,7 @@ import CajaTurnos from './pages/admin/CajaTurnos';
 import ReportesVentas from './pages/admin/ReportesVentas';
 import ComprasDirectas from './pages/admin/ComprasDirectas';
 import AdminLayout from './components/admin/AdminLayout';
+import AppLauncher from './pages/admin/AppLauncher';
 import ModulePlaceholder from './components/admin/ModulePlaceholder';
 // ── Nuevas páginas estructurales ──
 import Kardex from './pages/admin/Kardex';
@@ -127,32 +128,34 @@ function AppContent() {
           {/* Landing Page SaaS — Página Principal */}
           <Route path="/" element={<LandingPage />} />
 
-          {/* Tiendas Públicas por Empresa (con Header/Footer) */}
-          <Route element={<><Analytics /><Header /><main className="flex-grow"><NavigationWrapper /></main><Footer /></>}>
-            <Route path="/tienda" element={<Home />} />
-            <Route path="/tienda/:slug" element={<Home />} />
-            <Route path="/productos" element={<Productos />} />
-            <Route path="/productos/:slug" element={<ProductDetail />} />
-            <Route path="/carrito" element={<Carrito />} />
-            <Route path="/reservar" element={<Reservar />} />
-            <Route path="/nosotros" element={<Nosotros />} />
-            <Route path="/servicios" element={<Servicios />} />
-            <Route path="/gracias/:localizador" element={<Gracias />} />
-            <Route path="/perfil" element={<Perfil />} />
-            <Route path="/perfil/historial" element={<Historial />} />
-            <Route path="/software" element={<LandingPage />} />
-            <Route path="/:pageSlug" element={<DynamicPage />} />
+          {/* Tiendas Públicas por Empresa (SaaS Multi-Tenant) */}
+          <Route path="/:empresa_slug">
+            <Route element={<><Analytics /><Header /><main className="flex-grow"><NavigationWrapper /></main><Footer /></>}>
+              <Route path="productos" element={<Productos />} />
+              <Route path="productos/:slug" element={<ProductDetail />} />
+              <Route path="carrito" element={<Carrito />} />
+              <Route path="reservar" element={<Reservar />} />
+              <Route path="nosotros" element={<Nosotros />} />
+              <Route path="servicios" element={<Servicios />} />
+              <Route path="gracias/:localizador" element={<Gracias />} />
+              <Route path="perfil" element={<Perfil />} />
+              <Route path="perfil/historial" element={<Historial />} />
+              <Route path=":pageSlug" element={<DynamicPage />} />
+            </Route>
+
+            {/* Portal B2B / Mayoristas */}
+            <Route path="portal/login" element={<PortalLogin />} />
+            <Route path="portal" element={<PortalLayout />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<PortalDashboard />} />
+              <Route path="catalogo" element={<PortalCatalogo />} />
+              <Route path="pedidos" element={<PortalPedidos />} />
+              <Route path="facturas" element={<PortalFacturas />} />
+            </Route>
           </Route>
 
-          {/* Portal B2B / Mayoristas */}
-          <Route path="/portal/login" element={<PortalLogin />} />
-          <Route path="/portal" element={<PortalLayout />}>
-            <Route index element={<Navigate to="/portal/dashboard" replace />} />
-            <Route path="dashboard" element={<PortalDashboard />} />
-            <Route path="catalogo" element={<PortalCatalogo />} />
-            <Route path="pedidos" element={<PortalPedidos />} />
-            <Route path="facturas" element={<PortalFacturas />} />
-          </Route>
+          {/* Rutas sin Tenant (SaaS Global) */}
+          <Route path="/software" element={<LandingPage />} />
 
           {/* Admin Context (Login) */}
           <Route path="/admin/login" element={<Login />} />
@@ -160,13 +163,15 @@ function AppContent() {
           {/* Admin Protected Pages (with Sidebar) */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AdminLayout />}>
-              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin" element={<AppLauncher />} />
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/admin/categorias" element={<AdminCategorias />} />
               <Route path="/admin/productos" element={<AdminProductos />} />
               <Route path="/admin/ordenes" element={<AdminOrdenes />} />
               <Route path="/admin/usuarios" element={<AdminUsuarios />} />
-              <Route path="/admin/crm" element={<AdminCRM />} />
+
               <Route path="/admin/configuracion" element={<AdminConfiguracion />} />
+              <Route path="/admin/superadmin" element={<SuperAdmin />} />
               <Route path="/admin/seo" element={<AdminSEO />} />
               <Route path="/admin/menus" element={<AdminMenus />} />
               <Route path="/admin/galeria" element={<AdminGaleria />} />

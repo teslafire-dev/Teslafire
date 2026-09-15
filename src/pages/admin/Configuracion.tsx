@@ -23,6 +23,7 @@ import { useAuth } from "@/hooks/useAuth";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { Store } from "lucide-react";
 
 interface ConfigItem {
   id: string;
@@ -79,7 +80,8 @@ export default function Configuracion() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingAsset, setUploadingAsset] = useState<string | null>(null);
-  const [expandedCats, setExpandedCats] = useState<string[]>(['contacto', 'brand', 'identidad', 'general', 'marketing']);
+  const [expandedCats, setExpandedCats] = useState<string[]>(['tienda_publica', 'contacto', 'brand', 'identidad', 'general', 'marketing']);
+  const [tiendaPublicaActiva, setTiendaPublicaActiva] = useState(false);
   
   const handleAssetUpload = async (file: File, clave: string) => {
     if (!file) return;
@@ -156,7 +158,8 @@ export default function Configuracion() {
     loading: authLoading, 
     nombre_completo: dbNombre, 
     telefono: dbTelefono,
-    updateProfile 
+    updateProfile,
+    empresa_id
   } = useAuth();
   
   const { usdRate, eurRate, usdMarkupSelected, eurMarkupSelected, loading: currencyLoading } = useCurrency();
@@ -201,6 +204,17 @@ export default function Configuracion() {
 
         setConfig([...(data || []), ...synthetic]);
       }
+
+      if (empresa_id) {
+        const { data: empData } = await supabase
+          .from('empresas')
+          .select('tienda_publica_activa')
+          .eq('id', empresa_id)
+          .maybeSingle();
+        if (empData) {
+          setTiendaPublicaActiva(empData.tienda_publica_activa || false);
+        }
+      }
     } catch (err) {
       console.error("Configuracion: Error en fetchConfig:", err);
       toast.error("Error de conexión con el sistema");
@@ -233,6 +247,26 @@ export default function Configuracion() {
     } catch (err) {
       console.error("Configuracion: Error en handleSave:", err);
       toast.error("Error al guardar cambios");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleToggleTiendaPublica = async () => {
+    if (!empresa_id) return;
+    setSaving(true);
+    const newValue = !tiendaPublicaActiva;
+    try {
+      const { error } = await supabase
+        .from('empresas')
+        .update({ tienda_publica_activa: newValue })
+        .eq('id', empresa_id);
+      
+      if (error) throw error;
+      setTiendaPublicaActiva(newValue);
+      toast.success(newValue ? 'Tienda Pública Activada' : 'Tienda Pública Desactivada');
+    } catch (error) {
+      toast.error('Error al actualizar el estado de la tienda');
     } finally {
       setSaving(false);
     }
@@ -293,6 +327,31 @@ export default function Configuracion() {
                 onChange={(e) => setSearchKey(e.target.value)}
                 className="w-full bg-white border border-slate-100 rounded-3xl py-5 pl-16 pr-6 text-sm font-bold shadow-sm focus:ring-2 focus:ring-accent outline-none"
               />
+            </div>
+
+            {/* TIENDA PÚBLICA TOGGLE */}
+            <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-black text-primary-950 flex items-center gap-2">
+                    <Store className="w-5 h-5 text-accent" />
+                    Catálogo / Tienda Pública (B2C)
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1 max-w-lg">
+                    Si está activo, cualquier visitante podrá acceder a tu portal sin iniciar sesión y ver el catálogo con los precios de venta al detal. Si está inactivo, el portal requiere inicio de sesión (solo mayoristas B2B).
+                  </p>
+                </div>
+                <button
+                  onClick={handleToggleTiendaPublica}
+                  disabled={saving}
+                  className={`w-14 h-7 rounded-full transition-all relative flex items-center px-1 shrink-0 ${tiendaPublicaActiva ? 'bg-accent shadow-lg shadow-accent/20' : 'bg-slate-200'}`}
+                >
+                  <motion.div 
+                    animate={{ x: tiendaPublicaActiva ? 28 : 0 }}
+                    className="w-5 h-5 bg-white rounded-full shadow-md"
+                  />
+                </button>
+              </div>
             </div>
 
             {categories.map(cat => {

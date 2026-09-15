@@ -1,4 +1,4 @@
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useParams } from "react-router-dom";
 import ProductCard from "@/components/productos/ProductCard";
 import ProductFilters from "@/components/productos/ProductFilters";
 import { Grid, List, ChevronDown, SlidersHorizontal, Loader2, Package, X } from "lucide-react";
@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 const productsCache: Record<string, any[]> = {};
 
 export default function Productos() {
+  const { empresa_slug } = useParams<{ empresa_slug: string }>();
   const { t, lang } = useTranslation();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +31,8 @@ export default function Productos() {
     min: minPrice,
     max: maxPrice,
     sort: sortBy,
-    lang: lang // Include language in case names change
+    lang: lang,
+    empresa: empresa_slug
   });
 
   useEffect(() => {
@@ -52,8 +54,9 @@ export default function Productos() {
       if (currentCategory) {
         const { data: catData } = await supabase
           .from('categorias')
-          .select('id, slug, parent_id')
+          .select('id, slug, parent_id, empresas!inner(slug)')
           .eq('slug', currentCategory)
+          .eq('empresas.slug', empresa_slug)
           .single();
         
         if (catData) {
@@ -76,8 +79,9 @@ export default function Productos() {
         producto_categorias!inner(
           categoria_id,
           categorias(nombre, nombre_en, slug, parent_id)
-        )
-      `);
+        ),
+        empresas!inner(slug)
+      `).eq('empresas.slug', empresa_slug);
 
       // Apply Filters
       if (targetCategoryIds.length > 0) {

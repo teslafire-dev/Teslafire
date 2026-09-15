@@ -16,6 +16,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     nombre_completo: string | null;
     apellido: string | null;
     telefono: string | null;
+    empresa_id: string | null;
+    empresa_slug: string | null;
+    empresa_nombre: string | null;
+    modulos_activos: string[];
   }>({
     user: null,
     role: null,
@@ -27,14 +31,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     canManageOrders: false,
     nombre_completo: null,
     apellido: null,
-    telefono: null
+    telefono: null,
+    empresa_id: null,
+    empresa_slug: null,
+    empresa_nombre: null,
+    modulos_activos: []
   });
 
   const getProfileData = async (userId: string) => {
     try {
       const { data: profile, error } = await supabase
         .from('perfiles')
-        .select('*')
+        .select('*, empresas(slug, nombre, modulos_activos)')
         .eq('id', userId)
         .maybeSingle(); 
       
@@ -67,7 +75,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         can_manage_orders: profile?.can_manage_orders ?? (role === 'admin' || role === 'editor'),
         nombre_completo: profile?.nombre_completo ?? cliente?.nombre ?? null,
         apellido: profile?.apellido ?? null,
-        telefono: profile?.telefono ?? cliente?.telefono ?? null
+        telefono: profile?.telefono ?? cliente?.telefono ?? null,
+        empresa_id: profile?.empresa_id ?? null,
+        empresa_slug: profile?.empresas?.slug ?? null,
+        empresa_nombre: profile?.empresas?.nombre ?? null,
+        modulos_activos: profile?.empresas?.modulos_activos ?? []
       };
     } catch (error) {
       console.error("AuthContext: Error crítico al obtener el perfil:", error);
@@ -80,7 +92,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         can_manage_orders: false,
         nombre_completo: null,
         apellido: null,
-        telefono: null
+        telefono: null,
+        empresa_id: null,
+        empresa_slug: null,
+        empresa_nombre: null,
+        modulos_activos: []
       };
     }
   };
@@ -108,7 +124,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           canManageOrders: false, 
           nombre_completo: null, 
           apellido: null,
-          telefono: null 
+          telefono: null,
+          empresa_id: null,
+          empresa_slug: null,
+          empresa_nombre: null,
+          modulos_activos: []
         });
         return;
       }
@@ -126,7 +146,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           canManageOrders: profileData.can_manage_orders,
           nombre_completo: profileData.nombre_completo,
           apellido: profileData.apellido,
-          telefono: profileData.telefono
+          telefono: profileData.telefono,
+          empresa_id: profileData.empresa_id,
+          empresa_slug: profileData.empresa_slug,
+          empresa_nombre: profileData.empresa_nombre,
+          modulos_activos: profileData.modulos_activos
         });
       }
     };
@@ -170,7 +194,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           canManageOrders: profileData.can_manage_orders,
           nombre_completo: profileData.nombre_completo,
           apellido: profileData.apellido,
-          telefono: profileData.telefono
+          telefono: profileData.telefono,
+          empresa_id: profileData.empresa_id,
+          empresa_slug: profileData.empresa_slug,
+          empresa_nombre: profileData.empresa_nombre
         }));
       }
     },

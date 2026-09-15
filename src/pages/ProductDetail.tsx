@@ -30,7 +30,7 @@ import ProductCard from "@/components/productos/ProductCard";
 
 export default function ProductDetail() {
   const { t, lang } = useTranslation();
-  const { slug } = useParams();
+  const { slug, empresa_slug } = useParams();
   const [product, setProduct] = useState<any>(null);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,8 +47,9 @@ export default function ProductDetail() {
       try {
         const { data, error } = await supabase
           .from('productos')
-          .select('*, marcas(nombre), producto_categorias(categoria_id, categorias(nombre, nombre_en, slug))')
+          .select('*, marcas(nombre), producto_categorias(categoria_id, categorias(nombre, nombre_en, slug)), empresas!inner(slug)')
           .eq('slug', slug)
+          .eq('empresas.slug', empresa_slug)
           .single();
 
         if (!error && data) {
@@ -67,8 +68,9 @@ export default function ProductDetail() {
       try {
         const { data } = await supabase
          .from('productos')
-         .select('*, marcas(nombre), producto_categorias(categoria_id, categorias(nombre, nombre_en))')
+         .select('*, marcas(nombre), producto_categorias(categoria_id, categorias(nombre, nombre_en)), empresas!inner(slug)')
          .neq('id', currentId)
+         .eq('empresas.slug', empresa_slug)
          .limit(4);
         if (data) setSuggestions(data);
       } catch (err) { console.error(err); }

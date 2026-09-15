@@ -32,7 +32,12 @@ export interface AuthContextType {
   nombre_completo: string | null;
   apellido: string | null;
   telefono: string | null;
+  empresa_id: string | null;
+  empresa_slug: string | null;
+  empresa_nombre: string | null;
+  modulos_activos: string[];
   refreshProfile: () => Promise<void>;
+  syncUser: (userId: string | null) => Promise<void>;
   updateProfile: (data: { nombre_completo?: string; apellido?: string; telefono?: string }) => Promise<{ error: any }>;
   updateCredentials: (data: { email?: string; password?: string }) => Promise<{ error: any }>;
 }
