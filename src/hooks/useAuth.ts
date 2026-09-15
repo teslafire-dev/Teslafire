@@ -19,7 +19,12 @@ export function useAuth() {
     nombre_completo: context.nombre_completo,
     apellido: context.apellido,
     telefono: context.telefono,
+    empresa_id: context.empresa_id,
+    empresa_slug: context.empresa_slug,
+    empresa_nombre: context.empresa_nombre,
+    modulos_activos: context.modulos_activos,
     refreshProfile: context.refreshProfile,
+    syncUser: context.syncUser,
     updateProfile: context.updateProfile,
     updateCredentials: context.updateCredentials
   };

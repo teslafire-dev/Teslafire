@@ -6,6 +6,7 @@ export interface B2BCartItem {
   sku: string;
   nombre: string;
   precio_mayor: number;
+  precio_venta?: number;
   precio_detal?: number;
   stock?: number;
   unidad_medida?: string;

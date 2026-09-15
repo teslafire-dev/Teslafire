@@ -201,6 +201,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }));
       }
     },
+    syncUser: async (userId: string | null) => {},
     updateProfile: async (data: { nombre_completo?: string; apellido?: string; telefono?: string }) => {
       if (!authState.user) return { error: { message: "No session" } };
       
