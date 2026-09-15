@@ -171,13 +171,13 @@ export default function ProductEditor({ product, onBack, onSaved }: ProductEdito
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
         
         const { error: uploadError } = await supabase.storage
-          .from('productos')
+          .from('products')
           .upload(fileName, imageFile);
           
         if (uploadError) throw new Error('Error subiendo imagen: ' + uploadError.message);
         
         const { data: { publicUrl } } = supabase.storage
-          .from('productos')
+          .from('products')
           .getPublicUrl(fileName);
           
         finalImageUrl = publicUrl;
