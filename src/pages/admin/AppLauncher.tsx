@@ -23,7 +23,7 @@ export default function AppLauncher() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {ERP_MODULES.map((modulo) => {
-          const isModulePaid = (modulos_activos || []).includes(modulo.id) || modulos_activos?.length === 0; // Si no tiene, por defecto mostramos? Mejor bloquear
+          const isModulePaid = role === 'superadmin' || role === 'admin' || (modulos_activos || []).includes(modulo.id);
           const isRoleAllowed = modulo.rolesAllowed.includes(role || '');
           const canAccess = isModulePaid && isRoleAllowed;
 
