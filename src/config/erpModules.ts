@@ -26,7 +26,7 @@ export const ERP_MODULES: ERPModule[] = [
     description: 'Punto de venta, clientes, cotizaciones y pedidos B2B.',
     icon: ShoppingCart,
     color: 'bg-blue-500',
-    basePath: '/admin/ventas',
+    basePath: '/admin/ventas/clientes',
     rolesAllowed: ['admin', 'gerente', 'vendedor', 'cajero']
   },
   {
@@ -35,7 +35,7 @@ export const ERP_MODULES: ERPModule[] = [
     description: 'Productos, categorías, movimientos, y traslados.',
     icon: Package,
     color: 'bg-indigo-500',
-    basePath: '/admin/inventario',
+    basePath: '/admin/inventario/kardex',
     rolesAllowed: ['admin', 'gerente', 'almacenista']
   },
   {
@@ -44,7 +44,7 @@ export const ERP_MODULES: ERPModule[] = [
     description: 'Órdenes de compra y gestión de proveedores.',
     icon: Briefcase,
     color: 'bg-purple-500',
-    basePath: '/admin/compras',
+    basePath: '/admin/compras/proveedores',
     rolesAllowed: ['admin', 'gerente', 'contador']
   },
   {
@@ -53,7 +53,7 @@ export const ERP_MODULES: ERPModule[] = [
     description: 'Cuentas por cobrar/pagar, bancos y libros fiscales.',
     icon: DollarSign,
     color: 'bg-emerald-500',
-    basePath: '/admin/finanzas', // Tendremos que reajustar algunas rutas en App.tsx para que calcen aquí
+    basePath: '/admin/bancos/cuentas', // O /admin/cxc/estado
     rolesAllowed: ['admin', 'gerente', 'contador']
   },
   {
@@ -62,7 +62,7 @@ export const ERP_MODULES: ERPModule[] = [
     description: 'Reportes avanzados y tablero diario (BI).',
     icon: BarChart2,
     color: 'bg-orange-500',
-    basePath: '/admin/analiticas',
+    basePath: '/admin/dashboard',
     rolesAllowed: ['admin', 'gerente']
   },
   {
@@ -71,7 +71,7 @@ export const ERP_MODULES: ERPModule[] = [
     description: 'Roles, usuarios, datos de la empresa y web.',
     icon: Settings,
     color: 'bg-slate-700',
-    basePath: '/admin/configuracion', // o basepath múltiple si hay varios
+    basePath: '/admin/configuracion/empresa', // o basepath múltiple si hay varios
     rolesAllowed: ['admin']
   }
 ];

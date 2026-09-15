@@ -12,6 +12,7 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  // Estrategia: Network first con fallback a fetch (no estamos haciendo offline real aún, solo cumpliendo requisitos PWA)
-  e.respondWith(fetch(e.request).catch(() => fetch(e.request)));
+  // Solo interceptamos para que la PWA sea válida. 
+  // Pasamos la petición directamente a la red sin reintentos erróneos.
+  e.respondWith(fetch(e.request));
 });
